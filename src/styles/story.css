@@ -1,0 +1,409 @@
+/* ==========================================================
+   STORY, NOTEBOOK & LEVEL COMPLETION MODALS
+   ========================================================== */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+
+.modal-overlay.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Grandfather's Old Notebook Modal */
+.notebook-modal {
+  width: 680px;
+  max-width: 92vw;
+  background: #FFFDF9;
+  border: 4px solid #8D6E63;
+  border-radius: var(--radius-lg);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+  animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(30px) scale(0.96); opacity: 0; }
+  to { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+.notebook-binder {
+  height: 28px;
+  background: linear-gradient(90deg, #5D4037, #8D6E63, #5D4037);
+  border-bottom: 2px solid #3E2723;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  color: #D7CCC8;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.notebook-content {
+  padding: 24px 32px;
+  background-image: 
+    radial-gradient(#E5E7EB 1px, transparent 1px),
+    linear-gradient(#F3F4F6 1px, transparent 1px);
+  background-size: 20px 20px, 100% 24px;
+  background-color: #FFFDF8;
+  position: relative;
+}
+
+.notebook-header {
+  text-align: center;
+  margin-bottom: 16px;
+  border-bottom: 2px dashed #D7CCC8;
+  padding-bottom: 12px;
+}
+
+.notebook-title {
+  font-family: var(--font-hand), cursive;
+  font-size: 32px;
+  font-weight: 800;
+  color: #4E342E;
+  transform: rotate(-1deg);
+}
+
+.notebook-subtitle {
+  font-size: 12px;
+  font-weight: 600;
+  color: #8D6E63;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.notebook-entries-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin: 18px 0;
+}
+
+.notebook-entry-card {
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid #D7CCC8;
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  font-family: var(--font-hand), cursive;
+  font-size: 20px;
+  color: #3E2723;
+  box-shadow: 1px 2px 4px rgba(0,0,0,0.04);
+}
+
+.entry-label {
+  font-size: 13px;
+  font-family: var(--font-family);
+  font-weight: 800;
+  color: #8D6E63;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+/* Mentor Dialogue Area */
+.mentor-scene {
+  background: #FEF3C7;
+  border: 2px solid #FCD34D;
+  border-radius: var(--radius-md);
+  padding: 16px;
+  margin-top: 14px;
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.mentor-avatar {
+  font-size: 46px;
+  background: white;
+  border: 2px solid #F59E0B;
+  border-radius: var(--radius-full);
+  width: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-sm);
+  flex-shrink: 0;
+}
+
+.mentor-dialogue {
+  flex: 1;
+}
+
+.mentor-name {
+  font-size: 13px;
+  font-weight: 800;
+  color: #92400E;
+  margin-bottom: 4px;
+}
+
+.mentor-speech {
+  font-size: 14px;
+  font-weight: 600;
+  color: #78350F;
+  line-height: 1.4;
+}
+
+.notebook-footer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 20px;
+}
+
+.btn-start-farmdb {
+  background: linear-gradient(135deg, #16A34A, #15803D);
+  color: white;
+  border: none;
+  padding: 12px 28px;
+  border-radius: var(--radius-full);
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 4px 12px rgba(22, 163, 74, 0.4);
+  transition: all 0.2s ease;
+}
+
+.btn-start-farmdb:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 6px 16px rgba(22, 163, 74, 0.5);
+}
+
+/* ==========================================================
+   LEVEL COMPLETE CELEBRATION MODAL
+   ========================================================== */
+.celebration-modal {
+  width: 580px;
+  max-width: 90vw;
+  background: white;
+  border: 3px solid var(--green-primary);
+  border-radius: var(--radius-lg);
+  padding: 28px;
+  box-shadow: var(--shadow-float);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  position: relative;
+  animation: bounceIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes bounceIn {
+  0% { transform: scale(0.85); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.celebration-badge-icon {
+  font-size: 58px;
+  background: #DCFCE7;
+  border: 3px solid var(--green-primary);
+  border-radius: var(--radius-full);
+  width: 90px;
+  height: 90px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 16px rgba(34, 197, 94, 0.25);
+  animation: badgeSpin 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes badgeSpin {
+  0% { transform: scale(0.5) rotate(-30deg); }
+  100% { transform: scale(1) rotate(0deg); }
+}
+
+.celebration-title {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--green-deep);
+}
+
+.celebration-subtitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--wheat-amber);
+}
+
+.celebration-stats-card {
+  width: 100%;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-warm);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.c-stat-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.c-stat-val {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--green-deep);
+}
+
+.c-stat-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.unlocks-list {
+  width: 100%;
+  background: #F0FDF4;
+  border: 1px solid #BBF7D0;
+  border-radius: var(--radius-md);
+  padding: 12px 16px;
+  text-align: left;
+  font-size: 13px;
+  font-weight: 600;
+  color: #166534;
+}
+
+.unlocks-title {
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: var(--green-primary);
+  margin-bottom: 6px;
+}
+
+/* ==========================================================
+   STORY & LEVEL JOURNEY MAP VIEW
+   ========================================================== */
+.level-journey-container {
+  padding: 28px;
+  max-width: 1000px;
+  margin: 0 auto;
+  overflow-y: auto;
+  height: 100%;
+}
+
+.journey-header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.journey-title {
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--green-deep);
+}
+
+.journey-subtitle {
+  font-size: 14px;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.journey-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 18px;
+}
+
+.journey-card {
+  background: white;
+  border: 2px solid var(--border-warm);
+  border-radius: var(--radius-lg);
+  padding: 18px;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.journey-card.completed {
+  border-color: var(--green-primary);
+  background: #F0FDF4;
+}
+
+.journey-card.active {
+  border-color: var(--wheat-amber);
+  background: #FFFBEB;
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);
+}
+
+.journey-card.locked {
+  opacity: 0.75;
+  background: #F9FAFB;
+  border-style: dashed;
+}
+
+.journey-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.journey-level-tag {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: var(--radius-full);
+  background: #E5E7EB;
+  color: #4B5563;
+}
+
+.journey-card.completed .journey-level-tag {
+  background: #DCFCE7;
+  color: #15803D;
+}
+
+.journey-card.active .journey-level-tag {
+  background: #FEF3C7;
+  color: #92400E;
+}
+
+.journey-card-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--text-main);
+}
+
+.journey-card-desc {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.journey-card-sql {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  background: rgba(0, 0, 0, 0.04);
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  color: var(--green-deep);
+}

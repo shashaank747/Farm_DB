@@ -1,0 +1,1025 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FARMDB: From Farmer to Agribusiness</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=JetBrains+Mono:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet">
+
+  <link rel="stylesheet" href="/src/styles/variables.css">
+  <link rel="stylesheet" href="/src/styles/layout.css">
+  <link rel="stylesheet" href="/src/styles/farm.css">
+  <link rel="stylesheet" href="/src/styles/terminal.css">
+  <link rel="stylesheet" href="/src/styles/story.css">
+  <link rel="stylesheet" href="/src/styles/login.css">
+  <!-- SQLite WebAssembly UMD Script -->
+  <script src="/sql-wasm.js"></script>
+</head>
+
+<body>
+  <!-- ==========================================================
+       LIVING FARMDB LOGIN SCREEN (19 Interactive Living Effects)
+       ========================================================== -->
+  <div id="login-screen" class="hidden" style="display: none;">
+    <!-- Living Farm Scenery Layer -->
+    <div class="login-scenery-container time-morning" id="login-scenery">
+      <div class="login-night-overlay"></div>
+
+      <!-- Celestial Bodies -->
+      <div class="login-sun"></div>
+      <div class="login-moon"></div>
+
+      <!-- Stars Layer -->
+      <div class="login-stars-layer">
+        <div class="login-star twinkle-1" style="top: 10%; left: 15%; width: 3px; height: 3px;"></div>
+        <div class="login-star twinkle-2" style="top: 14%; left: 28%; width: 2px; height: 2px;"></div>
+        <div class="login-star twinkle-3" style="top: 8%; left: 45%; width: 4px; height: 4px;"></div>
+        <div class="login-star twinkle-1" style="top: 22%; left: 52%; width: 2px; height: 2px;"></div>
+        <div class="login-star twinkle-2" style="top: 12%; left: 66%; width: 3px; height: 3px;"></div>
+        <div class="login-star twinkle-3" style="top: 18%; left: 82%; width: 3px; height: 3px;"></div>
+        <div class="login-star twinkle-1" style="top: 26%; left: 91%; width: 2px; height: 2px;"></div>
+        <div class="login-star twinkle-2" style="top: 6%; left: 88%; width: 4px; height: 4px;"></div>
+        <div class="login-star twinkle-3" style="top: 28%; left: 34%; width: 2px; height: 2px;"></div>
+        <div class="login-star twinkle-1" style="top: 19%; left: 8%; width: 3px; height: 3px;"></div>
+      </div>
+
+      <!-- Animated Drifting Clouds -->
+      <div class="login-clouds-layer">
+        <div class="login-cloud login-cloud-1"></div>
+        <div class="login-cloud login-cloud-2"></div>
+        <div class="login-cloud login-cloud-3"></div>
+      </div>
+
+      <!-- Occasional Birds Flying Across Sky -->
+      <div class="login-birds-flock">
+        <span class="login-bird">🕊️</span>
+        <span class="login-bird" style="animation-delay: 0.3s; font-size: 11px;">🕊️</span>
+        <span class="login-bird" style="animation-delay: 0.6s; font-size: 14px;">🕊️</span>
+      </div>
+
+      <!-- Landscape Backdrop with Hills, River, Barn & Meadow -->
+      <div class="login-landscape-backdrop">
+        <svg viewBox="0 0 1200 480" preserveAspectRatio="none"
+          style="position: absolute; bottom: 0; left: 0; width: 100%; height: 58%; pointer-events: none;">
+          <!-- Distant Mountains -->
+          <path d="M0 260 Q180 180 360 250 T720 220 T1080 240 T1200 250 L1200 480 L0 480 Z" fill="#93C5FD"
+            opacity="0.35" />
+          <path d="M0 290 Q220 230 460 280 T920 260 T1200 280 L1200 480 L0 480 Z" fill="#86EFAC" opacity="0.45" />
+          <!-- Rolling Hills -->
+          <path d="M0 320 Q280 270 580 330 T1200 310 L1200 480 L0 480 Z" fill="#4ADE80" opacity="0.6" />
+          <path d="M0 360 Q340 320 700 370 T1200 350 L1200 480 L0 480 Z" fill="#22C55E" opacity="0.8" />
+          <!-- River -->
+          <path
+            d="M480 480 C540 420 580 400 660 380 C740 360 820 370 880 360 C940 350 990 355 1040 350 L1080 365 C1020 372 960 370 900 380 C820 395 760 410 700 480 Z"
+            fill="#60A5FA" opacity="0.85" />
+          <path d="M510 480 C560 430 600 410 670 390 C750 370 830 380 890 370 L910 374 C840 385 770 402 715 480 Z"
+            fill="#93C5FD" opacity="0.7" />
+          <!-- Barn & Silo Art -->
+          <g transform="translate(950, 260) scale(0.85)">
+            <rect x="0" y="25" width="28" height="65" rx="3" fill="#E2E8F0" stroke="#94A3B8" stroke-width="2" />
+            <path d="M0 25 C0 10 28 10 28 25 Z" fill="#CBD5E1" stroke="#94A3B8" stroke-width="2" />
+            <polygon points="35,40 85,10 135,40 135,90 35,90" fill="#DC2626" stroke="#991B1B" stroke-width="2.5" />
+            <line x1="33" y1="40" x2="85" y2="8" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round" />
+            <line x1="85" y1="8" x2="137" y2="40" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round" />
+            <rect x="77" y="0" width="16" height="12" fill="#FFFFFF" stroke="#991B1B" stroke-width="1.5" />
+            <polygon points="75,0 85,-7 95,0" fill="#DC2626" />
+            <rect x="68" y="55" width="34" height="35" fill="#FFFFFF" />
+            <line x1="68" y1="55" x2="102" y2="90" stroke="#DC2626" stroke-width="2" />
+            <line x1="102" y1="55" x2="68" y2="90" stroke="#DC2626" stroke-width="2" />
+          </g>
+          <!-- Meadow Foreground -->
+          <path d="M0 430 Q300 410 600 425 T1200 420 L1200 480 L0 480 Z" fill="#15803D" />
+          <path d="M0 450 Q360 440 750 448 T1200 445 L1200 480 L0 480 Z" fill="#166534" />
+        </svg>
+      </div>
+
+      <!-- Animated Windmill on Right -->
+      <div class="login-windmill-group">
+        <div class="windmill-sails">
+          <div class="sail-blade b1"></div>
+          <div class="sail-blade b2"></div>
+          <div class="sail-blade b3"></div>
+          <div class="sail-blade b4"></div>
+        </div>
+        <div class="windmill-tower"></div>
+      </div>
+
+      <!-- Grazing Cows near Barn -->
+      <div class="login-cows-group">
+        <span class="login-cow cow-1">🐄</span>
+        <span class="login-cow cow-2">🐂</span>
+      </div>
+
+      <!-- Left Stage: Tree, Grandpa, Dog & Hanging Sign -->
+      <div class="login-left-stage">
+        <!-- Tree Foliage & Branch -->
+        <svg viewBox="0 0 400 360" class="tree-foliage-branch">
+          <path d="M-40 0 C60 0 120 40 180 110 C240 180 200 240 170 360 L-40 360 Z" fill="#582900" stroke="#381A00"
+            stroke-width="4" />
+          <!-- Branch extending right to hold sign -->
+          <path d="M140 110 C180 120 260 130 320 140" fill="none" stroke="#582900" stroke-width="18"
+            stroke-linecap="round" />
+          <path d="M220 125 C260 110 340 115 370 125" fill="none" stroke="#6E3809" stroke-width="12"
+            stroke-linecap="round" />
+          <!-- Swaying Leaves -->
+          <g class="leaf-cluster">
+            <circle cx="100" cy="50" r="70" fill="#16A34A" opacity="0.95" />
+            <circle cx="160" cy="70" r="60" fill="#22C55E" opacity="0.95" />
+            <circle cx="220" cy="60" r="55" fill="#15803D" opacity="0.95" />
+            <circle cx="280" cy="90" r="65" fill="#16A34A" opacity="0.95" />
+            <circle cx="340" cy="110" r="48" fill="#4ADE80" opacity="0.9" />
+          </g>
+        </svg>
+
+        <!-- Hanging Wooden Sign with Chains -->
+        <div class="hanging-wooden-sign">
+          <div class="sign-chains">
+            <div class="chain-link-strip"></div>
+            <div class="chain-link-strip"></div>
+          </div>
+          <div class="sign-wooden-board">
+            <div class="sign-quote">"Good farms<br>grow great stories."</div>
+            <div class="sign-author">— Grandpa</div>
+          </div>
+        </div>
+
+        <!-- Grandpa Character on Bench with SQL Mug -->
+        <div class="grandpa-actor-group">
+          <svg viewBox="0 0 200 240" width="180" height="216">
+            <!-- Wooden bench -->
+            <rect x="10" y="160" width="180" height="16" rx="4" fill="#854D0E" stroke="#582900" stroke-width="2" />
+            <rect x="25" y="176" width="14" height="40" rx="2" fill="#713F12" />
+            <rect x="160" y="176" width="14" height="40" rx="2" fill="#713F12" />
+
+            <g class="grandpa-body">
+              <!-- Denim Legs & Boots -->
+              <path d="M60 170 L55 210 L35 215 L35 225 L75 225 L75 170 Z" fill="#1E3A8A" stroke="#172554"
+                stroke-width="1.5" />
+              <path d="M100 170 L105 210 L125 215 L125 225 L85 225 L85 170 Z" fill="#1E3A8A" stroke="#172554"
+                stroke-width="1.5" />
+              <path d="M30 215 C30 210 50 210 65 215 L70 225 L30 225 Z" fill="#78350F" />
+              <path d="M130 215 C130 210 110 210 95 215 L90 225 L130 225 Z" fill="#78350F" />
+              <!-- Red Plaid Shirt -->
+              <rect x="52" y="95" width="60" height="75" rx="10" fill="#DC2626" />
+              <!-- Denim Overalls -->
+              <path d="M54 125 L110 125 L106 175 L58 175 Z" fill="#2563EB" stroke="#1D4ED8" stroke-width="1.5" />
+              <rect x="62" y="95" width="10" height="32" fill="#1D4ED8" />
+              <rect x="92" y="95" width="10" height="32" fill="#1D4ED8" />
+              <circle cx="67" cy="126" r="3.5" fill="#FBBF24" stroke="#D97706" stroke-width="1" />
+              <circle cx="97" cy="126" r="3.5" fill="#FBBF24" stroke="#D97706" stroke-width="1" />
+              <!-- Left Arm -->
+              <path d="M52 105 C40 120 40 145 55 155" fill="none" stroke="#DC2626" stroke-width="12"
+                stroke-linecap="round" />
+              <!-- Right Arm & SQL Mug -->
+              <g class="grandpa-mug">
+                <path d="M110 105 C125 115 130 135 118 148" fill="none" stroke="#DC2626" stroke-width="12"
+                  stroke-linecap="round" />
+                <circle cx="118" cy="148" r="7" fill="#FDBA74" />
+                <rect x="114" y="138" width="22" height="24" rx="4" fill="#FFFFFF" stroke="#E5E7EB"
+                  stroke-width="1.5" />
+                <path d="M136 142 C142 142 142 154 136 154" fill="none" stroke="#FFFFFF" stroke-width="3" />
+                <text x="117" y="152" font-size="7" font-weight="900" fill="#15803D"
+                  font-family="sans-serif">SQL🌱</text>
+                <path d="M120 134 C120 130 124 128 122 124" fill="none" stroke="rgba(255,255,255,0.6)"
+                  stroke-width="1.5" stroke-linecap="round" />
+                <path d="M126 135 C126 131 130 129 128 125" fill="none" stroke="rgba(255,255,255,0.6)"
+                  stroke-width="1.5" stroke-linecap="round" />
+              </g>
+              <!-- Head & Face -->
+              <rect x="76" y="86" width="14" height="14" fill="#FDBA74" />
+              <circle cx="83" cy="74" r="18" fill="#FDBA74" />
+              <path d="M74 70 Q78 66 82 70" fill="none" stroke="#78350F" stroke-width="2" stroke-linecap="round" />
+              <path d="M86 70 Q90 66 94 70" fill="none" stroke="#78350F" stroke-width="2" stroke-linecap="round" />
+              <circle cx="73" cy="74" r="3.5" fill="#FCA5A5" opacity="0.6" />
+              <circle cx="93" cy="74" r="3.5" fill="#FCA5A5" opacity="0.6" />
+              <circle cx="83" cy="72" r="3.5" fill="#FB923C" />
+              <path d="M70 73 C70 94 96 94 96 73 C92 78 74 78 70 73 Z" fill="#FFFFFF" stroke="#E2E8F0"
+                stroke-width="1" />
+              <!-- Straw Hat -->
+              <ellipse cx="83" cy="58" rx="36" ry="10" fill="#FDE047" stroke="#CA8A04" stroke-width="1.5" />
+              <path d="M62 56 C62 38 104 38 104 56 Z" fill="#FACC15" stroke="#CA8A04" stroke-width="1.5" />
+              <path d="M62 54 C72 52 94 52 104 54" stroke="#DC2626" stroke-width="3.5" />
+            </g>
+          </svg>
+        </div>
+
+        <!-- Sleeping Farm Dog -->
+        <div class="sleeping-dog-group">
+          <svg viewBox="0 0 140 80" width="130" height="74">
+            <g class="dog-body">
+              <ellipse cx="70" cy="52" rx="38" ry="24" fill="#D97706" stroke="#B45309" stroke-width="1.5" />
+              <ellipse cx="78" cy="56" rx="22" ry="15" fill="#FFFFFF" opacity="0.95" />
+              <ellipse cx="50" cy="46" rx="14" ry="12" fill="#92400E" />
+              <g class="dog-tail">
+                <path d="M106 50 C116 46 122 36 116 28 C112 32 108 42 104 46" fill="#D97706" stroke="#B45309"
+                  stroke-width="1.5" />
+                <circle cx="116" cy="28" r="3" fill="#FFFFFF" />
+              </g>
+              <ellipse cx="42" cy="62" rx="9" ry="6" fill="#FFFFFF" stroke="#E5E7EB" stroke-width="1" />
+              <ellipse cx="56" cy="64" rx="8" ry="5" fill="#FFFFFF" stroke="#E5E7EB" stroke-width="1" />
+              <circle cx="34" cy="46" r="16" fill="#D97706" stroke="#B45309" stroke-width="1.5" />
+              <path d="M22 52 C22 42 36 42 36 52 Z" fill="#FFFFFF" />
+              <ellipse cx="42" cy="42" rx="7" ry="14" fill="#78350F" transform="rotate(18 42 42)" />
+              <path d="M27 46 Q31 49 35 46" fill="none" stroke="#451A03" stroke-width="1.8" stroke-linecap="round" />
+              <ellipse cx="23" cy="50" rx="3" ry="2.2" fill="#1F2937" />
+              <path d="M38 52 C42 56 46 54 48 50" fill="none" stroke="#DC2626" stroke-width="3"
+                stroke-linecap="round" />
+              <circle cx="43" cy="56" r="2.5" fill="#FBBF24" />
+            </g>
+          </svg>
+        </div>
+
+        <!-- Night Warm Lantern Glow near Grandpa -->
+        <div class="grandpa-lantern">
+          <div class="lantern-glow-halo"></div>
+        </div>
+      </div>
+
+      <!-- Wooden Crate Sign on Bottom Right -->
+      <div class="login-crate-sign">
+        <span>DATA GROWS HERE</span> <span>🌱</span>
+      </div>
+    </div>
+
+    <!-- Top Header Navigation -->
+    <header class="login-top-header">
+      <div class="login-brand-group">
+        <div class="login-brand-icon-leaf">🌱</div>
+        <div class="login-brand-text">
+          <h1>FARMDB</h1>
+          <p>Grow • Query • Harvest • Expand</p>
+        </div>
+      </div>
+      <!-- Interactive Time-of-Day Switcher Badge -->
+      <div class="login-time-badge" id="login-time-badge"
+        title="Click to test Day / Sunset / Night / Midnight lighting">
+        <span class="login-time-dot" id="login-time-dot">☀️</span>
+        <span id="login-time-text">Morning 🌅</span>
+      </div>
+    </header>
+
+    <!-- Main Center Stage: Login Card & Feature Panel -->
+    <main class="login-main-stage">
+      <!-- Tactile Parchment Login Card -->
+      <div class="login-card" id="login-card">
+        <!-- Corner Botanical Accents -->
+        <svg class="card-leaf-corner tl" viewBox="0 0 32 32">
+          <path d="M4 28 C4 14 14 4 28 4 C28 18 18 28 4 28 Z" fill="#22C55E" opacity="0.75" />
+          <path d="M4 28 L28 4" stroke="#15803D" stroke-width="1.5" />
+        </svg>
+        <svg class="card-leaf-corner tr" viewBox="0 0 32 32">
+          <path d="M4 28 C4 14 14 4 28 4 C28 18 18 28 4 28 Z" fill="#22C55E" opacity="0.75" />
+          <path d="M4 28 L28 4" stroke="#15803D" stroke-width="1.5" />
+        </svg>
+        <svg class="card-leaf-corner bl" viewBox="0 0 32 32">
+          <path d="M4 28 C4 14 14 4 28 4 C28 18 18 28 4 28 Z" fill="#22C55E" opacity="0.75" />
+          <path d="M4 28 L28 4" stroke="#15803D" stroke-width="1.5" />
+        </svg>
+        <svg class="card-leaf-corner br" viewBox="0 0 32 32">
+          <path d="M4 28 C4 14 14 4 28 4 C28 18 18 28 4 28 Z" fill="#22C55E" opacity="0.75" />
+          <path d="M4 28 L28 4" stroke="#15803D" stroke-width="1.5" />
+        </svg>
+
+        <!-- Card Header -->
+        <div class="login-card-header">
+          <div class="login-script-title">Welcome to</div>
+          <div class="login-bold-logo">
+            <span>FARMDB</span>
+            <span class="logo-sprout-pulse">🌱</span>
+          </div>
+          <div class="login-sub-motto">Cultivate Data. Grow Possibilities.</div>
+        </div>
+
+        <!-- Validation Error Notification -->
+        <div class="login-error-toast" id="login-error-toast"></div>
+
+        <!-- Login Form -->
+        <form class="login-form" id="login-form">
+          <div class="input-group">
+            <div class="input-wrapper">
+              <span class="input-icon">✉️</span>
+              <input type="text" class="login-input" id="login-email" placeholder="Email or Username"
+                value="farmer@farmdb.com" autocomplete="username">
+            </div>
+          </div>
+
+          <div class="input-group">
+            <div class="input-wrapper">
+              <span class="input-icon">🔒</span>
+              <input type="password" class="login-input" id="login-password" placeholder="Password" value="farmdb2026"
+                autocomplete="current-password">
+              <button type="button" class="btn-toggle-password" id="btn-toggle-password"
+                title="Toggle password visibility">👁</button>
+            </div>
+          </div>
+
+          <div class="form-options-row">
+            <label class="remember-label">
+              <input type="checkbox" class="custom-checkbox" id="login-remember" checked>
+              <span>Remember me</span>
+            </label>
+            <a href="#" class="link-forgot-password" id="link-forgot-pass">Forgot password?</a>
+          </div>
+
+          <button type="submit" class="login-button" id="btn-login-submit">
+            <span class="login-spinner"></span>
+            <span class="btn-content">
+              <span>🌱</span>
+              <span id="login-btn-text">Log In</span>
+              <span class="login-arrow">➔</span>
+            </span>
+          </button>
+
+          <div class="social-divider">
+            <span>or continue with</span>
+          </div>
+
+          <div class="social-buttons-grid">
+            <button type="button" class="social-btn" id="btn-social-google">
+              <svg viewBox="0 0 24 24">
+                <path fill="#4285F4"
+                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                <path fill="#34A853"
+                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                <path fill="#FBBC05"
+                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
+                <path fill="#EA4335"
+                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
+              </svg>
+              <span>Google</span>
+            </button>
+            <button type="button" class="social-btn" id="btn-social-github">
+              <svg viewBox="0 0 24 24" fill="#24292F">
+                <path
+                  d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" />
+              </svg>
+              <span>GitHub</span>
+            </button>
+          </div>
+
+          <div class="login-card-footer">
+            <span>New to FarmDB?</span> <a class="link-signup" id="link-create-account">Create an account</a>
+            <button type="button" class="btn-guest-login" id="btn-guest-login">⚡ Play as Demo Farmer (Instant
+              Access)</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Right Translucent Feature Panel -->
+      <div class="login-feature-panel">
+        <div class="feature-item">
+          <div class="feature-icon-badge green">🌱</div>
+          <div class="feature-text-group">
+            <h4>Manage Fields</h4>
+            <p>Plan and organize your plots</p>
+          </div>
+        </div>
+
+        <div class="feature-item">
+          <div class="feature-icon-badge blue">🗄️</div>
+          <div class="feature-text-group">
+            <h4>Store & Query</h4>
+            <p>Work with real SQL databases</p>
+          </div>
+        </div>
+
+        <div class="feature-item">
+          <div class="feature-icon-badge amber">🐄</div>
+          <div class="feature-text-group">
+            <h4>Raise Livestock</h4>
+            <p>Keep your farm thriving</p>
+          </div>
+        </div>
+
+        <div class="feature-item">
+          <div class="feature-icon-badge teal">📊</div>
+          <div class="feature-text-group">
+            <h4>Track Progress</h4>
+            <p>From seeds to success</p>
+          </div>
+        </div>
+
+        <div class="feature-panel-divider"></div>
+
+        <div class="feature-panel-quote">
+          "Small queries, Big harvests." 🌱
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div id="app">
+    <!-- ==========================================================
+         TOP NAVIGATION BAR
+         ========================================================== -->
+    <header class="top-nav">
+      <div class="nav-left">
+        <div class="brand" id="brand-logo" title="FARMDB: From Farmer to Agribusiness">
+          <div class="brand-icon">🌾</div>
+          <div class="brand-text">
+            <h1>FARMDB</h1>
+          </div>
+        </div>
+
+        <div class="stat-pill day-pill" id="day-pill" title="Season 1">
+          <span>📅 Day <strong id="day-val">1</strong></span>
+        </div>
+
+        <div class="stat-pill time-pill" id="time-pill"
+          title="Click to cycle time of day (Morning ➔ Day ➔ Sunset ➔ Night)">
+          <span id="time-icon">🌅</span>
+          <span id="time-text">07:00 AM</span>
+        </div>
+
+        <button class="btn-advance-day" id="btn-advance-day"
+          title="Advance farm time by 1 day (crops grow, water consumed)">
+          <span>⏩ Advance</span>
+        </button>
+
+        <!-- Prominent SQL Compiler Button in Top Bar -->
+        <button class="btn-sql-compiler" id="btn-top-sql-compiler" title="Open SQL Compiler & Studio (Ctrl+Enter)">
+          <span class="compiler-glow-ring"></span>
+          <span class="compiler-icon">⚡</span>
+          <span class="compiler-label">SQL Compiler</span>
+        </button>
+      </div>
+
+      <div class="nav-center">
+        <div class="stat-pill level-pill" id="level-pill" title="Player Level">
+          <span>🎖️ <strong id="level-role">Lvl 1: New Farmer</strong></span>
+        </div>
+
+        <div class="stat-pill money-pill" id="money-pill" title="Treasury Cash">
+          <span>💰 <strong id="money-val">₹500</strong></span>
+        </div>
+
+        <div class="stat-pill weather-pill" id="weather-pill" title="Farm Weather">
+          <span id="weather-icon">☀️</span>
+          <span id="weather-text">24°C</span>
+        </div>
+      </div>
+
+      <div class="nav-right">
+        <button class="btn-icon" id="btn-toggle-sound" title="Toggle Farm Audio (Muted by default)">
+          <span id="sound-icon">🔇</span>
+        </button>
+        <button class="btn-icon" id="btn-show-story" title="View Grandfather's Notebook & Story">
+          <span>📖</span>
+        </button>
+        <button class="btn-icon" id="btn-reset-level" title="Reset Current Level Database">
+          <span>↺</span>
+        </button>
+        <button class="btn-icon" id="btn-toggle-debug" title="Toggle Developer Diagnostics (F2)">
+          <span>🐛</span>
+        </button>
+        <button class="btn-icon" id="btn-logout-game" title="Log Out & Return to Living Login Screen">
+          <span>🚪</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- ==========================================================
+         MAIN BODY & SIDEBAR
+         ========================================================== -->
+    <div class="app-body">
+      <!-- Left Sidebar Navigation -->
+      <aside class="sidebar">
+        <nav class="sidebar-nav">
+          <div class="nav-item active" data-view="farm-world">
+            <span class="nav-icon">🏠</span>
+            <span>Farm World</span>
+          </div>
+          <div class="nav-item" data-view="fields-view">
+            <span class="nav-icon">🌾</span>
+            <span>Fields & Plots</span>
+            <span class="nav-badge" id="nav-plots-count">1/5</span>
+          </div>
+          <div class="nav-item" data-view="inventory-view">
+            <span class="nav-icon">📦</span>
+            <span>Warehouse</span>
+          </div>
+          <div class="nav-item" data-view="pasture-view">
+            <span class="nav-icon">🐄</span>
+            <span>Pasture & Barn</span>
+          </div>
+          <div class="nav-item" data-view="database-view">
+            <span class="nav-icon">🗄</span>
+            <span>Database (ERD)</span>
+          </div>
+          <div class="nav-item" data-view="journey-view">
+            <span class="nav-icon">🗺️</span>
+            <span>Story & Levels</span>
+          </div>
+        </nav>
+
+        <!-- Current Mission Card in Sidebar -->
+        <div class="sidebar-mission-card">
+          <div class="sidebar-mission-title">
+            <span>🎯 Current Task</span>
+          </div>
+          <div class="sidebar-mission-text" id="sidebar-mission-desc">
+            Loading your first task...
+          </div>
+          <button class="sidebar-mission-btn" id="btn-open-terminal-from-mission">
+            Open SQL Terminal ❯
+          </button>
+        </div>
+      </aside>
+
+      <!-- Main Viewport -->
+      <main class="main-viewport">
+        <!-- 1. FARM WORLD VIEW -->
+        <div class="view-panel active" id="view-farm-world">
+          <div class="farm-world-container time-morning" id="farm-world-container">
+            <!-- Sky & Celestial Layer -->
+            <div class="sky-layer">
+              <div class="stars-layer" id="stars-layer"></div>
+              <div class="sun" id="sky-sun"></div>
+              <div class="moon" id="sky-moon">
+                <div class="moon-glow"></div>
+                <div class="moon-body"></div>
+              </div>
+              <div class="cloud cloud-1"></div>
+              <div class="cloud cloud-2"></div>
+              <div class="cloud cloud-3"></div>
+            </div>
+
+            <!-- Hills Horizon -->
+            <div class="horizon-hills"></div>
+
+            <!-- Living Farm Canvas -->
+            <div class="farm-canvas">
+              <!-- Ambient Fireflies for Night Ambiance -->
+              <div class="fireflies-layer" id="fireflies-layer"></div>
+              <!-- West Zone: Reservoir & Warehouse -->
+              <div class="farm-zone-west">
+                <!-- Water Reservoir -->
+                <div class="reservoir-card">
+                  <div class="reservoir-header">
+                    <span class="reservoir-title">💧 Water Reservoir</span>
+                  </div>
+                  <div class="reservoir-tank-visual">
+                    <div class="water-fill" id="water-fill-bar">
+                      <div class="water-wave"></div>
+                    </div>
+                  </div>
+                  <div class="reservoir-stats" id="water-stats-text">
+                    <span>72,000 L</span>
+                    <span>/ 100,000 L</span>
+                  </div>
+                </div>
+
+                <!-- Warehouse Shed -->
+                <div class="warehouse-card" id="warehouse-inspect-trigger">
+                  <div class="warehouse-header">
+                    <span class="warehouse-title">📦 Storage Warehouse</span>
+                  </div>
+                  <div class="warehouse-crates-grid" id="warehouse-crates-container">
+                    <!-- Dynamic Crates via SQL -->
+                  </div>
+                </div>
+              </div>
+
+              <!-- Center Zone: 5 Farming Plots A1 - A5 -->
+              <div class="farm-zone-center">
+                <div class="zone-center-header">
+                  <span class="zone-center-title">🌱 Active Farming Plots</span>
+                  <span style="font-size: 11px; font-weight:700; color: #15803D;">Click plot to inspect</span>
+                </div>
+                <div class="plots-grid" id="plots-container">
+                  <!-- Dynamic Plots A1-A5 -->
+                </div>
+              </div>
+
+              <!-- East Zone: Barn & Equipment Yard -->
+              <div class="farm-zone-east">
+                <!-- Animal Pasture -->
+                <div class="pasture-card">
+                  <div class="pasture-title">🐄 Animal Barn & Pasture</div>
+                  <div class="pasture-pen" id="pasture-pen-container">
+                    <!-- Dynamic Cows -->
+                  </div>
+                </div>
+
+                <!-- Equipment Pad -->
+                <div class="equipment-card">
+                  <div class="equipment-title">🚜 Equipment Yard</div>
+                  <div class="equipment-pad" id="equipment-pad-container">
+                    <!-- Dynamic Tractor -->
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. DATABASE ERD VIEW -->
+        <div class="view-panel" id="view-database-view">
+          <div style="padding: 24px; overflow-y: auto; height: 100%;">
+            <div style="margin-bottom: 20px;">
+              <h2 style="color: var(--green-deep); font-size: 22px; font-weight:800;">🗄️ Live Database Schema & ERD
+              </h2>
+              <p style="color: var(--text-muted); font-size: 13px;">Every table shown here is an active SQLite
+                WebAssembly table inside the farm engine.</p>
+            </div>
+            <div id="database-erd-container"
+              style="display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px;">
+              <!-- Dynamic Table Cards -->
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. INVENTORY WAREHOUSE VIEW -->
+        <div class="view-panel" id="view-inventory-view">
+          <div style="padding: 24px; overflow-y: auto; height: 100%;">
+            <h2 style="color: var(--earth-dark); font-size: 22px; font-weight:800; margin-bottom: 16px;">📦 Warehouse
+              Inventory & Stock</h2>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+              <div
+                style="background: white; border: 2px solid var(--wheat-border); border-radius: 12px; padding: 18px;">
+                <h3 style="color: var(--wheat-amber); font-size: 16px; margin-bottom: 12px;">🌱 Seeds Storage (seeds
+                  table)</h3>
+                <div id="warehouse-full-seeds"></div>
+              </div>
+              <div style="background: white; border: 2px solid #86EFAC; border-radius: 12px; padding: 18px;">
+                <h3 style="color: var(--green-deep); font-size: 16px; margin-bottom: 12px;">🌾 Harvested Stock (stock
+                  table)</h3>
+                <div id="warehouse-full-stock"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. STORY & 10-LEVEL JOURNEY VIEW -->
+        <div class="view-panel" id="view-journey-view">
+          <div class="level-journey-container">
+            <div class="journey-header">
+              <h2 class="journey-title">🌾 From Farmer to Agribusiness</h2>
+              <p class="journey-subtitle">Master SQL through 10 story-driven agricultural chapters</p>
+            </div>
+            <div class="journey-grid" id="journey-cards-grid">
+              <!-- Dynamic 10 Level Cards -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Plot Details Inspector Modal -->
+        <div class="plot-inspector-modal" id="plot-inspector-modal">
+          <div class="inspector-header">
+            <span class="inspector-title" id="inspector-plot-id">Plot A1</span>
+            <button class="inspector-close" id="btn-close-inspector">&times;</button>
+          </div>
+          <div class="inspector-rows">
+            <div class="inspector-row">
+              <span class="inspector-label">Active Crop:</span>
+              <span class="inspector-value" id="inspector-crop">None</span>
+            </div>
+            <div class="inspector-row">
+              <span class="inspector-label">Soil Status:</span>
+              <span class="inspector-value" id="inspector-status">Available</span>
+            </div>
+            <div class="inspector-row">
+              <span class="inspector-label">Growth Stage:</span>
+              <span class="inspector-value" id="inspector-growth">0%</span>
+            </div>
+            <div class="inspector-row">
+              <span class="inspector-label">Expected Yield:</span>
+              <span class="inspector-value" id="inspector-yield">0 kg</span>
+            </div>
+            <div class="inspector-row">
+              <span class="inspector-label">Water Usage:</span>
+              <span class="inspector-value" id="inspector-water">0 L / day</span>
+            </div>
+          </div>
+          <div style="margin-top: 14px; text-align: center;">
+            <button class="btn-advance-day" style="width: 100%; justify-content: center;" id="btn-inspector-action">
+              Open SQL Terminal
+            </button>
+          </div>
+        </div>
+
+        <!-- Floating Button to Reopen SQL Terminal if closed -->
+        <button class="floating-terminal-trigger" id="btn-toggle-terminal" style="display: none;">
+          <span>⚡ Open SQL Terminal</span>
+        </button>
+      </main>
+    </div>
+
+    <!-- ==========================================================
+         FLOATING DRAGGABLE & RESIZABLE SQL TERMINAL
+         ========================================================== -->
+    <div class="floating-terminal" id="floating-sql-terminal">
+      <!-- Drag Handle Titlebar -->
+      <div class="terminal-titlebar" id="terminal-titlebar">
+        <div class="terminal-title">
+          <span id="terminal-title-icon">🌾</span>
+          <span id="terminal-title-text">FARMDB SQL Studio</span>
+        </div>
+        <div class="terminal-window-controls">
+          <button class="win-btn min-btn" id="btn-minimize-terminal" title="Minimize to Farm Report">_</button>
+          <button class="win-btn max-btn" id="btn-maximize-terminal" title="Maximize window">□</button>
+          <button class="win-btn close-btn" id="btn-close-terminal" title="Close window">✕</button>
+        </div>
+      </div>
+
+      <!-- Minimized Farm Dispatch Quick Report Widget -->
+      <div class="terminal-minimized-report" id="terminal-minimized-report">
+        <!-- Status Header Banner -->
+        <div class="report-header-banner">
+          <div class="report-status-badge">
+            <span class="report-pulse-dot"></span>
+            <span class="report-status-label">Live Farm Dispatch</span>
+          </div>
+          <div class="report-time-badge" id="report-time-badge">
+            Day 1 • Morning ☀️
+          </div>
+        </div>
+
+        <!-- 4 Farm Metrics Grid -->
+        <div class="report-metrics-grid">
+          <!-- Plots & Crops -->
+          <div class="report-stat-card" id="report-card-plots">
+            <div class="report-stat-header">
+              <span class="report-stat-icon">🌱</span>
+              <span class="report-stat-name">Field Plots</span>
+            </div>
+            <div class="report-stat-value" id="report-plots-val">5 Plots</div>
+            <div class="report-stat-sub" id="report-plots-sub">5 Available Soil</div>
+          </div>
+
+          <!-- Water Reservoir -->
+          <div class="report-stat-card" id="report-card-water">
+            <div class="report-stat-header">
+              <span class="report-stat-icon">💧</span>
+              <span class="report-stat-name">Reservoir</span>
+            </div>
+            <div class="report-stat-value" id="report-water-val">72,000 L</div>
+            <div class="report-stat-bar-track">
+              <div class="report-stat-bar-fill" id="report-water-bar-fill" style="width: 72%;"></div>
+            </div>
+            <div class="report-stat-sub" id="report-water-sub">72% Reserves</div>
+          </div>
+
+          <!-- Warehouse Seed Inventory -->
+          <div class="report-stat-card" id="report-card-seeds">
+            <div class="report-stat-header">
+              <span class="report-stat-icon">📦</span>
+              <span class="report-stat-name">Warehouse</span>
+            </div>
+            <div class="report-stat-value" id="report-seeds-val">0 Varieties</div>
+            <div class="report-stat-sub" id="report-seeds-sub">Seeds in Stock</div>
+          </div>
+
+          <!-- Livestock & Barn -->
+          <div class="report-stat-card" id="report-card-livestock">
+            <div class="report-stat-header">
+              <span class="report-stat-icon">🐄</span>
+              <span class="report-stat-name">Pasture & Barn</span>
+            </div>
+            <div class="report-stat-value" id="report-livestock-val">Pasture Empty</div>
+            <div class="report-stat-sub" id="report-livestock-sub">Ready for Cattle</div>
+          </div>
+        </div>
+
+        <!-- Current Objective Teaser -->
+        <div class="report-mission-box">
+          <div class="report-mission-header">
+            <span class="report-mission-icon">🎯</span>
+            <span class="report-mission-label">Active Mission Target</span>
+          </div>
+          <div class="report-mission-title" id="report-mission-title">Loading mission target...</div>
+        </div>
+
+        <!-- Action Footer -->
+        <div class="report-footer">
+          <button class="btn-restore-from-report" id="btn-restore-from-report"
+            title="Click to reopen SQL Studio compiler">
+            <span>⚡ Resume SQL Studio ⤢</span>
+          </button>
+          <div class="report-drag-hint">Drag titlebar to move • Click to expand</div>
+        </div>
+      </div>
+
+      <!-- Main Terminal Body -->
+      <div class="terminal-body">
+        <!-- Toolbar -->
+        <div class="terminal-toolbar">
+          <div class="toolbar-left">
+            <button class="btn-run-sql" id="btn-run-sql" title="Execute SQL (Ctrl+Enter)">
+              <span>▶ Run SQL</span>
+            </button>
+            <button class="btn-toolbar" id="btn-clear-sql" title="Clear Editor">
+              <span>🧹 Clear</span>
+            </button>
+            <button class="btn-toolbar" id="btn-quick-fill" title="Insert Mission SQL Template">
+              <span>⚡ Fill Query</span>
+            </button>
+          </div>
+          <div class="toolbar-right">
+            <button class="btn-toolbar btn-hint-badge" id="btn-toggle-hint" title="View 3-tier Mission Hints">
+              <span id="hint-button-label">💡 Hint (1/3)</span>
+            </button>
+            <button class="btn-toolbar" id="btn-toggle-schema" title="Toggle Database Schema Explorer">
+              <span>🔍 Schema</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Split View: Editor & Schema -->
+        <div class="terminal-center-split">
+          <!-- Editor Pane -->
+          <div class="editor-pane">
+            <div class="code-editor-wrapper">
+              <div class="line-numbers" id="editor-line-numbers">1<br>2<br>3</div>
+              <textarea class="sql-textarea" id="sql-input" spellcheck="false" placeholder="-- Write SQL here to manage your farm...
+SELECT * FROM seeds;"></textarea>
+            </div>
+          </div>
+
+          <!-- Schema Pane (Collapsible) -->
+          <div class="schema-pane" id="schema-pane">
+            <div class="schema-header">
+              <span>📂 Tables & Columns</span>
+            </div>
+            <div class="schema-tree" id="schema-tree-container">
+              <!-- Live Tables & Columns -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Output Tabs & Results Area -->
+        <div class="terminal-output-pane">
+          <div class="output-tabs">
+            <div class="output-tab active" data-tab="results">📊 Query Results</div>
+            <div class="output-tab" data-tab="mission">🎯 Mission Objectives</div>
+            <div class="output-tab" data-tab="hints">💡 Hints (<span id="hint-tier-count">1</span>/3)</div>
+          </div>
+
+          <div class="output-content-area" id="output-content">
+            <div id="tab-content-results">
+              <div style="color: #9CA3AF; font-style: italic; padding: 8px;">Run a query above to view results.</div>
+            </div>
+            <div id="tab-content-mission" style="display: none;">
+              <div id="mission-tab-text" style="line-height: 1.5; font-size: 13px;"></div>
+            </div>
+            <div id="tab-content-hints" style="display: none;">
+              <div id="hints-tab-content"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Status Bar & Resize Handle -->
+      <div class="terminal-statusbar">
+        <span id="status-message">Connecting to SQLite WebAssembly...</span>
+        <div class="resize-handle" id="terminal-resize-handle" title="Drag to resize"></div>
+      </div>
+    </div>
+
+    <!-- ==========================================================
+         GRANDFATHER'S OLD NOTEBOOK MODAL (STORY SCENE)
+         ========================================================== -->
+    <div class="modal-overlay" id="notebook-modal-overlay">
+      <div class="notebook-modal">
+        <div class="notebook-binder">
+          <span>Grandfather's Farm Journal • Volume IV</span>
+        </div>
+        <div class="notebook-content">
+          <div class="notebook-header">
+            <div class="notebook-title">Farm Journal & Inventory</div>
+            <div class="notebook-subtitle">Humble Beginnings • 5 Empty Plots</div>
+          </div>
+
+          <div class="notebook-entries-grid" id="notebook-entries">
+            <!-- Dynamic Entries -->
+          </div>
+
+          <div class="mentor-scene">
+            <div class="mentor-avatar">👨‍🌾</div>
+            <div class="mentor-dialogue">
+              <div class="mentor-name">Uncle Somu (Family Friend & Advisor)</div>
+              <div class="mentor-speech" id="mentor-intro-speech">
+                "Your grandfather knew the land better than anyone. But the farm has grown too complicated to manage
+                from handwritten notes. You need a system that never forgets. Welcome to FARMDB."
+              </div>
+            </div>
+          </div>
+
+          <div class="notebook-footer">
+            <button class="btn-start-farmdb" id="btn-start-playing">
+              <span>Enter Farm & Open Database ❯</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==========================================================
+         LEVEL COMPLETION CELEBRATION MODAL
+         ========================================================== -->
+    <div class="modal-overlay" id="celebration-modal-overlay">
+      <div class="celebration-modal">
+        <div class="celebration-badge-icon" id="celebration-badge">🌱</div>
+        <h2 class="celebration-title" id="celebration-title">LEVEL 1 COMPLETE</h2>
+        <div class="celebration-subtitle" id="celebration-subtitle">The farm finally has a memory!</div>
+
+        <div class="celebration-stats-card" id="celebration-stats-grid">
+          <!-- Dynamic stats -->
+        </div>
+
+        <div class="unlocks-list">
+          <div class="unlocks-title">✨ Unlocked in Next Chapter:</div>
+          <div id="celebration-unlocks-text">🔓 Plot A2 Unlocked! First Harvest, Crop Growth Stages, Tractors & Market
+            Sales!</div>
+        </div>
+
+        <button class="btn-start-farmdb" id="btn-proceed-next-level">
+          <span>Begin Next Level ❯</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- ==========================================================
+         DEVELOPER / DEBUG PANEL MODAL (Requirement 17)
+         ========================================================== -->
+    <div class="modal-overlay" id="debug-modal-overlay">
+      <div
+        style="background: #FFFFFF; border: 3px solid #3B82F6; border-radius: 12px; padding: 20px; width: 620px; max-width: 90vw; max-height: 85vh; overflow-y: auto; box-shadow: var(--shadow-float); font-family: var(--font-mono); font-size: 12px;">
+        <div
+          style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #E5E7EB; padding-bottom: 10px; margin-bottom: 14px;">
+          <strong style="font-size: 15px; color: #1E40AF;">🐛 FARMDB Developer Diagnostics</strong>
+          <button id="btn-close-debug"
+            style="background: #EF4444; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-weight: bold;">✕
+            Close (F2)</button>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px;">
+          <div style="background: #F8FAFC; padding: 8px; border-radius: 6px; border: 1px solid #E2E8F0;">
+            <div style="color: #64748B;">SQLite Engine:</div>
+            <div id="dbg-sqlite-status" style="font-weight: bold; color: #16A34A;">CHECKING...</div>
+          </div>
+          <div style="background: #F8FAFC; padding: 8px; border-radius: 6px; border: 1px solid #E2E8F0;">
+            <div style="color: #64748B;">Database Tables:</div>
+            <div id="dbg-tables-status" style="font-weight: bold; color: #16A34A;">CHECKING...</div>
+          </div>
+          <div style="background: #F8FAFC; padding: 8px; border-radius: 6px; border: 1px solid #E2E8F0;">
+            <div style="color: #64748B;">Game State:</div>
+            <div id="dbg-state-status" style="font-weight: bold; color: #16A34A;">CHECKING...</div>
+          </div>
+          <div style="background: #F8FAFC; padding: 8px; border-radius: 6px; border: 1px solid #E2E8F0;">
+            <div style="color: #64748B;">Farm Renderer:</div>
+            <div id="dbg-renderer-status" style="font-weight: bold; color: #16A34A;">CHECKING...</div>
+          </div>
+          <div style="background: #F8FAFC; padding: 8px; border-radius: 6px; border: 1px solid #E2E8F0;">
+            <div style="color: #64748B;">Mission System:</div>
+            <div id="dbg-mission-status" style="font-weight: bold; color: #16A34A;">CHECKING...</div>
+          </div>
+          <div style="background: #F8FAFC; padding: 8px; border-radius: 6px; border: 1px solid #E2E8F0;">
+            <div style="color: #64748B;">Story System:</div>
+            <div id="dbg-story-status" style="font-weight: bold; color: #16A34A;">CHECKING...</div>
+          </div>
+        </div>
+
+        <div style="margin-bottom: 12px;">
+          <div style="font-weight: bold; color: #334155; margin-bottom: 4px;">Last SQL Query:</div>
+          <pre id="dbg-last-sql"
+            style="background: #F1F5F9; padding: 8px; border-radius: 6px; overflow-x: auto; color: #0F172A; max-height: 80px;">(none)</pre>
+        </div>
+
+        <div style="margin-bottom: 12px;">
+          <div style="font-weight: bold; color: #334155; margin-bottom: 4px;">Last SQL Result / Rows:</div>
+          <pre id="dbg-last-result"
+            style="background: #F1F5F9; padding: 8px; border-radius: 6px; overflow-x: auto; color: #0F172A; max-height: 80px;">(none)</pre>
+        </div>
+
+        <div style="margin-bottom: 12px;">
+          <div style="font-weight: bold; color: #DC2626; margin-bottom: 4px;">Last Error:</div>
+          <pre id="dbg-last-error"
+            style="background: #FEF2F2; padding: 8px; border-radius: 6px; overflow-x: auto; color: #B91C1C; max-height: 80px;">(none)</pre>
+        </div>
+
+        <div style="display: flex; gap: 8px; margin-top: 14px;">
+          <button id="dbg-btn-test-sql"
+            style="background: #3B82F6; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer;">Test
+            SQL Ping</button>
+          <button id="dbg-btn-clear-storage"
+            style="background: #F59E0B; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer;">Clear
+            LocalStorage & Reset</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast Notifications Container -->
+    <div id="toast-container"></div>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+
+</html>
