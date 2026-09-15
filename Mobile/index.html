@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#0f140f">
+  <title>FARMDB Mobile • Android Edition</title>
+  <link rel="icon" type="image/png" href="/farmdb_icon.png">
+
+  <!-- Google Fonts: Inter & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="/src/styles/mobile.css">
+  <!-- SQLite WebAssembly Engine -->
+  <script src="/sql-wasm.js"></script>
+</head>
+
+<body>
+  <div id="app-root">
+
+    <!-- ==========================================================
+         TOP MOBILE HUD
+         ========================================================== -->
+    <header class="mobile-hud">
+      <div class="hud-brand">
+        <img src="/farmdb_icon.png" alt="FarmDB" class="hud-logo">
+        <div class="hud-title-group">
+          <h1>
+            <span>FARMDB</span>
+            <span class="level-badge">Lvl 1</span>
+          </h1>
+        </div>
+      </div>
+
+      <div class="hud-stats">
+        <div class="hud-stat-pill">
+          <span>🪙</span>
+          <span id="hud-coins">250</span>
+        </div>
+        <div class="hud-stat-pill">
+          <span>💧</span>
+          <span id="hud-water">850</span>
+        </div>
+        <button class="hud-btn" id="btn-open-briefing" title="Mission Briefing">📜</button>
+      </div>
+    </header>
+
+    <!-- ==========================================================
+         MOBILE WORKSPACE
+         ========================================================== -->
+    <main class="mobile-workspace">
+
+      <!-- 3D Living Farm Viewport -->
+      <section id="canvas-container"></section>
+
+      <!-- Mission Directive Strip -->
+      <section class="mission-strip">
+        <div class="mission-text-wrap">
+          <span class="mission-tag">Directive • Level 1</span>
+          <span class="mission-desc" id="mission-desc">Step 1: Check available land with SELECT</span>
+        </div>
+        <button class="btn-open-briefing" id="btn-open-briefing-2">View Mission</button>
+      </section>
+
+      <!-- Terminal Bottom Sheet -->
+      <section id="terminal-drawer">
+
+        <!-- 1-Tap SQL Chips Carousel -->
+        <div class="quick-chips-bar">
+          <button class="chip-btn query-template" data-insert="SELECT * FROM plots;">📋 All Plots</button>
+          <button class="chip-btn query-template" data-insert="UPDATE plots SET crop = 'wheat', status = 'planted' WHERE id = 'A1.1';">🌾 Plant Wheat</button>
+          <button class="chip-btn query-template" data-insert="UPDATE plots SET moisture = 80 WHERE id = 'A1.1';">💧 Water Plot</button>
+          <button class="chip-btn action-chip" data-insert="SELECT">SELECT</button>
+          <button class="chip-btn action-chip" data-insert="*">*</button>
+          <button class="chip-btn action-chip" data-insert="FROM plots">FROM plots</button>
+          <button class="chip-btn action-chip" data-insert="WHERE">WHERE</button>
+          <button class="chip-btn action-chip" data-insert="id = 'A1.1'">id = 'A1.1'</button>
+          <button class="chip-btn action-chip" data-insert=";">;</button>
+        </div>
+
+        <!-- Terminal Tabs -->
+        <div class="terminal-tabs">
+          <button class="tab-btn active" data-tab="editor">SQL Terminal</button>
+          <button class="tab-btn" data-tab="results">Query Results</button>
+          <button class="tab-btn" data-tab="tasks">Objectives</button>
+        </div>
+
+        <!-- Tab 1: SQL Editor -->
+        <div class="tab-content active" id="tab-editor">
+          <div class="editor-panel">
+            <textarea id="sql-input" placeholder="Enter SQL query here... (e.g. SELECT * FROM plots;)" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off"></textarea>
+          </div>
+
+          <!-- Sticky Action Bar directly above soft keyboard -->
+          <div class="mobile-action-bar">
+            <button class="btn-secondary" id="btn-clear">Clear</button>
+            <button class="btn-dismiss-kb" id="btn-dismiss-kb">⌨️ Hide</button>
+            <button class="btn-execute" id="btn-execute">
+              <span>▶ RUN SQL</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Tab 2: Query Results -->
+        <div class="tab-content" id="tab-results">
+          <div class="results-panel">
+            <div class="result-status-banner success" id="result-status">
+              Ready to execute queries.
+            </div>
+            <div id="result-table-wrap">
+              <p style="font-size:12px;color:#78909C;padding:12px 0;">Run a SELECT query to see records.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 3: Objectives -->
+        <div class="tab-content" id="tab-tasks">
+          <div class="tasks-panel" id="task-cards-list">
+            <!-- Dynamic task cards -->
+          </div>
+        </div>
+
+      </section>
+
+    </main>
+
+    <!-- ==========================================================
+         MISSION BRIEFING MODAL
+         ========================================================== -->
+    <div class="modal-backdrop" id="modal-briefing">
+      <div class="modal-card">
+        <img src="/images/cinematics/level1_homestead.jpg" alt="Homestead" class="modal-hero-img">
+        <div class="modal-body">
+          <h2>Level 1: Homestead Awakening</h2>
+          <p>Welcome to your family farmstead! Before we can build an agricultural empire, you need to manage your fields using SQL queries against the local farm database.</p>
+          <div style="background:rgba(255,255,255,0.05);padding:10px;border-radius:8px;font-size:12px;border:1px solid rgba(255,255,255,0.1);">
+            <strong style="color:#FFD54F;">Level Directives:</strong>
+            <ol style="margin-left:18px;margin-top:6px;line-height:1.5;">
+              <li>Inspect your land using <code>SELECT * FROM plots;</code></li>
+              <li>Plant Heritage Wheat in plot <b>A1.1</b></li>
+              <li>Irrigate the soil by setting moisture &ge; 60</li>
+            </ol>
+          </div>
+          <button class="modal-btn-close" id="btn-close-briefing">Ready to Farm 🚜</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+
+</html>

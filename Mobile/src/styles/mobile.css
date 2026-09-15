@@ -1,0 +1,707 @@
+/* ==========================================================
+   FARMDB MOBILE CORE DESIGN SYSTEM
+   Optimized for Android Touch, Viewport Changes & Soft Keyboard
+   ========================================================== */
+
+:root {
+  --bg-dark: #0f140f;
+  --bg-card: #192219;
+  --bg-card-hover: #222e22;
+  --border-color: rgba(255, 255, 255, 0.12);
+  --border-highlight: #4CAF50;
+  --accent-green: #4CAF50;
+  --accent-green-bright: #69F0AE;
+  --accent-gold: #FFD54F;
+  --accent-blue: #42A5F5;
+  --accent-red: #EF5350;
+  --text-primary: #FFFFFF;
+  --text-secondary: #B0BEC5;
+  --text-muted: #78909C;
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: var(--bg-dark);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  touch-action: manipulation;
+  user-select: none;
+}
+
+/* App Main Container */
+#app-root {
+  display: flex;
+  flex-direction: column;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh; /* Dynamic viewport units for mobile */
+  position: relative;
+  overflow: hidden;
+}
+
+/* ==========================================================
+   TOP MOBILE HUD / HEADER
+   ========================================================== */
+.mobile-hud {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: calc(8px + var(--safe-top)) 12px 8px 12px;
+  background: rgba(15, 20, 15, 0.92);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border-color);
+  z-index: 50;
+  flex-shrink: 0;
+}
+
+.hud-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.hud-logo {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.hud-title-group h1 {
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.level-badge {
+  background: linear-gradient(135deg, #FF8F00, #FFA000);
+  color: #000;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 10px;
+  text-transform: uppercase;
+}
+
+.hud-stats {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.hud-stat-pill {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(255, 255, 255, 0.08);
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 700;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.hud-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--border-color);
+  color: white;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+/* ==========================================================
+   VIEWPORT SPLIT / WORKSPACE (PORTRAIT DEFAULT)
+   ========================================================== */
+.mobile-workspace {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  position: relative;
+}
+
+/* 3D Canvas Container */
+#canvas-container {
+  width: 100%;
+  height: 44%;
+  position: relative;
+  background: #78B6E8;
+  transition: height 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.farm-3d-webgl-canvas {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+  outline: none;
+}
+
+/* 3D Presets Overlay */
+.farm-3d-controls-overlay {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  pointer-events: none;
+}
+
+.farm-3d-presets-pill {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  background: rgba(15, 23, 42, 0.88);
+  backdrop-filter: blur(10px);
+  padding: 3px 6px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  pointer-events: auto;
+  overflow-x: auto;
+  max-width: 90vw;
+  scrollbar-width: none;
+}
+.farm-3d-presets-pill::-webkit-scrollbar {
+  display: none;
+}
+
+.cam-preset-btn {
+  background: transparent;
+  border: none;
+  color: #94A3B8;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 999px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.cam-preset-btn.active {
+  background: linear-gradient(135deg, #F59E0B, #D97706);
+  color: #FFFFFF;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.45);
+}
+
+.farm-3d-hint-tag {
+  display: none !important;
+}
+
+/* ==========================================================
+   MISSION DIRECTIVE STRIP
+   ========================================================== */
+.mission-strip {
+  background: linear-gradient(90deg, #1b261b, #152015);
+  border-top: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border-color);
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  z-index: 30;
+}
+
+.mission-text-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow: hidden;
+}
+
+.mission-tag {
+  font-size: 9px;
+  text-transform: uppercase;
+  font-weight: 800;
+  color: var(--accent-gold);
+  letter-spacing: 0.5px;
+}
+
+.mission-desc {
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #ECEFF1;
+}
+
+.btn-open-briefing {
+  background: rgba(255, 213, 79, 0.15);
+  border: 1px solid var(--accent-gold);
+  color: var(--accent-gold);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+
+/* ==========================================================
+   MOBILE TERMINAL DRAWER (BOTTOM SHEET)
+   ========================================================== */
+#terminal-drawer {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  background: var(--bg-card);
+  border-top: 1px solid var(--border-color);
+  position: relative;
+  z-index: 40;
+}
+
+/* Quick SQL Chips Carousel */
+.quick-chips-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  background: #121812;
+  overflow-x: auto;
+  white-space: nowrap;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.quick-chips-bar::-webkit-scrollbar {
+  display: none;
+}
+
+.chip-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #E0E0E0;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 5px 9px;
+  border-radius: 6px;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.chip-btn:active {
+  background: var(--accent-green);
+  color: black;
+  border-color: var(--accent-green);
+}
+
+.chip-btn.action-chip {
+  background: rgba(66, 165, 245, 0.15);
+  border-color: var(--accent-blue);
+  color: #90CAF9;
+}
+
+.chip-btn.query-template {
+  background: rgba(255, 213, 79, 0.12);
+  border-color: rgba(255, 213, 79, 0.4);
+  color: var(--accent-gold);
+}
+
+/* Terminal Tab Switcher */
+.terminal-tabs {
+  display: flex;
+  background: #141c14;
+  border-bottom: 1px solid var(--border-color);
+  flex-shrink: 0;
+}
+
+.tab-btn {
+  flex: 1;
+  padding: 8px 0;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+}
+
+.tab-btn.active {
+  color: var(--accent-green-bright);
+  border-bottom-color: var(--accent-green-bright);
+  background: rgba(105, 240, 174, 0.05);
+}
+
+/* Tab Content Areas */
+.tab-content {
+  display: none;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  position: relative;
+}
+
+.tab-content.active {
+  display: flex;
+  flex-direction: column;
+}
+
+/* SQL Editor */
+.editor-panel {
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  gap: 8px;
+}
+
+#sql-input {
+  width: 100%;
+  flex: 1;
+  min-height: 75px;
+  background: #0d120d;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  color: #A7FFEB;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.45;
+  padding: 10px;
+  outline: none;
+  resize: none;
+  user-select: text;
+}
+
+#sql-input:focus {
+  border-color: var(--accent-green-bright);
+  box-shadow: 0 0 0 1px var(--accent-green-bright);
+}
+
+/* Sticky Mobile Action Buttons */
+.mobile-action-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px calc(8px + var(--safe-bottom)) 12px;
+  background: #121912;
+  border-top: 1px solid var(--border-color);
+  flex-shrink: 0;
+}
+
+.btn-execute {
+  flex: 2;
+  background: linear-gradient(135deg, #2E7D32, #4CAF50);
+  border: none;
+  color: white;
+  font-size: 14px;
+  font-weight: 800;
+  padding: 10px 16px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 4px 14px rgba(76, 175, 80, 0.4);
+  cursor: pointer;
+}
+
+.btn-execute:active {
+  transform: scale(0.98);
+}
+
+.btn-secondary {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border-color);
+  color: #CFD8DC;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 10px 8px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+/* Result Table Area */
+.results-panel {
+  padding: 8px 12px;
+  flex: 1;
+  overflow: auto;
+}
+
+.result-status-banner {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 6px 10px;
+  border-radius: 6px;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.result-status-banner.success {
+  background: rgba(76, 175, 80, 0.15);
+  color: #A5D6A7;
+  border: 1px solid rgba(76, 175, 80, 0.3);
+}
+
+.result-status-banner.error {
+  background: rgba(239, 83, 80, 0.15);
+  color: #FFCDD2;
+  border: 1px solid rgba(239, 83, 80, 0.3);
+}
+
+.table-scroller {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+}
+
+.mobile-data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-align: left;
+}
+
+.mobile-data-table th {
+  background: #233023;
+  color: var(--accent-gold);
+  padding: 7px 10px;
+  font-weight: 700;
+  border-bottom: 1px solid var(--border-color);
+  white-space: nowrap;
+}
+
+.mobile-data-table td {
+  padding: 7px 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  color: #E0E0E0;
+  white-space: nowrap;
+}
+
+.mobile-data-table tr:nth-child(even) {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+/* Tasks / Mission List */
+.tasks-panel {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.task-card {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 10px;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.task-card.done {
+  border-color: var(--accent-green);
+  background: rgba(76, 175, 80, 0.08);
+}
+
+.task-checkbox {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 900;
+  flex-shrink: 0;
+}
+
+.task-card.done .task-checkbox {
+  background: var(--accent-green);
+  color: black;
+}
+
+.task-info h4 {
+  font-size: 12px;
+  font-weight: 700;
+  margin-bottom: 3px;
+}
+
+.task-info p {
+  font-size: 11px;
+  color: var(--text-secondary);
+  line-height: 1.35;
+}
+
+/* ==========================================================
+   KEYBOARD COMPENSATION MODE (Crucial for Android)
+   When soft keyboard opens, minimize 3D canvas so inputs stay visible
+   ========================================================== */
+body.keyboard-open #canvas-container {
+  height: 48px; /* Compact ribbon showing miniature status */
+}
+
+body.keyboard-open .canvas-quick-actions,
+body.keyboard-open .plot-info-banner {
+  display: none !important;
+}
+
+body.keyboard-open .mission-strip {
+  display: none !important; /* Save vertical space for keyboard */
+}
+
+body.keyboard-open #terminal-drawer {
+  flex: 1;
+  height: auto;
+}
+
+body.keyboard-open #sql-input {
+  min-height: 60px;
+}
+
+/* Floating Dismiss Keyboard Button */
+.btn-dismiss-kb {
+  display: none;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid var(--border-color);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+}
+
+body.keyboard-open .btn-dismiss-kb {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* ==========================================================
+   LANDSCAPE ORIENTATION MODE
+   Side-by-Side Dual Pane Layout
+   ========================================================== */
+@media (orientation: landscape) and (max-height: 520px) {
+  .mobile-workspace {
+    flex-direction: row;
+  }
+
+  #canvas-container {
+    width: 48%;
+    height: 100% !important;
+    border-right: 1px solid var(--border-color);
+  }
+
+  #terminal-drawer {
+    width: 52%;
+    height: 100%;
+  }
+
+  .mission-strip {
+    display: none; /* Hide strip in landscape to conserve space */
+  }
+
+  body.keyboard-open #canvas-container {
+    display: none; /* In landscape, when keyboard opens, give full width to terminal */
+  }
+
+  body.keyboard-open #terminal-drawer {
+    width: 100%;
+  }
+}
+
+/* ==========================================================
+   MODAL / BRIEFING POPUP
+   ========================================================== */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(8px);
+  z-index: 100;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.modal-backdrop.open {
+  display: flex;
+}
+
+.modal-card {
+  width: 100%;
+  max-width: 440px;
+  max-height: 90vh;
+  background: #182218;
+  border: 1px solid rgba(255, 213, 79, 0.4);
+  border-radius: 14px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6);
+}
+
+.modal-hero-img {
+  width: 100%;
+  height: 140px;
+  object-fit: cover;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.modal-body {
+  padding: 16px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.modal-body h2 {
+  font-size: 17px;
+  color: var(--accent-gold);
+}
+
+.modal-body p {
+  font-size: 13px;
+  line-height: 1.45;
+  color: #CFD8DC;
+}
+
+.modal-btn-close {
+  background: var(--accent-green);
+  color: black;
+  border: none;
+  padding: 12px;
+  font-size: 14px;
+  font-weight: 800;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-top: 8px;
+}
