@@ -1,0 +1,743 @@
+/* ==========================================================
+   FARMDB TRAINER & INSTRUCTOR PORTAL STYLESHEET
+   ========================================================== */
+
+:root {
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', Consolas, monospace;
+
+  --bg-app: #F8FAFC;
+  --bg-card: #FFFFFF;
+  --border-subtle: #E2E8F0;
+  --border-strong: #CBD5E1;
+
+  --green-primary: #10B981;
+  --green-dark: #047857;
+  --green-deep: #064E3B;
+  --green-light: #ECFDF5;
+
+  --text-main: #0F172A;
+  --text-muted: #64748B;
+  --text-light: #94A3B8;
+
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-sans);
+  background: var(--bg-app);
+  color: var(--text-main);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ==========================================================
+   TOP NAVIGATION BAR
+   ========================================================== */
+.trainer-navbar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: #FFFFFF;
+  border-bottom: 1px solid var(--border-subtle);
+  padding: 12px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: var(--shadow-sm);
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.trainer-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.trainer-logo-img {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  object-fit: contain;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  flex-shrink: 0;
+}
+
+.trainer-logo-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  background: linear-gradient(135deg, #059669, #047857);
+  color: white;
+  border-radius: 10px;
+  font-size: 20px;
+  box-shadow: 0 2px 6px rgba(5, 150, 105, 0.35);
+}
+
+.trainer-title-group h1 {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--text-main);
+  letter-spacing: -0.3px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.trainer-portal-pill {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  background: var(--green-light);
+  color: var(--green-dark);
+  border-radius: 999px;
+  border: 1px solid #A7F3D0;
+}
+
+.trainer-title-group p {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.trainer-nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.profile-selector-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #F1F5F9;
+  padding: 4px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border-subtle);
+}
+
+.profile-selector-group label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.student-select {
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--border-strong);
+  background: white;
+  color: var(--text-main);
+  cursor: pointer;
+  outline: none;
+}
+
+.btn-nav-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--border-subtle);
+  background: white;
+  color: var(--text-main);
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+
+.btn-nav-action:hover {
+  background: #F8FAFC;
+  border-color: var(--border-strong);
+}
+
+.btn-nav-action.primary {
+  background: linear-gradient(135deg, #059669, #047857);
+  color: white;
+  border: none;
+  box-shadow: 0 2px 6px rgba(5, 150, 105, 0.35);
+}
+
+.btn-nav-action.primary:hover {
+  background: linear-gradient(135deg, #10B981, #059669);
+  box-shadow: 0 4px 10px rgba(16, 185, 129, 0.45);
+}
+
+/* ==========================================================
+   MAIN DASHBOARD LAYOUT
+   ========================================================== */
+.trainer-container {
+  max-width: 1240px;
+  margin: 24px auto;
+  padding: 0 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* Header Session Banner */
+.student-banner {
+  background: white;
+  border-radius: 14px;
+  border: 1px solid var(--border-subtle);
+  padding: 20px 24px;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.student-info-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.student-avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 12px;
+  background: #E0E7FF;
+  color: #4338CA;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  font-weight: 800;
+  border: 2px solid #C7D2FE;
+}
+
+.student-text h2 {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--text-main);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.student-badge-role {
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #EFF6FF;
+  color: #1D4ED8;
+  border: 1px solid #BFDBFE;
+}
+
+.student-meta {
+  font-size: 12px;
+  color: var(--text-muted);
+  display: flex;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.student-banner-right {
+  display: flex;
+  gap: 8px;
+}
+
+/* ==========================================================
+   KPI SUMMARY CARDS
+   ========================================================== */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.kpi-card {
+  background: white;
+  border-radius: 12px;
+  border: 1px solid var(--border-subtle);
+  padding: 18px 20px;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.kpi-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.kpi-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.kpi-icon {
+  font-size: 16px;
+}
+
+.kpi-value {
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--text-main);
+  letter-spacing: -0.5px;
+}
+
+.kpi-subtext {
+  font-size: 11.5px;
+  color: var(--text-muted);
+}
+
+.kpi-progress-bar {
+  height: 6px;
+  background: #E2E8F0;
+  border-radius: 999px;
+  overflow: hidden;
+  margin-top: 4px;
+}
+
+.kpi-progress-fill {
+  height: 100%;
+  background: var(--green-primary);
+  border-radius: 999px;
+  transition: width 0.4s ease;
+}
+
+/* ==========================================================
+   SECTION TABS & ACTIONS
+   ========================================================== */
+.section-nav-tabs {
+  display: flex;
+  border-bottom: 2px solid var(--border-subtle);
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.section-tab-btn {
+  padding: 10px 18px;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--text-muted);
+  background: transparent;
+  border: none;
+  border-bottom: 3px solid transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.15s ease;
+}
+
+.section-tab-btn:hover {
+  color: var(--text-main);
+}
+
+.section-tab-btn.active {
+  color: var(--green-dark);
+  border-bottom-color: var(--green-primary);
+}
+
+/* ==========================================================
+   10-LEVEL CURRICULUM PROGRESS MATRIX
+   ========================================================== */
+.curriculum-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 16px;
+}
+
+.level-card {
+  background: white;
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: border-color 0.15s ease;
+}
+
+.level-card.passed {
+  border-color: #86EFAC;
+  background: linear-gradient(180deg, #F0FDF4 0%, #FFFFFF 35%);
+}
+
+.level-card.active {
+  border-color: #93C5FD;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+.level-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.level-num-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.level-number-badge {
+  font-size: 11px;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: #E2E8F0;
+  color: #334155;
+}
+
+.level-card.passed .level-number-badge {
+  background: #DCFCE7;
+  color: #15803D;
+}
+
+.level-title-text {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.status-pill {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.status-pill.passed {
+  background: #DCFCE7;
+  color: #15803D;
+  border: 1px solid #86EFAC;
+}
+
+.status-pill.in-progress {
+  background: #DBEAFE;
+  color: #1D4ED8;
+  border: 1px solid #BFDBFE;
+}
+
+.status-pill.not-started {
+  background: #F1F5F9;
+  color: #64748B;
+  border: 1px solid #E2E8F0;
+}
+
+.level-concept-tag {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  color: #4338CA;
+  background: #EEF2FF;
+  padding: 2px 8px;
+  border-radius: 6px;
+  border: 1px solid #E0E7FF;
+}
+
+.level-stats-row {
+  display: flex;
+  gap: 12px;
+  font-size: 11.5px;
+  color: var(--text-muted);
+}
+
+.level-query-box {
+  background: #0F172A;
+  color: #E2E8F0;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  overflow-x: auto;
+  max-height: 75px;
+}
+
+/* ==========================================================
+   STRUCTURED TRAINING REPORT CONTAINER
+   ========================================================== */
+.report-paper {
+  background: white;
+  border-radius: 14px;
+  border: 1px solid var(--border-subtle);
+  padding: 32px 36px;
+  box-shadow: var(--shadow-md);
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.report-header {
+  border-bottom: 2px solid var(--border-subtle);
+  padding-bottom: 20px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.report-brand-area h2 {
+  font-size: 22px;
+  font-weight: 900;
+  color: var(--text-main);
+  letter-spacing: -0.5px;
+}
+
+.report-brand-area p {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.report-grade-badge {
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.grade-circle {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #059669, #047857);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  font-weight: 900;
+  box-shadow: 0 4px 10px rgba(5, 150, 105, 0.4);
+}
+
+.grade-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  margin-top: 4px;
+}
+
+.report-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  background: #F8FAFC;
+  padding: 14px 18px;
+  border-radius: 10px;
+  border: 1px solid var(--border-subtle);
+}
+
+.report-meta-item .meta-lbl {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.report-meta-item .meta-val {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+/* Executive Summary Box */
+.report-section h3 {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--text-main);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid var(--border-subtle);
+  padding-bottom: 6px;
+}
+
+.summary-callout-box {
+  background: #F0FDF4;
+  border: 1px solid #86EFAC;
+  border-radius: 10px;
+  padding: 14px 18px;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: #166534;
+}
+
+/* Competency Proficiency Table */
+.proficiency-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+}
+
+.proficiency-table th,
+.proficiency-table td {
+  padding: 10px 14px;
+  text-align: left;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.proficiency-table th {
+  background: #F8FAFC;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.rating-stars {
+  color: #F59E0B;
+  font-size: 13px;
+}
+
+/* Strengths & Growth Areas */
+.evaluation-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+@media (max-width: 768px) {
+  .evaluation-split {
+    grid-template-columns: 1fr;
+  }
+}
+
+.eval-box {
+  background: #F8FAFC;
+  border-radius: 10px;
+  border: 1px solid var(--border-subtle);
+  padding: 16px;
+}
+
+.eval-box h4 {
+  font-size: 13px;
+  font-weight: 800;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.eval-box.strengths h4 {
+  color: #15803D;
+}
+
+.eval-box.growth h4 {
+  color: #B45309;
+}
+
+.eval-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12.5px;
+  color: #334155;
+}
+
+.eval-list li {
+  position: relative;
+  padding-left: 18px;
+}
+
+.eval-list li::before {
+  content: '•';
+  position: absolute;
+  left: 4px;
+  font-weight: 900;
+}
+
+.eval-box.strengths li::before {
+  color: #22C55E;
+}
+
+.eval-box.growth li::before {
+  color: #F59E0B;
+}
+
+/* Recommendations Callout */
+.recommendations-box {
+  background: #FFFBEB;
+  border: 1px solid #FCD34D;
+  border-radius: 10px;
+  padding: 16px 20px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #92400E;
+}
+
+/* Report Action Floating Bar */
+.report-action-bar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  background: white;
+  padding: 14px 20px;
+  border-radius: 10px;
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-sm);
+  flex-wrap: wrap;
+}
+
+/* ==========================================================
+   PRINT STYLES FOR PDF / PRINT REPORT
+   ========================================================== */
+@media print {
+  body {
+    background: white;
+    color: black;
+  }
+
+  .trainer-navbar,
+  .section-nav-tabs,
+  .report-action-bar,
+  .btn-nav-action,
+  .student-banner-right {
+    display: none !important;
+  }
+
+  .trainer-container {
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
+  }
+
+  .report-paper {
+    border: none;
+    box-shadow: none;
+    padding: 0;
+  }
+
+  .report-meta-grid,
+  .eval-box,
+  .summary-callout-box,
+  .recommendations-box {
+    border: 1px solid #CCCCCC;
+    background: #FAFAFA !important;
+    color: black !important;
+  }
+}
