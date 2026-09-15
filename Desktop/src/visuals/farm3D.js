@@ -71,6 +71,9 @@ class Farm3DWorld {
     this.activeViewPreset = 'isometric';
     this.isHarvestingAnim = false;
     this.hoveredPlot = null;
+    this.lampPosts = [];
+    this.hoveredLampPost = null;
+    this.lastTimeOfDay = null;
     this.startTime = performance.now();
     this.isInitialized = false;
   }
@@ -137,6 +140,7 @@ class Farm3DWorld {
     this.buildGrassAndWildflowers();
     this.buildFireflies();
     this.buildEnvironmentProps();
+    this.buildLampPosts();
     this.buildClouds();
 
     // 6. Event Listeners
@@ -352,6 +356,18 @@ class Farm3DWorld {
         this.fireflies.forEach(f => f.visible = true); // Fireflies active at night
       }
     }
+
+    const isNight = (timeOfDay === 'night');
+    // Transition into night resets manual lamp overrides so street lamps default to ON automatically
+    if (isNight && this.lastTimeOfDay !== 'night') {
+      if (this.lampPosts) {
+        this.lampPosts.forEach(lamp => {
+          if (lamp.userData) lamp.userData.userOverride = null;
+        });
+      }
+    }
+    this.lastTimeOfDay = timeOfDay;
+    this.updateLampPostLighting(isNight);
   }
 
   // ==========================================================
@@ -2443,6 +2459,386 @@ class Farm3DWorld {
   }
 
   // ==========================================================
+  // STREET LAMP POSTS (Country Road Illumination & Interaction)
+  // ==========================================================
+  buildLampPosts() {
+    // 7 Strategic lamp posts along the main farm road and cross paths
+    this.lampConfigs = [
+      { id: 'lamp_nw', x: -10.5, y: 0, z: -20, rotY: 0, label: 'North-West Main Road Lamp' },
+      { id: 'lamp_ne', x: -1.5, y: 0, z: -20, rotY: Math.PI, label: 'North-East Main Road Lamp' },
+      { id: 'lamp_sw', x: -10.5, y: 0, z: 20, rotY: 0, label: 'South-West Main Road Lamp' },
+      { id: 'lamp_se', x: -1.5, y: 0, z: 20, rotY: Math.PI, label: 'South-East Main Road Lamp' },
+      { id: 'lamp_path_w', x: -15, y: 0, z: -3.2, rotY: -Math.PI / 2, label: 'Pasture Walkway Lamp' },
+      { id: 'lamp_path_c', x: 5, y: 0, z: -3.2, rotY: -Math.PI / 2, label: 'Central Plot Walkway Lamp' },
+      { id: 'lamp_path_e', x: 15, y: 0, z: -3.2, rotY: -Math.PI / 2, label: 'East Meadow Walkway Lamp' }
+    ];
+
+    const manager = new THREE.LoadingManager();
+    const mtlLoader = new MTLLoader(manager);
+    mtlLoader.setPath('/models/lamppost/');
+    mtlLoader.load(
+      'rv_lamp_post_4.mtl',
+      (materials) => {
+        materials.preload();
+        const objLoader = new OBJLoader(manager);
+        objLoader.setMaterials(materials);
+        objLoader.setPath('/models/lamppost/');
+        objLoader.load(
+          'rv_lamp_post_4.obj',
+          (lampObj) => {
+            this.setupLampPosts(lampObj, this.lampConfigs);
+          },
+          undefined,
+          (err) => {
+            console.warn('Could not load lamp post OBJ, using procedural fallback:', err);
+            this.setupProceduralLampPosts(this.lampConfigs);
+          }
+        );
+      },
+      undefined,
+      (err) => {
+        console.warn('Could not load lamp post MTL, loading OBJ directly or fallback:', err);
+        const objLoader = new OBJLoader(manager);
+        objLoader.setPath('/models/lamppost/');
+        objLoader.load(
+          'rv_lamp_post_4.obj',
+          (lampObj) => {
+            this.setupLampPosts(lampObj, this.lampConfigs);
+          },
+          undefined,
+          () => this.setupProceduralLampPosts(this.lampConfigs)
+        );
+      }
+    );
+  }
+
+  setupLampPosts(baseModel, configs) {
+    if (this.lampPosts && this.lampPosts.length > 0) {
+      this.lampPosts.forEach(lamp => {
+        this.scene.remove(lamp);
+        const idx = this.clickableEntities.indexOf(lamp);
+        if (idx !== -1) this.clickableEntities.splice(idx, 1);
+      });
+      this.lampPosts = [];
+    }
+
+    const scale = 0.25; // Gives ~6.1m realistic street lamp height
+    const localBulbPos = new THREE.Vector3(1.225, 4.315, 0);
+
+    configs.forEach((cfg) => {
+      const lampGroup = new THREE.Group();
+      lampGroup.position.set(cfg.x, cfg.y, cfg.z);
+      lampGroup.rotation.y = cfg.rotY;
+
+      const modelClone = baseModel.clone(true);
+      modelClone.scale.set(scale, scale, scale);
+
+      let dedicatedBulbMat = null;
+
+      // Ensure distinct materials per lamp so that switching a lamp only affects that specific unit
+      modelClone.traverse((child) => {
+        if (child.isMesh) {
+          child.castShadow = true;
+          child.receiveShadow = true;
+
+          if (Array.isArray(child.material)) {
+            child.material = child.material.map((mat) => {
+              const matName = mat ? (mat.name || '') : '';
+              if (matName.includes('glow') || matName === 'Lamppost_glow1SG') {
+                const bulbMat = new THREE.MeshStandardMaterial({
+                  name: 'Lamppost_glow1SG',
+                  color: 0x3A3A3A,
+                  emissive: 0x000000,
+                  emissiveIntensity: 0,
+                  roughness: 0.25,
+                  metalness: 0.1
+                });
+                dedicatedBulbMat = bulbMat;
+                return bulbMat;
+              } else if (matName.includes('blinn') || matName === 'blinn2SG') {
+                return new THREE.MeshStandardMaterial({
+                  name: 'blinn2SG',
+                  color: 0xE8F4F8,
+                  transparent: true,
+                  opacity: 0.45,
+                  roughness: 0.15,
+                  metalness: 0.1
+                });
+              } else if (matName.includes('mat3') || matName === 'Lamp_post_metal_mat3SG') {
+                return new THREE.MeshStandardMaterial({
+                  name: 'Lamp_post_metal_mat3SG',
+                  color: 0xC6A052,
+                  roughness: 0.4,
+                  metalness: 0.8
+                });
+              } else {
+                return new THREE.MeshStandardMaterial({
+                  name: 'Lamp_post_metal_mat1SG',
+                  color: 0x1C2228,
+                  roughness: 0.6,
+                  metalness: 0.7
+                });
+              }
+            });
+          } else if (child.material) {
+            const matName = child.material.name || '';
+            if (matName.includes('glow') || matName === 'Lamppost_glow1SG') {
+              const bulbMat = new THREE.MeshStandardMaterial({
+                name: 'Lamppost_glow1SG',
+                color: 0x3A3A3A,
+                emissive: 0x000000,
+                emissiveIntensity: 0,
+                roughness: 0.25,
+                metalness: 0.1
+              });
+              dedicatedBulbMat = bulbMat;
+              child.material = bulbMat;
+            } else {
+              child.material = new THREE.MeshStandardMaterial({
+                color: 0x1C2228,
+                roughness: 0.6,
+                metalness: 0.7
+              });
+            }
+          }
+        }
+      });
+
+      lampGroup.add(modelClone);
+
+      // Warm street lamp light source to enlighten the countryside road
+      const pointLight = new THREE.PointLight(0xFFB74D, 0, 18, 1.8);
+      pointLight.position.copy(localBulbPos);
+      pointLight.visible = false;
+      lampGroup.add(pointLight);
+
+      // Soft glow halo
+      const haloGeo = new THREE.SphereGeometry(0.32, 12, 12);
+      const haloMat = new THREE.MeshBasicMaterial({
+        color: 0xFFAA22,
+        transparent: true,
+        opacity: 0.85,
+        blending: THREE.AdditiveBlending
+      });
+      const haloMesh = new THREE.Mesh(haloGeo, haloMat);
+      haloMesh.position.copy(localBulbPos);
+      haloMesh.visible = false;
+      lampGroup.add(haloMesh);
+
+      // Raycast hit target cylinder (provides easy mouse clicking & mobile tapping)
+      const hitGeo = new THREE.CylinderGeometry(0.9, 0.9, 6.2, 8);
+      const hitMat = new THREE.MeshBasicMaterial({ visible: false });
+      const hitMesh = new THREE.Mesh(hitGeo, hitMat);
+      hitMesh.position.set(0.6, 3.1, 0);
+      lampGroup.add(hitMesh);
+
+      lampGroup.userData = {
+        type: 'lamppost',
+        id: cfg.id,
+        label: cfg.label,
+        bulbMat: dedicatedBulbMat,
+        pointLight: pointLight,
+        haloMesh: haloMesh,
+        isOn: false,
+        userOverride: null
+      };
+
+      this.scene.add(lampGroup);
+      this.lampPosts.push(lampGroup);
+      this.clickableEntities.push(lampGroup);
+    });
+
+    const isNight = (gameState && gameState.timeOfDay === 'night');
+    this.updateLampPostLighting(isNight);
+  }
+
+  setupProceduralLampPosts(configs) {
+    if (this.lampPosts && this.lampPosts.length > 0) return;
+
+    const postMat = new THREE.MeshStandardMaterial({ color: 0x1C2228, roughness: 0.6, metalness: 0.7 });
+    const brassMat = new THREE.MeshStandardMaterial({ color: 0xC6A052, roughness: 0.4, metalness: 0.8 });
+    const glassMat = new THREE.MeshStandardMaterial({ color: 0xE8F4F8, transparent: true, opacity: 0.45, roughness: 0.15 });
+
+    configs.forEach((cfg) => {
+      const lampGroup = new THREE.Group();
+      lampGroup.position.set(cfg.x, cfg.y, cfg.z);
+      lampGroup.rotation.y = cfg.rotY;
+
+      // Base
+      const baseGeo = new THREE.CylinderGeometry(0.45, 0.55, 0.4, 8);
+      const baseMesh = new THREE.Mesh(baseGeo, postMat);
+      baseMesh.position.y = 0.2;
+      lampGroup.add(baseMesh);
+
+      // Pole
+      const poleGeo = new THREE.CylinderGeometry(0.12, 0.18, 4.2, 8);
+      const poleMesh = new THREE.Mesh(poleGeo, postMat);
+      poleMesh.position.y = 2.3;
+      lampGroup.add(poleMesh);
+
+      // Collar
+      const collarGeo = new THREE.CylinderGeometry(0.2, 0.2, 0.15, 8);
+      const collarMesh = new THREE.Mesh(collarGeo, brassMat);
+      collarMesh.position.y = 4.4;
+      lampGroup.add(collarMesh);
+
+      // Overhanging Arm
+      const armGeo = new THREE.BoxGeometry(1.2, 0.1, 0.1);
+      const armMesh = new THREE.Mesh(armGeo, postMat);
+      armMesh.position.set(0.6, 4.6, 0);
+      lampGroup.add(armMesh);
+
+      // Lantern Hood
+      const hoodGeo = new THREE.ConeGeometry(0.4, 0.3, 6);
+      const hoodMesh = new THREE.Mesh(hoodGeo, postMat);
+      hoodMesh.position.set(1.2, 4.5, 0);
+      lampGroup.add(hoodMesh);
+
+      // Lantern Glass Body
+      const glassGeo = new THREE.CylinderGeometry(0.25, 0.18, 0.5, 6);
+      const glassMesh = new THREE.Mesh(glassGeo, glassMat);
+      glassMesh.position.set(1.2, 4.15, 0);
+      lampGroup.add(glassMesh);
+
+      // Dedicated Bulb
+      const bulbMat = new THREE.MeshStandardMaterial({
+        color: 0x3A3A3A,
+        emissive: 0x000000,
+        emissiveIntensity: 0,
+        roughness: 0.25
+      });
+      const bulbGeo = new THREE.SphereGeometry(0.12, 8, 8);
+      const bulbMesh = new THREE.Mesh(bulbGeo, bulbMat);
+      bulbMesh.position.set(1.2, 4.15, 0);
+      lampGroup.add(bulbMesh);
+
+      const localBulbPos = new THREE.Vector3(1.2, 4.15, 0);
+
+      // PointLight
+      const pointLight = new THREE.PointLight(0xFFB74D, 0, 18, 1.8);
+      pointLight.position.copy(localBulbPos);
+      pointLight.visible = false;
+      lampGroup.add(pointLight);
+
+      // Halo
+      const haloGeo = new THREE.SphereGeometry(0.32, 12, 12);
+      const haloMat = new THREE.MeshBasicMaterial({
+        color: 0xFFAA22,
+        transparent: true,
+        opacity: 0.85,
+        blending: THREE.AdditiveBlending
+      });
+      const haloMesh = new THREE.Mesh(haloGeo, haloMat);
+      haloMesh.position.copy(localBulbPos);
+      haloMesh.visible = false;
+      lampGroup.add(haloMesh);
+
+      // Hit area
+      const hitGeo = new THREE.CylinderGeometry(0.9, 0.9, 6.2, 8);
+      const hitMat = new THREE.MeshBasicMaterial({ visible: false });
+      const hitMesh = new THREE.Mesh(hitGeo, hitMat);
+      hitMesh.position.set(0.6, 3.1, 0);
+      lampGroup.add(hitMesh);
+
+      lampGroup.userData = {
+        type: 'lamppost',
+        id: cfg.id,
+        label: cfg.label,
+        bulbMat: bulbMat,
+        pointLight: pointLight,
+        haloMesh: haloMesh,
+        isOn: false,
+        userOverride: null
+      };
+
+      this.scene.add(lampGroup);
+      this.lampPosts.push(lampGroup);
+      this.clickableEntities.push(lampGroup);
+    });
+
+    const isNight = (gameState && gameState.timeOfDay === 'night');
+    this.updateLampPostLighting(isNight);
+  }
+
+  setLampState(lamp, turnOn) {
+    if (!lamp || !lamp.userData) return;
+    lamp.userData.isOn = turnOn;
+
+    if (lamp.userData.pointLight) {
+      lamp.userData.pointLight.visible = turnOn;
+      lamp.userData.pointLight.intensity = turnOn ? 2.6 : 0;
+    }
+
+    if (lamp.userData.haloMesh) {
+      lamp.userData.haloMesh.visible = turnOn;
+    }
+
+    if (lamp.userData.bulbMat) {
+      if (turnOn) {
+        lamp.userData.bulbMat.color.setHex(0xFFF3D0);
+        lamp.userData.bulbMat.emissive.setHex(0xFFA000);
+        lamp.userData.bulbMat.emissiveIntensity = 2.8;
+      } else {
+        lamp.userData.bulbMat.color.setHex(0x3A3A3A);
+        lamp.userData.bulbMat.emissive.setHex(0x000000);
+        lamp.userData.bulbMat.emissiveIntensity = 0;
+      }
+    }
+  }
+
+  updateLampPostLighting(isNight = false) {
+    if (!this.lampPosts || this.lampPosts.length === 0) return;
+    this.lampPosts.forEach(lamp => {
+      if (!isNight) {
+        // Street lamps stay off during the day
+        this.setLampState(lamp, false);
+      } else {
+        // At night, street lamps turn on by default unless the user switched that specific lamp off
+        const override = lamp.userData ? lamp.userData.userOverride : null;
+        const shouldBeOn = (override !== null) ? override : true;
+        this.setLampState(lamp, shouldBeOn);
+      }
+    });
+  }
+
+  findClickedLampPost() {
+    if (this.hoveredLampPost) return this.hoveredLampPost;
+    if (!this.lampPosts || this.lampPosts.length === 0) return null;
+    this.raycaster.setFromCamera(this.mouse, this.camera);
+    for (const lamp of this.lampPosts) {
+      const hits = this.raycaster.intersectObjects(lamp.children, true);
+      if (hits.length > 0) {
+        return lamp;
+      }
+    }
+    return null;
+  }
+
+  toggleLampPost(lamp) {
+    if (!lamp || !lamp.userData) return;
+    const isNight = (gameState && gameState.timeOfDay === 'night');
+    const currentState = lamp.userData.isOn;
+    const nextState = !currentState;
+    lamp.userData.userOverride = nextState;
+    this.setLampState(lamp, nextState);
+
+    try {
+      if (sound && typeof sound.playSwitchClick === 'function') {
+        sound.playSwitchClick(true);
+      } else if (sound && typeof sound.playChime === 'function') {
+        sound.playChime();
+      }
+    } catch (e) { }
+
+    const statusText = nextState ? 'Turned ON 💡' : 'Turned OFF 🌙';
+    const label = lamp.userData.label || 'Street lamp';
+    const note = (!isNight && nextState) ? ' (Street lamps illuminate automatically at night)' : '';
+    if (window.farmdb && window.farmdb.showToast) {
+      window.farmdb.showToast(`🏮 ${label}: ${statusText}${note}`, 'info');
+    }
+  }
+
+  // ==========================================================
   // RAYCASTING & INTERACTION
   // ==========================================================
   setupInteractivity() {
@@ -2485,14 +2881,18 @@ class Farm3DWorld {
       this.hoveredReservoir = false;
     }
 
-    // 2. Check Clickable Entities (Cows, Barn, Truck, Farmer)
+    // 2. Check Clickable Entities (Cows, Barn, Truck, Farmer, Street Lamps)
     let hitEntity = null;
+    let hitLamp = null;
     if (this.clickableEntities && this.clickableEntities.length > 0) {
       for (const ent of this.clickableEntities) {
         if (ent.visible === false) continue;
         const hits = this.raycaster.intersectObjects(ent.children, true);
         if (hits.length > 0) {
           hitEntity = ent.userData.type;
+          if (ent.userData.type === 'lamppost') {
+            hitLamp = ent;
+          }
           break;
         }
       }
@@ -2500,6 +2900,7 @@ class Farm3DWorld {
 
     if (hitEntity) {
       this.hoveredEntity = hitEntity;
+      this.hoveredLampPost = hitLamp;
       this.canvas.style.cursor = 'pointer';
       if (this.hoveredPlot) {
         const prevPlot = this.plotMeshes.get(this.hoveredPlot);
@@ -2509,6 +2910,7 @@ class Farm3DWorld {
       return;
     } else {
       this.hoveredEntity = null;
+      this.hoveredLampPost = null;
     }
 
     // 3. Check Cultivation Plot Beds
@@ -2534,6 +2936,21 @@ class Farm3DWorld {
   }
 
   handleClick() {
+    // 0. Street Lamp Post Interaction (Toggle On/Off on user click)
+    if (this.hoveredEntity === 'lamppost' || this.hoveredLampPost) {
+      const lamp = this.hoveredLampPost || this.findClickedLampPost();
+      if (lamp) {
+        this.toggleLampPost(lamp);
+        return;
+      }
+    }
+
+    const clickedLamp = this.findClickedLampPost();
+    if (clickedLamp) {
+      this.toggleLampPost(clickedLamp);
+      return;
+    }
+
     if (this.hoveredReservoir) {
       try {
         if (sound && typeof sound.playWaterSplash === 'function') {
@@ -2874,7 +3291,17 @@ class Farm3DWorld {
       }
     }
 
-    // 10. Render
+    // 10. Subtle breathing shimmer for lit street lamp lanterns
+    if (this.lampPosts && this.lampPosts.length > 0) {
+      this.lampPosts.forEach((lamp, idx) => {
+        if (lamp.userData && lamp.userData.isOn && lamp.userData.pointLight) {
+          const shimmer = 1.0 + Math.sin(elapsed * 3.6 + idx * 1.4) * 0.035;
+          lamp.userData.pointLight.intensity = 2.6 * shimmer;
+        }
+      });
+    }
+
+    // 11. Render
     if (this.renderer && this.scene && this.camera) {
       this.renderer.render(this.scene, this.camera);
     }
