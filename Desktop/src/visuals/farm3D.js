@@ -724,9 +724,10 @@ class Farm3DWorld {
       }
     );
 
-    // Pasture Pen with Cows
+    // Pasture Pen with Cows (dynamically synced with SQLite animals table)
     const cow1 = this.createCowModel('Daisy');
     cow1.position.set(-30, 0, 5);
+    cow1.visible = false;
     this.scene.add(cow1);
     this.cowMeshes.push(cow1);
     this.clickableEntities.push(cow1);
@@ -734,9 +735,12 @@ class Farm3DWorld {
     const cow2 = this.createCowModel('Bella');
     cow2.position.set(-34, 0, 12);
     cow2.rotation.y = 0.8;
+    cow2.visible = false;
     this.scene.add(cow2);
     this.cowMeshes.push(cow2);
     this.clickableEntities.push(cow2);
+
+    this.syncAnimalsFromDatabase();
   }
 
   buildProceduralBarn() {
@@ -1960,20 +1964,22 @@ class Farm3DWorld {
   // ==========================================================
   // LIVESTOCK ACTIVE TROT & MOO REACTION
   // ==========================================================
-  playAnimalReactionAnimation() {
-    if (this.cowMeshes.length === 0 || this.isAnimalAnimating) return;
+  playAnimalReactionAnimation(cowName = null) {
+    const activeCows = this.cowMeshes.filter(c => c.visible);
+    if (activeCows.length === 0 || this.isAnimalAnimating) return;
     this.isAnimalAnimating = true;
 
     try {
       if (sound && typeof sound.playCowMoo === 'function') sound.playCowMoo();
     } catch (e) { }
 
+    const namesText = cowName || activeCows.map(c => c.userData.name || 'Cow').join(' & ');
     if (window.farmdb && window.farmdb.showToast) {
-      window.farmdb.showToast('🐄 Daisy & Bella mooed happily! Cattle fed & roaming the pasture.', 'info');
+      window.farmdb.showToast(`🐄 ${namesText} mooed happily! Cattle fed & roaming the pasture.`, 'info');
     }
 
-    const cow1 = this.cowMeshes[0];
-    const cow2 = this.cowMeshes[1];
+    const cow1 = activeCows[0];
+    const cow2 = activeCows.length > 1 ? activeCows[1] : null;
     const origPos1 = cow1.position.clone();
     const origPos2 = cow2 ? cow2.position.clone() : null;
 
@@ -1985,7 +1991,7 @@ class Farm3DWorld {
       const t = progress / animDuration;
       const trotCycle = progress * 0.25;
 
-      this.cowMeshes.forEach((cow, i) => {
+      activeCows.forEach((cow, i) => {
         const legs = cow.userData.legs;
         if (legs) {
           // 4-Leg Trot Cycle
@@ -2029,7 +2035,7 @@ class Farm3DWorld {
       } else {
         cow1.position.copy(origPos1);
         if (cow2 && origPos2) cow2.position.copy(origPos2);
-        this.cowMeshes.forEach(cow => {
+        activeCows.forEach(cow => {
           const legs = cow.userData.legs;
           if (legs) {
             legs.fl.rotation.set(0, 0, 0);
@@ -2547,9 +2553,21 @@ class Farm3DWorld {
 
     if (this.hoveredEntity) {
       if (this.hoveredEntity === 'cow') {
-        this.playAnimalReactionAnimation();
+        const activeCows = this.cowMeshes.filter(c => c.visible);
+        const name = activeCows.length > 0 ? activeCows[0].userData.name : null;
+        this.playAnimalReactionAnimation(name);
       } else if (this.hoveredEntity === 'barn') {
-        this.playTruckDeliveryAnimation('Farm Supplies');
+        const animals = (sqlEngine && sqlEngine.isReady) ? (sqlEngine.getTableData('animals') || []) : [];
+        if (animals.length === 0) {
+          try {
+            if (sound && typeof sound.playCowMoo === 'function') sound.playCowMoo();
+          } catch (e) {}
+          if (window.farmdb && window.farmdb.showToast) {
+            window.farmdb.showToast('🏡 Uncle Somu: "Hear that gentle moo? Daisy & Bella are resting inside the barn! Complete Level 1 Task 4 in SQL Studio to register them and let them out into the pasture!"', 'info');
+          }
+        } else {
+          this.playTruckDeliveryAnimation('Farm Supplies');
+        }
       } else if (this.hoveredEntity === 'truck') {
         this.playTruckDeliveryAnimation('Seed Sacks');
       } else if (this.hoveredEntity === 'tractor') {
@@ -2673,8 +2691,62 @@ class Farm3DWorld {
           this.waterGaugeMesh.scale.set(1, pct, 1);
         }
       }
+
+      // 3. Sync Livestock & Animals with Database
+      this.syncAnimalsFromDatabase();
     } catch (e) {
       console.error('Error syncing 3D farm with database:', e);
+    }
+  }
+
+  /**
+   * Synchronize 3D pasture cows with SQLite 'animals' table
+   * When table has 0 rows (Level 1 start), cows rest inside the barn and are not roaming outside.
+   * When table has rows (after Level 1 Task 4), cows graze happily in the pasture pen.
+   */
+  syncAnimalsFromDatabase() {
+    if (!sqlEngine || !sqlEngine.isReady) return;
+
+    try {
+      const animals = sqlEngine.getTableData('animals') || [];
+      const cowRecords = animals.filter(a => (a.animal_type || 'cow').toLowerCase() === 'cow' || !a.animal_type);
+
+      // If no cattle registered in database, hide cows from the pasture (they are inside the barn)
+      if (cowRecords.length === 0) {
+        this.cowMeshes.forEach(cow => {
+          cow.visible = false;
+        });
+        return;
+      }
+
+      // Ensure we have enough 3D cow meshes to represent the registered animals
+      while (this.cowMeshes.length < cowRecords.length) {
+        const idx = this.cowMeshes.length;
+        const name = cowRecords[idx]?.name || `Cow ${idx + 1}`;
+        const newCow = this.createCowModel(name);
+        const posX = -30 - (idx % 3) * 3;
+        const posZ = 5 + Math.floor(idx / 3) * 5 + (idx % 2) * 2;
+        newCow.position.set(posX, 0, posZ);
+        newCow.rotation.y = (idx % 2 === 0 ? 0.3 : 1.2);
+        this.scene.add(newCow);
+        this.cowMeshes.push(newCow);
+        this.clickableEntities.push(newCow);
+      }
+
+      // Update visibility and metadata for each cow
+      this.cowMeshes.forEach((cow, i) => {
+        if (i < cowRecords.length) {
+          cow.visible = true;
+          const data = cowRecords[i];
+          cow.userData.name = data.name || (i === 0 ? 'Daisy' : 'Bella');
+          cow.userData.health = data.health || 'Healthy';
+          cow.userData.age = data.age || 3;
+        } else {
+          cow.visible = false;
+        }
+      });
+    } catch (e) {
+      console.warn('Error syncing 3D animals with database:', e);
     }
   }
 
@@ -2724,6 +2796,7 @@ class Farm3DWorld {
     // 2. Animate Cows (head bob & tail swish when idle)
     if (!this.isAnimalAnimating) {
       this.cowMeshes.forEach((cow, i) => {
+        if (!cow.visible) return;
         if (cow.userData.head) {
           cow.userData.head.rotation.x = Math.sin(elapsed * 1.5 + i) * 0.08;
         }

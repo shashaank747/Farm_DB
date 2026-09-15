@@ -495,7 +495,7 @@ class FarmDBApp {
         if (animals.length > 0) {
           animalsVal.textContent = `${animals.length} Cattle`;
         } else {
-          animalsVal.textContent = `Barn Empty`;
+          animalsVal.textContent = `In Barn (0 Reg)`;
         }
       }
       if (animalsSub) {
@@ -503,7 +503,7 @@ class FarmDBApp {
           const isNight = gameState.timeOfDay === 'night';
           animalsSub.textContent = isNight ? `💤 Sleeping peacefully` : `Grazing • 100% Happy`;
         } else {
-          animalsSub.textContent = `Add cows via SQL`;
+          animalsSub.textContent = `Register via SQL in Lvl 1`;
         }
       }
     } catch (e) {}
