@@ -196,6 +196,10 @@ class FarmDBApp {
       levelRole.textContent = `Lvl ${gameState.currentLevel}: ${lvlData.role}`;
       levelRole.title = `Level ${gameState.currentLevel}: ${lvlData.role} • Concept: ${lvlData.concept || 'SQL'}`;
     }
+    const sidebarFarmerRole = document.getElementById('sidebar-farmer-role');
+    if (sidebarFarmerRole && lvlData) {
+      sidebarFarmerRole.textContent = `Lvl ${gameState.currentLevel}: ${lvlData.role}`;
+    }
 
     if (weatherIcon) weatherIcon.textContent = gameState.weather.icon;
     if (weatherText) {
@@ -1320,12 +1324,19 @@ class FarmDBApp {
 
     // Burger Navigation Toggle & Sidebar Collapsing
     const btnToggleSidebar = document.getElementById('btn-toggle-sidebar');
+    const btnFloatingBurger = document.getElementById('btn-floating-burger');
     const btnCollapseSidebar = document.getElementById('btn-collapse-sidebar');
     const sidebarBackdrop = document.getElementById('sidebar-backdrop');
 
     if (btnToggleSidebar) {
       btnToggleSidebar.addEventListener('click', () => {
         this.toggleSidebar();
+      });
+    }
+
+    if (btnFloatingBurger) {
+      btnFloatingBurger.addEventListener('click', () => {
+        this.toggleSidebar(true);
       });
     }
 
@@ -1361,14 +1372,17 @@ class FarmDBApp {
     } else {
       const sidebar = document.getElementById('app-sidebar');
       const burger = document.getElementById('btn-toggle-sidebar');
+      const floatingBurger = document.getElementById('btn-floating-burger');
       if (sidebar) sidebar.classList.remove('collapsed');
       if (burger) burger.classList.add('active');
+      if (floatingBurger) floatingBurger.classList.add('active');
     }
   }
 
   toggleSidebar(forceOpen = null, silent = false) {
     const sidebar = document.getElementById('app-sidebar') || document.querySelector('.sidebar');
     const burgerBtn = document.getElementById('btn-toggle-sidebar');
+    const floatingBurger = document.getElementById('btn-floating-burger');
     const backdrop = document.getElementById('sidebar-backdrop');
     if (!sidebar) return;
 
@@ -1378,6 +1392,7 @@ class FarmDBApp {
     if (willBeOpen) {
       sidebar.classList.remove('collapsed');
       if (burgerBtn) burgerBtn.classList.add('active');
+      if (floatingBurger) floatingBurger.classList.add('active');
       if (backdrop && window.innerWidth <= 768) backdrop.classList.add('active');
       localStorage.setItem('farmdb_sidebar_collapsed', 'false');
       if (!silent) {
@@ -1387,6 +1402,7 @@ class FarmDBApp {
     } else {
       sidebar.classList.add('collapsed');
       if (burgerBtn) burgerBtn.classList.remove('active');
+      if (floatingBurger) floatingBurger.classList.remove('active');
       if (backdrop) backdrop.classList.remove('active');
       localStorage.setItem('farmdb_sidebar_collapsed', 'true');
       if (!silent) {

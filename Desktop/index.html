@@ -421,13 +421,6 @@
          ========================================================== -->
     <header class="top-nav">
       <div class="nav-left">
-        <!-- Burger Icon for Navigation Sidebar -->
-        <button class="btn-burger-menu active" id="btn-toggle-sidebar" title="Toggle Navigation Sidebar (Ctrl+B)" aria-label="Toggle navigation menu">
-          <span class="burger-bar"></span>
-          <span class="burger-bar"></span>
-          <span class="burger-bar"></span>
-        </button>
-
         <div class="brand" id="brand-logo" title="FARMDB: From Farmer to Agribusiness">
           <img src="/farmdb_icon.png" alt="FarmDB Logo" class="brand-logo-img">
           <div class="brand-text">
@@ -511,48 +504,91 @@
 
       <!-- Left Sidebar Navigation -->
       <aside class="sidebar" id="app-sidebar">
-        <!-- Sidebar Header with Collapse Button -->
+        <!-- Sidebar Header with Burger Toggle and Collapse Controls -->
         <div class="sidebar-header">
-          <div class="sidebar-header-label">
-            <span class="sidebar-header-icon">🌱</span>
-            <span class="sidebar-header-title">FARM MENU</span>
+          <div class="sidebar-header-left">
+            <button class="btn-burger-menu active" id="btn-toggle-sidebar" title="Toggle Farm Menu (Ctrl+B)" aria-label="Toggle navigation menu">
+              <span class="burger-bar"></span>
+              <span class="burger-bar"></span>
+              <span class="burger-bar"></span>
+            </button>
+            <div class="sidebar-header-label">
+              <span class="sidebar-header-icon">🌱</span>
+              <span class="sidebar-header-title">FARM MENU</span>
+            </div>
           </div>
-          <button class="btn-sidebar-collapse" id="btn-collapse-sidebar" title="Collapse Sidebar (Ctrl+B)">
+          <button class="btn-sidebar-collapse" id="btn-collapse-sidebar" title="Collapse Menu (Ctrl+B)">
             <span>◀</span>
           </button>
         </div>
 
         <nav class="sidebar-nav">
-          <div class="nav-item active" data-view="farm-world">
-            <span class="nav-icon">🏠</span>
-            <span>Farm World</span>
+          <!-- Operations Group -->
+          <div class="sidebar-section">
+            <div class="sidebar-section-header">
+              <span class="sidebar-section-title">Farm Activities</span>
+            </div>
+            <div class="nav-item active" data-view="farm-world">
+              <span class="nav-icon">🏠</span>
+              <span class="nav-text">Farm World</span>
+            </div>
+            <div class="nav-item" data-view="fields-view">
+              <span class="nav-icon">🌾</span>
+              <span class="nav-text">Fields & Plots</span>
+              <span class="nav-badge" id="nav-plots-count">1/5</span>
+            </div>
+            <div class="nav-item" data-view="inventory-view">
+              <span class="nav-icon">📦</span>
+              <span class="nav-text">Warehouse</span>
+            </div>
+            <div class="nav-item" data-view="pasture-view">
+              <span class="nav-icon">🐄</span>
+              <span class="nav-text">Pasture & Barn</span>
+            </div>
           </div>
-          <div class="nav-item" data-view="fields-view">
-            <span class="nav-icon">🌾</span>
-            <span>Fields & Plots</span>
-            <span class="nav-badge" id="nav-plots-count">1/5</span>
-          </div>
-          <div class="nav-item" data-view="inventory-view">
-            <span class="nav-icon">📦</span>
-            <span>Warehouse</span>
-          </div>
-          <div class="nav-item" data-view="pasture-view">
-            <span class="nav-icon">🐄</span>
-            <span>Pasture & Barn</span>
-          </div>
-          <div class="nav-item" data-view="database-view">
-            <span class="nav-icon">🗄</span>
-            <span>Database (ERD)</span>
-          </div>
-          <div class="nav-item" data-view="journey-view">
-            <span class="nav-icon">🗺️</span>
-            <span>Story & Levels</span>
+
+          <!-- Progression & Database Group -->
+          <div class="sidebar-section">
+            <div class="sidebar-section-header">
+              <span class="sidebar-section-title">Database & System</span>
+            </div>
+            <div class="nav-item" data-view="database-view">
+              <span class="nav-icon">🗄️</span>
+              <span class="nav-text">Database (ERD)</span>
+            </div>
+            <div class="nav-item" data-view="journey-view">
+              <span class="nav-icon">🗺️</span>
+              <span class="nav-text">Story & Levels</span>
+            </div>
           </div>
         </nav>
+
+        <!-- Sidebar Footer Status Card -->
+        <div class="sidebar-footer">
+          <div class="sidebar-farmer-card">
+            <div class="farmer-avatar">👨‍🌾</div>
+            <div class="farmer-meta">
+              <span class="farmer-name">Farmer Player</span>
+              <span class="farmer-rank" id="sidebar-farmer-role">Lvl 1 Pioneer</span>
+            </div>
+          </div>
+          <div class="sidebar-shortcut-hint" title="Press Ctrl+B to toggle menu">
+            <kbd>Ctrl</kbd>+<kbd>B</kbd> <span>toggle menu</span>
+          </div>
+        </div>
       </aside>
 
       <!-- Main Viewport -->
       <main class="main-viewport">
+        <!-- Floating Burger Menu Toggle (Positioned below navbar, shown when sidebar is collapsed) -->
+        <button class="btn-floating-burger" id="btn-floating-burger" title="Open Farm Menu (Ctrl+B)" aria-label="Open navigation menu">
+          <div class="floating-burger-bars">
+            <span class="burger-bar"></span>
+            <span class="burger-bar"></span>
+            <span class="burger-bar"></span>
+          </div>
+          <span class="floating-burger-label">MENU</span>
+        </button>
         <!-- Floating Quest HUD (Objective Card) -->
         <div class="quest-hud" id="quest-hud">
           <!-- Expanded Card View -->
