@@ -9,6 +9,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { TDSLoader } from 'three/examples/jsm/loaders/TDSLoader.js';
+import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js';
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
 import { MTLLoader } from 'three/examples/jsm/loaders/MTLLoader.js';
 import { TGALoader } from 'three/examples/jsm/loaders/TGALoader.js';
@@ -93,6 +94,10 @@ class Farm3DWorld {
     this.birdChirpedThisPerch = false;
     this.countrysideGroup = null;
 
+    // Animated German Shepherd Dogs (2 dogs roaming the farm)
+    this.dogs = []; // Array of { group, mixer, animations, currentAction, state, stateTimer, walkTarget }
+    this.dogClock = new THREE.Clock();
+
     this.startTime = performance.now();
     this.isInitialized = false;
   }
@@ -164,6 +169,7 @@ class Farm3DWorld {
     this.buildBirdFlock();
     this.buildPerchingBird();
     this.buildClouds();
+    this.buildDog();
 
     // 6. Event Listeners
     this.setupInteractivity();
@@ -453,8 +459,8 @@ class Farm3DWorld {
       } else {
         const blend = Math.min(1.0, distFromFarmEdge / 35.0);
         const wave = Math.sin(x * 0.015) * Math.cos(z * 0.015) * 4.5
-                   + Math.sin(x * 0.035 + 0.8) * 2.0
-                   + Math.sin(z * 0.028) * 2.2;
+          + Math.sin(x * 0.035 + 0.8) * 2.0
+          + Math.sin(z * 0.028) * 2.2;
         posAttr.setY(i, wave * blend - 0.08);
       }
     }
@@ -2637,6 +2643,125 @@ class Farm3DWorld {
   }
 
   // ==========================================================
+  // ANIMATED GERMAN SHEPHERD DOGS (2x FBX with Skeleton Animations)
+  // ==========================================================
+  buildDog() {
+    const fbxLoader = new FBXLoader();
+    const textureLoader = new THREE.TextureLoader();
+
+    // Two dogs with different spawn positions
+    const dogSpawns = [
+      { pos: new THREE.Vector3(-30, 0, -18), rotY: Math.PI / 4 },   // Near the barn
+      { pos: new THREE.Vector3(15, 0, 20), rotY: -Math.PI / 3 }     // Near the south plots
+    ];
+
+    // Load textures once (shared between both dogs)
+    const baseColorMap = textureLoader.load('/models/dog/T_GermanShepherd_B.png');
+    const normalMap = textureLoader.load('/models/dog/T_GermanShepherd_N.png');
+    const roughnessMap = textureLoader.load('/models/dog/T_GermanShepherd_R.png');
+
+    const dogMaterial = new THREE.MeshStandardMaterial({
+      map: baseColorMap,
+      normalMap: normalMap,
+      roughnessMap: roughnessMap,
+      roughness: 0.75,
+      metalness: 0.05
+    });
+
+    // Animation clip files to load
+    const animFiles = {
+      idle: '/models/dog/1 type_Idle Breathing_v01.fbx',
+      play: '/models/dog/1 type_Idle_Playing_v01.fbx',
+      walk: '/models/dog/1 type_Walk Loop_v01.fbx',
+      run: '/models/dog/1 type_Run Loop_v01.fbx'
+    };
+    const animKeys = Object.keys(animFiles);
+
+    // Helper: set up one dog instance from a freshly loaded model
+    const setupDog = (model, spawnInfo, dogIndex) => {
+      model.scale.set(0.03, 0.03, 0.03);
+      model.position.copy(spawnInfo.pos);
+      model.rotation.y = spawnInfo.rotY;
+
+      model.traverse((child) => {
+        if (child.isMesh) {
+          child.castShadow = true;
+          child.receiveShadow = true;
+          child.material = dogMaterial.clone();
+        }
+      });
+
+      this.scene.add(model);
+      model.userData = { type: 'dog', dogIndex };
+      this.clickableEntities.push(model);
+
+      const dogData = {
+        group: model,
+        mixer: new THREE.AnimationMixer(model),
+        animations: {},
+        currentAction: null,
+        state: 'IDLE',
+        stateTimer: 3.0 + Math.random() * 4.0,
+        walkTarget: new THREE.Vector3()
+      };
+
+      this.dogs.push(dogData);
+
+      // Load animations for this dog
+      let loaded = 0;
+      animKeys.forEach((key) => {
+        const animLoader = new FBXLoader();
+        animLoader.load(animFiles[key], (animFBX) => {
+          if (animFBX.animations && animFBX.animations.length > 0) {
+            const clip = animFBX.animations[0];
+            clip.name = key;
+            const action = dogData.mixer.clipAction(clip);
+            dogData.animations[key] = action;
+          }
+          loaded++;
+          if (loaded === animKeys.length) {
+            if (dogData.animations.idle) {
+              dogData.animations.idle.play();
+              dogData.currentAction = dogData.animations.idle;
+            }
+            console.log(`\u{1F415} Dog ${dogIndex + 1} loaded with ${Object.keys(dogData.animations).length} animations!`);
+          }
+        }, undefined, (err) => {
+          console.warn(`Could not load dog animation ${key}:`, err);
+          loaded++;
+        });
+      });
+    };
+
+    // Load each dog as a separate FBX instance (clone() breaks SkinnedMesh skeletons)
+    dogSpawns.forEach((spawnInfo, idx) => {
+      const loader = new FBXLoader();
+      loader.load('/models/dog/SK_GermanShepherd_01.fbx', (dogModel) => {
+        setupDog(dogModel, spawnInfo, idx);
+      }, undefined, (err) => {
+        console.warn(`Could not load German Shepherd FBX model for dog ${idx + 1}:`, err);
+      });
+    });
+  }
+
+  /**
+   * Smoothly transition a specific dog's animation clip
+   */
+  switchDogAnimation(dogIndex, newAnimName, fadeDuration = 0.35) {
+    const dogData = this.dogs[dogIndex];
+    if (!dogData) return;
+    const newAction = dogData.animations[newAnimName];
+    if (!newAction || newAction === dogData.currentAction) return;
+
+    newAction.reset();
+    newAction.play();
+    if (dogData.currentAction) {
+      dogData.currentAction.crossFadeTo(newAction, fadeDuration, true);
+    }
+    dogData.currentAction = newAction;
+  }
+
+  // ==========================================================
   // CLOUDS IN UPPER SKY (HIGH ALTITUDE & CLEAN HORIZONS)
   // ==========================================================
   buildClouds() {
@@ -3363,7 +3488,7 @@ class Farm3DWorld {
         if (animals.length === 0) {
           try {
             if (sound && typeof sound.playCowMoo === 'function') sound.playCowMoo();
-          } catch (e) {}
+          } catch (e) { }
           if (window.farmdb && window.farmdb.showToast) {
             window.farmdb.showToast('🏡 Uncle Somu: "Hear that gentle moo? Daisy & Bella are resting inside the barn! Complete Level 1 Task 4 in SQL Studio to register them and let them out into the pasture!"', 'info');
           }
@@ -3732,7 +3857,7 @@ class Farm3DWorld {
             this.birdChirpedThisPerch = true;
             try {
               if (sound && typeof sound.playBirdChirp === 'function') sound.playBirdChirp();
-            } catch (e) {}
+            } catch (e) { }
           }
         }
         // Stage 4: Turn head right and look around (5.0 to 7.0s)
@@ -3810,6 +3935,64 @@ class Farm3DWorld {
         if (lamp.userData && lamp.userData.isOn && lamp.userData.pointLight) {
           const shimmer = 1.0 + Math.sin(elapsed * 3.6 + idx * 1.4) * 0.035;
           lamp.userData.pointLight.intensity = 2.6 * shimmer;
+        }
+      });
+    }
+
+    // 14. Animate German Shepherd Dogs (State Machine: IDLE ↔ WALK ↔ PLAY)
+    if (this.dogs.length > 0) {
+      const dogDelta = this.dogClock.getDelta();
+
+      this.dogs.forEach((dogData, idx) => {
+        // Update animation mixer
+        dogData.mixer.update(dogDelta);
+
+        // State machine timer
+        dogData.stateTimer -= dogDelta;
+        if (dogData.stateTimer <= 0) {
+          if (dogData.state === 'IDLE') {
+            const roll = Math.random();
+            if (roll < 0.65) {
+              // Walk to a random point anywhere on the farm
+              const angle = Math.random() * Math.PI * 2;
+              const dist = 10 + Math.random() * 35;
+              dogData.walkTarget.set(
+                Math.cos(angle) * dist,
+                0,
+                Math.sin(angle) * dist
+              );
+              // Clamp within full farm boundaries
+              dogData.walkTarget.x = THREE.MathUtils.clamp(dogData.walkTarget.x, -48, 48);
+              dogData.walkTarget.z = THREE.MathUtils.clamp(dogData.walkTarget.z, -40, 40);
+              this.switchDogAnimation(idx, 'walk');
+              dogData.state = 'WALKING';
+              dogData.stateTimer = 5.0 + Math.random() * 7.0;
+            } else {
+              this.switchDogAnimation(idx, 'play');
+              dogData.state = 'PLAYING';
+              dogData.stateTimer = 3.0 + Math.random() * 3.0;
+            }
+          } else {
+            this.switchDogAnimation(idx, 'idle');
+            dogData.state = 'IDLE';
+            dogData.stateTimer = 3.0 + Math.random() * 5.0;
+          }
+        }
+
+        // Move dog towards target during WALKING state
+        if (dogData.state === 'WALKING' && dogData.group) {
+          const dir = new THREE.Vector3().subVectors(dogData.walkTarget, dogData.group.position);
+          dir.y = 0;
+          const dist = dir.length();
+          if (dist > 0.5) {
+            dir.normalize();
+            dogData.group.position.addScaledVector(dir, Math.min(dogDelta * 4.0, dist));
+            dogData.group.rotation.y = Math.atan2(dir.x, dir.z);
+          } else {
+            this.switchDogAnimation(idx, 'idle');
+            dogData.state = 'IDLE';
+            dogData.stateTimer = 2.0 + Math.random() * 4.0;
+          }
         }
       });
     }

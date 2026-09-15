@@ -32,3 +32,6 @@ Thumbs.db
 
 # Agent scratch/config
 .agents/
+
+# Source raw asset archives
+/Dog/
