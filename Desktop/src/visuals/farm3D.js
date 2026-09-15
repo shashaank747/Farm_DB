@@ -231,26 +231,26 @@ class Farm3DWorld {
 
   setCameraPreset(preset, animate = true) {
     this.activeViewPreset = preset;
-    let targetPos = new THREE.Vector3(38, 32, 42);
+    let targetPos = new THREE.Vector3(46, 38, 50);
     let targetLook = new THREE.Vector3(0, 2, 0);
 
     if (preset === 'ground' || preset === 'farmer') {
-      targetPos.set(-18, 5, 26);
+      targetPos.set(-24, 6, 30);
       targetLook.set(0, 3, -5);
     } else if (preset === 'top' || preset === 'topdown') {
-      targetPos.set(0, 68, 0.1);
+      targetPos.set(0, 85, 0.1);
       targetLook.set(0, 0, 0);
     } else if (preset === 'focus' || preset === 'plot') {
-      targetPos.set(-14, 10, 14);
-      targetLook.set(-14, 1, 0);
+      targetPos.set(-18, 12, 16);
+      targetLook.set(-18, 1, 0);
     } else if (preset === 'reservoir' || preset === 'water') {
-      const rx = this.waterReservoirGroup ? this.waterReservoirGroup.position.x : -15;
-      const rz = this.waterReservoirGroup ? this.waterReservoirGroup.position.z : -25;
+      const rx = this.waterReservoirGroup ? this.waterReservoirGroup.position.x : -18;
+      const rz = this.waterReservoirGroup ? this.waterReservoirGroup.position.z : -32;
       targetPos.set(rx + 1, 10.5, rz + 16);
       targetLook.set(rx, 6.0, rz);
     } else if (preset === 'windmill' || preset === 'windpump') {
-      const wx = this.windmillGroup ? this.windmillGroup.position.x : 24;
-      const wz = this.windmillGroup ? this.windmillGroup.position.z : -18;
+      const wx = this.windmillGroup ? this.windmillGroup.position.x : 26;
+      const wz = this.windmillGroup ? this.windmillGroup.position.z : -28;
       targetPos.set(wx - 11, 7.5, wz + 13);
       targetLook.set(wx, 7.5, wz);
     }
@@ -397,7 +397,7 @@ class Farm3DWorld {
   // ==========================================================
   buildTerrain() {
     // Main Farm Soil & Grass Platform
-    const groundGeo = new THREE.BoxGeometry(90, 2, 80);
+    const groundGeo = new THREE.BoxGeometry(124, 2, 104);
     const groundMat = new THREE.MeshStandardMaterial({
       color: 0x567D46,
       roughness: 0.85,
@@ -409,7 +409,7 @@ class Farm3DWorld {
     this.scene.add(ground);
 
     // Dirt Roads & Cobblestone Path
-    const roadGeo = new THREE.PlaneGeometry(8, 70);
+    const roadGeo = new THREE.PlaneGeometry(8, 96);
     const roadMat = new THREE.MeshStandardMaterial({
       color: 0x8D6E63,
       roughness: 0.95
@@ -421,10 +421,10 @@ class Farm3DWorld {
     this.scene.add(mainRoad);
 
     // East-West Connecting Path
-    const crossPathGeo = new THREE.PlaneGeometry(55, 6);
+    const crossPathGeo = new THREE.PlaneGeometry(84, 7);
     const crossPath = new THREE.Mesh(crossPathGeo, roadMat);
     crossPath.rotation.x = -Math.PI / 2;
-    crossPath.position.set(12, 0.02, 0);
+    crossPath.position.set(1, 0.02, 0);
     crossPath.receiveShadow = true;
     this.scene.add(crossPath);
   }
@@ -445,8 +445,8 @@ class Farm3DWorld {
       const x = posAttr.getX(i);
       const z = posAttr.getZ(i);
 
-      // Keep central farm plateau (x: [-46, 46], z: [-42, 42]) level at Y = 0
-      const distFromFarmEdge = Math.max(0, Math.max(Math.abs(x) - 45, Math.abs(z) - 41));
+      // Keep central farm plateau (x: [-62, 62], z: [-52, 52]) level at Y = 0
+      const distFromFarmEdge = Math.max(0, Math.max(Math.abs(x) - 62, Math.abs(z) - 52));
 
       if (distFromFarmEdge === 0) {
         posAttr.setY(i, 0);
@@ -639,26 +639,24 @@ class Farm3DWorld {
   buildFencesAndPaths() {
     const fenceMat = new THREE.MeshStandardMaterial({ color: 0x6D4C41, roughness: 0.9 });
 
-    // Perimeter Wooden Fence Posts & Rails along north & south
-    const buildFenceRow = (startX, z, count) => {
+    // Helper to build a fence segment along X
+    const buildFenceRowX = (startX, endX, z) => {
       const group = new THREE.Group();
+      const length = endX - startX;
+      const count = Math.floor(length / 4) + 1;
       for (let i = 0; i < count; i++) {
-        // Post
-        const postGeo = new THREE.CylinderGeometry(0.18, 0.18, 2.2, 6);
-        const post = new THREE.Mesh(postGeo, fenceMat);
+        const post = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 2.2, 6), fenceMat);
         post.position.set(startX + i * 4, 1.1, z);
         post.castShadow = true;
-        group.appendChild ? group.appendChild(post) : group.add(post);
+        group.add(post);
 
-        // Rail
         if (i < count - 1) {
-          const railGeo = new THREE.BoxGeometry(4, 0.15, 0.12);
-          const rail1 = new THREE.Mesh(railGeo, fenceMat);
+          const rail1 = new THREE.Mesh(new THREE.BoxGeometry(4, 0.15, 0.12), fenceMat);
           rail1.position.set(startX + i * 4 + 2, 1.5, z);
           rail1.castShadow = true;
           group.add(rail1);
 
-          const rail2 = new THREE.Mesh(railGeo, fenceMat);
+          const rail2 = new THREE.Mesh(new THREE.BoxGeometry(4, 0.15, 0.12), fenceMat);
           rail2.position.set(startX + i * 4 + 2, 0.8, z);
           rail2.castShadow = true;
           group.add(rail2);
@@ -667,17 +665,55 @@ class Farm3DWorld {
       this.scene.add(group);
     };
 
-    buildFenceRow(-40, -32, 20);
-    buildFenceRow(-40, 32, 20);
+    // Helper to build a fence segment along Z
+    const buildFenceRowZ = (x, startZ, endZ) => {
+      const group = new THREE.Group();
+      const length = endZ - startZ;
+      const count = Math.floor(length / 4) + 1;
+      for (let i = 0; i < count; i++) {
+        const post = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 2.2, 6), fenceMat);
+        post.position.set(x, 1.1, startZ + i * 4);
+        post.castShadow = true;
+        group.add(post);
+
+        if (i < count - 1) {
+          const rail1 = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.15, 4), fenceMat);
+          rail1.position.set(x, 1.5, startZ + i * 4 + 2);
+          rail1.castShadow = true;
+          group.add(rail1);
+
+          const rail2 = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.15, 4), fenceMat);
+          rail2.position.set(x, 0.8, startZ + i * 4 + 2);
+          rail2.castShadow = true;
+          group.add(rail2);
+        }
+      }
+      this.scene.add(group);
+    };
+
+    // North Perimeter Fence (North Boundary z = -44)
+    buildFenceRowX(-54, 54, -44);
+
+    // South Perimeter Fence (with entrance driveway gap between x = -12 and x = 0)
+    buildFenceRowX(-54, -14, 44);
+    buildFenceRowX(0, 54, 44);
+
+    // West Perimeter Fence (with truck entrance gap between z = -14 and z = 2)
+    buildFenceRowZ(-54, -44, -14);
+    buildFenceRowZ(-54, 2, 44);
+
+    // East Perimeter Fence
+    buildFenceRowZ(54, -44, 44);
   }
 
   // ==========================================================
   // CULTIVATION PLOTS (A1 - A5, North & South Beds)
+  // Completely clear of roads with generous 3.75m+ grass verges
   // ==========================================================
   buildPlots() {
     const cols = ['A1', 'A2', 'A3', 'A4', 'A5'];
-    const colXPositions = [-20, -10, 0, 10, 20];
-    const subZPositions = [-10, 10]; // North Bed (Z: -10), South Bed (Z: +10)
+    const colXPositions = [-30.0, -17.5, 7.5, 20.0, 32.5];
+    const subZPositions = [-12.5, 12.5]; // North Bed (Z: -12.5), South Bed (Z: +12.5)
 
     cols.forEach((col, colIdx) => {
       const x = colXPositions[colIdx];
@@ -689,8 +725,8 @@ class Farm3DWorld {
         const plotGroup = new THREE.Group();
         plotGroup.position.set(x, 0, z);
 
-        // 1. Raised Tilled Soil Bed (0.3m elevation)
-        const bedGeo = new THREE.BoxGeometry(7.5, 0.5, 9.5);
+        // 1. Raised Tilled Soil Bed (0.3m elevation, 7.5m wide x 9.0m deep)
+        const bedGeo = new THREE.BoxGeometry(7.5, 0.5, 9.0);
         const bedMat = new THREE.MeshStandardMaterial({
           color: 0x3E2723, // Rich dark loam
           roughness: 0.95
@@ -706,22 +742,22 @@ class Farm3DWorld {
         const borderMat = new THREE.MeshStandardMaterial({ color: 0x5D4037 });
         const borderGeo = new THREE.BoxGeometry(8, 0.35, 0.25);
         const b1 = new THREE.Mesh(borderGeo, borderMat);
-        b1.position.set(0, 0.3, -4.8);
+        b1.position.set(0, 0.3, -4.55);
         plotGroup.add(b1);
         const b2 = b1.clone();
-        b2.position.set(0, 0.3, 4.8);
+        b2.position.set(0, 0.3, 4.55);
         plotGroup.add(b2);
 
         // 3. 3D Plot Label Marker Sign
         const signPostGeo = new THREE.CylinderGeometry(0.1, 0.1, 1.8, 6);
         const signPost = new THREE.Mesh(signPostGeo, borderMat);
-        signPost.position.set(-3.5, 0.9, -4.5);
+        signPost.position.set(-3.5, 0.9, -4.3);
         plotGroup.add(signPost);
 
         const signBoardGeo = new THREE.BoxGeometry(1.6, 0.8, 0.1);
         const signBoardMat = new THREE.MeshStandardMaterial({ color: 0xFEF3C7, roughness: 0.6 });
         const signBoard = new THREE.Mesh(signBoardGeo, signBoardMat);
-        signBoard.position.set(-3.5, 1.6, -4.5);
+        signBoard.position.set(-3.5, 1.6, -4.3);
         plotGroup.add(signBoard);
 
         // 4. Crop Group container
@@ -898,7 +934,7 @@ class Farm3DWorld {
   // ==========================================================
   buildBarnAndPasture() {
     this.barnGroup = new THREE.Group();
-    this.barnGroup.position.set(-32, 0, -18);
+    this.barnGroup.position.set(-42, 0, -26);
     this.barnGroup.userData = { type: 'barn' };
     this.scene.add(this.barnGroup);
     this.clickableEntities.push(this.barnGroup);
@@ -971,14 +1007,14 @@ class Farm3DWorld {
 
     // Pasture Pen with Cows (dynamically synced with SQLite animals table)
     const cow1 = this.createCowModel('Daisy');
-    cow1.position.set(-30, 0, 5);
+    cow1.position.set(-38, 0, 6);
     cow1.visible = false;
     this.scene.add(cow1);
     this.cowMeshes.push(cow1);
     this.clickableEntities.push(cow1);
 
     const cow2 = this.createCowModel('Bella');
-    cow2.position.set(-34, 0, 12);
+    cow2.position.set(-44, 0, 14);
     cow2.rotation.y = 0.8;
     cow2.visible = false;
     this.scene.add(cow2);
@@ -1134,8 +1170,8 @@ class Farm3DWorld {
   // ==========================================================
   buildWaterReservoir() {
     this.waterReservoirGroup = new THREE.Group();
-    // Positioned prominently on the West side of Plot A1, right alongside the main farm path
-    this.waterReservoirGroup.position.set(-15, 0, -25);
+    // Positioned prominently on the North side of Plot A2, with clear view and pipe connection
+    this.waterReservoirGroup.position.set(-18, 0, -32);
     this.waterReservoirGroup.userData = { type: 'water_reservoir' };
 
     // 1. Stone Foundation Ring
@@ -1372,8 +1408,8 @@ class Farm3DWorld {
   // ==========================================================
   buildEquipmentYard() {
     this.tractorGroup = new THREE.Group();
-    this.tractorGroup.position.set(-15, 0, 18);
-    this.tractorGroup.rotation.y = -Math.PI / 3;
+    this.tractorGroup.position.set(-22, 0, 26);
+    this.tractorGroup.rotation.y = -Math.PI / 4;
     this.tractorGroup.userData = { type: 'tractor' };
     this.scene.add(this.tractorGroup);
     this.clickableEntities.push(this.tractorGroup);
@@ -1501,7 +1537,7 @@ class Farm3DWorld {
   buildWindpump() {
     this.windmillGroup = new THREE.Group();
     // Positioned on the North-East meadow overlooking the fields
-    this.windmillGroup.position.set(24, 0, -18);
+    this.windmillGroup.position.set(26, 0, -28);
     this.windmillGroup.userData = { type: 'windmill' };
     this.scene.add(this.windmillGroup);
     this.clickableEntities.push(this.windmillGroup);
@@ -1730,7 +1766,7 @@ class Farm3DWorld {
   buildFarmer() {
     this.farmerGroup = new THREE.Group();
     // Staged on the rustic wooden barn porch right outside the barn door
-    this.farmerHomePos = new THREE.Vector3(-26, 0, -11);
+    this.farmerHomePos = new THREE.Vector3(-36, 0, -16);
     this.farmerGroup.position.copy(this.farmerHomePos);
     this.farmerGroup.rotation.y = Math.PI / 2; // Facing the farm fields
     this.farmerGroup.userData = { type: 'farmer' };
@@ -1868,17 +1904,17 @@ class Farm3DWorld {
     this.isFarmerAnimating = true;
 
     // Determine target location: Plot bed
-    let targetX = -20;
-    let targetZ = -10;
+    let targetX = -30.0;
+    let targetZ = -12.5;
     if (this.plotMeshes.has(targetPlotId)) {
       const p = this.plotMeshes.get(targetPlotId);
       targetX = p.group.position.x;
       targetZ = p.group.position.z;
     } else if (targetPlotId && targetPlotId.startsWith('A')) {
       const col = targetPlotId.split('.')[0];
-      const mapCols = { 'A1': -20, 'A2': -10, 'A3': 0, 'A4': 10, 'A5': 20 };
+      const mapCols = { 'A1': -30.0, 'A2': -17.5, 'A3': 7.5, 'A4': 20.0, 'A5': 32.5 };
       if (mapCols[col] !== undefined) targetX = mapCols[col];
-      targetZ = targetPlotId.includes('.2') ? 10 : -10;
+      targetZ = targetPlotId.includes('.2') ? 12.5 : -12.5;
     }
 
     const standPos = new THREE.Vector3(targetX + 4.2, 0, targetZ);
@@ -2020,7 +2056,7 @@ class Farm3DWorld {
   // ==========================================================
   buildDeliveryTruck() {
     this.deliveryTruckGroup = new THREE.Group();
-    this.truckHomePos = new THREE.Vector3(-46, 0, -8);
+    this.truckHomePos = new THREE.Vector3(-48, 0, -6);
     this.deliveryTruckGroup.position.copy(this.truckHomePos);
     this.deliveryTruckGroup.rotation.y = Math.PI / 2; // Facing East towards barn
     this.deliveryTruckGroup.userData = { type: 'truck' };
@@ -2794,11 +2830,11 @@ class Farm3DWorld {
     this.perchingBirdGroup.add(breast);
 
     this.perchOptions = [
-      { name: 'Tractor Roof', pos: new THREE.Vector3(-15, 3.4, 18), rotY: Math.PI / 4 },
-      { name: 'North Lamp Post', pos: new THREE.Vector3(-10.5, 6.2, -20), rotY: 0 },
-      { name: 'South Lamp Post', pos: new THREE.Vector3(-10.5, 6.2, 20), rotY: 0 },
-      { name: 'Barn Roof Ridge', pos: new THREE.Vector3(-32, 9.6, -18), rotY: -Math.PI / 3 },
-      { name: 'Pasture Fence Post', pos: new THREE.Vector3(-14, 2.3, -32), rotY: Math.PI / 2 }
+      { name: 'Tractor Roof', pos: new THREE.Vector3(-22, 3.4, 26), rotY: Math.PI / 4 },
+      { name: 'North Lamp Post', pos: new THREE.Vector3(-10.5, 6.2, -24), rotY: 0 },
+      { name: 'South Lamp Post', pos: new THREE.Vector3(-10.5, 6.2, 24), rotY: 0 },
+      { name: 'Barn Roof Ridge', pos: new THREE.Vector3(-42, 9.6, -26), rotY: -Math.PI / 3 },
+      { name: 'Pasture Fence Post', pos: new THREE.Vector3(-54, 2.3, 0), rotY: Math.PI / 2 }
     ];
 
     this.perchState = 'IDLE_WAIT';
@@ -2813,13 +2849,13 @@ class Farm3DWorld {
   buildLampPosts() {
     // 7 Strategic lamp posts along the main farm road and cross paths
     this.lampConfigs = [
-      { id: 'lamp_nw', x: -10.5, y: 0, z: -20, rotY: 0, label: 'North-West Main Road Lamp' },
-      { id: 'lamp_ne', x: -1.5, y: 0, z: -20, rotY: Math.PI, label: 'North-East Main Road Lamp' },
-      { id: 'lamp_sw', x: -10.5, y: 0, z: 20, rotY: 0, label: 'South-West Main Road Lamp' },
-      { id: 'lamp_se', x: -1.5, y: 0, z: 20, rotY: Math.PI, label: 'South-East Main Road Lamp' },
-      { id: 'lamp_path_w', x: -15, y: 0, z: -3.2, rotY: -Math.PI / 2, label: 'Pasture Walkway Lamp' },
-      { id: 'lamp_path_c', x: 5, y: 0, z: -3.2, rotY: -Math.PI / 2, label: 'Central Plot Walkway Lamp' },
-      { id: 'lamp_path_e', x: 15, y: 0, z: -3.2, rotY: -Math.PI / 2, label: 'East Meadow Walkway Lamp' }
+      { id: 'lamp_nw', x: -10.5, y: 0, z: -24, rotY: 0, label: 'North-West Main Road Lamp' },
+      { id: 'lamp_ne', x: -1.5, y: 0, z: -24, rotY: Math.PI, label: 'North-East Main Road Lamp' },
+      { id: 'lamp_sw', x: -10.5, y: 0, z: 24, rotY: 0, label: 'South-West Main Road Lamp' },
+      { id: 'lamp_se', x: -1.5, y: 0, z: 24, rotY: Math.PI, label: 'South-East Main Road Lamp' },
+      { id: 'lamp_path_w', x: -24, y: 0, z: -4.2, rotY: -Math.PI / 2, label: 'Pasture Walkway Lamp' },
+      { id: 'lamp_path_c', x: 14, y: 0, z: -4.2, rotY: -Math.PI / 2, label: 'Central Plot Walkway Lamp' },
+      { id: 'lamp_path_e', x: 26, y: 0, z: -4.2, rotY: -Math.PI / 2, label: 'East Meadow Walkway Lamp' }
     ];
 
     const manager = new THREE.LoadingManager();
