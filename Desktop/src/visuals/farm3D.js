@@ -3544,6 +3544,13 @@ class Farm3DWorld {
         const activeCows = this.cowMeshes.filter(c => c.visible);
         const name = activeCows.length > 0 ? activeCows[0].userData.name : null;
         this.playAnimalReactionAnimation(name);
+      } else if (this.hoveredEntity === 'dog') {
+        try {
+          if (sound && typeof sound.playDogSound === 'function') sound.playDogSound();
+        } catch (e) { }
+        if (window.farmdb && window.farmdb.showToast) {
+          window.farmdb.showToast('🐕 Bruno the German Shepherd wagged his tail and greeted you!', 'info');
+        }
       } else if (this.hoveredEntity === 'barn') {
         const animals = (sqlEngine && sqlEngine.isReady) ? (sqlEngine.getTableData('animals') || []) : [];
         if (animals.length === 0) {
@@ -3746,8 +3753,8 @@ class Farm3DWorld {
     this.isHarvestingAnim = true;
 
     try {
-      if (sound && typeof sound.playTractorRev === 'function') {
-        sound.playTractorRev();
+      if (sound && typeof sound.startTractor === 'function') {
+        sound.startTractor();
       }
     } catch (e) { }
     const originalPos = this.tractorGroup.position.clone();
@@ -3776,6 +3783,11 @@ class Farm3DWorld {
       if (driveProgress < 1.0) {
         requestAnimationFrame(driveLoop);
       } else {
+        try {
+          if (sound && typeof sound.stopTractor === 'function') {
+            sound.stopTractor();
+          }
+        } catch (e) { }
         setTimeout(() => {
           this.tractorGroup.position.copy(originalPos);
           this.tractorGroup.rotation.y = originalRot;
@@ -4048,6 +4060,9 @@ class Farm3DWorld {
               this.switchDogAnimation(idx, 'play');
               dogData.state = 'PLAYING';
               dogData.stateTimer = 3.0 + Math.random() * 3.0;
+              try {
+                if (sound && typeof sound.playDogSound === 'function') sound.playDogSound();
+              } catch (e) { }
             }
           } else {
             this.switchDogAnimation(idx, 'idle');

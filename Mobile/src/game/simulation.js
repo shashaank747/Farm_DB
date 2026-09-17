@@ -200,8 +200,8 @@ export class SimulationEngine {
    */
   advanceDay(engine = sqlEngine) {
     const currentDay = gameState.advanceDay();
-    if (sound && typeof sound.playChime === 'function') {
-      sound.playChime();
+    if (sound && typeof sound.playRooster === 'function') {
+      sound.playRooster(currentDay);
     }
 
     if (!engine || !engine.isReady) {

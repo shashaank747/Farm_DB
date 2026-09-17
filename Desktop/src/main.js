@@ -91,6 +91,7 @@ class FarmDBApp {
     window.renderFarmQuickReport = () => this.renderMinimizedFarmReport();
     window.sqlEngine = sqlEngine;
     window.gameState = gameState;
+    window.sound = sound;
     window.farm3D = farm3D;
     window.simulation = simulation;
 
@@ -767,7 +768,7 @@ class FarmDBApp {
     if (lvlData.completion && lvlData.completion.badge) {
       gameState.awardBadge(lvlData.completion.badge);
     }
-    sound.playHarvestSuccess();
+    sound.playLevelUp();
     this.recordLevelPassed(gameState.currentLevel);
     this.showCelebrationModal(lvlData);
   }

@@ -1,6 +1,4 @@
-/**
- * FARMDB Game State & Progression Manager
- */
+import { sound } from '../visuals/audio.js';
 
 class GameState {
   constructor() {
@@ -131,8 +129,15 @@ class GameState {
   }
 
   addMoney(amount) {
-    this.money += amount;
-    this.notify();
+    if (amount > 0) {
+      this.money += amount;
+      try {
+        if (sound && typeof sound.playMoneyReceived === 'function') {
+          sound.playMoneyReceived();
+        }
+      } catch (e) { }
+      this.notify();
+    }
   }
 
   spendMoney(amount) {
@@ -157,7 +162,7 @@ class GameState {
     const isNew = !this.completedMissions.includes(missionKey);
     if (isNew) {
       this.completedMissions.push(missionKey);
-      if (rewardMoney > 0) this.money += rewardMoney;
+      if (rewardMoney > 0) this.addMoney(rewardMoney);
       if (rewardXp > 0) this.xp += rewardXp;
     }
     this.currentMissionIndex += 1;

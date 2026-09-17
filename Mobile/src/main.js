@@ -59,6 +59,12 @@ class MobileApp {
       this.renderMissionInfo();
     });
 
+    window.sqlEngine = sqlEngine;
+    window.gameState = gameState;
+    window.sound = sound;
+    window.farm3D = farm3D;
+    window.simulation = simulation;
+
     console.log('🌾 FARMDB Mobile 3D World Ready!');
   }
 
