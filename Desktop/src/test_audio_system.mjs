@@ -143,18 +143,50 @@ async function runAudioTests() {
     assert('Cow Sound Alternation & Cooldown', cowTest.secondIdx === cowTest.firstIdx + 1 && cowTest.thirdIdx === cowTest.secondIdx,
       `index progression: ${cowTest.firstIdx} -> ${cowTest.secondIdx} -> ${cowTest.thirdIdx} (cooldown blocked immediate 2nd trigger)`);
 
-    // 5. Test Dog Sounds Cooldown & Randomization
+    // 5. Test Shared 5-Minute Real-Life Dog Cooldown (300,000ms)
     const dogTest = await page.evaluate(async () => {
       const { sound } = await import('/src/visuals/audio.js');
+      sound.unmute();
+
+      // Reset to expired cooldown
+      sound.lastDogTime = Date.now() - 300005;
+      
+      // 1st play: should succeed
+      const play1 = sound.playDogSound();
       const time1 = sound.lastDogTime;
-      sound.playDogSound();
-      const time2 = sound.lastDogTime;
-      sound.playDogSound(); // Blocked by cooldown
-      const time3 = sound.lastDogTime;
-      return { played: time2 > time1, cooldownBlocked: time3 === time2 };
+      const storedTime1 = localStorage.getItem('farmdb_last_dog_time');
+
+      // 2nd play immediately: must fail (blocked by 300,000ms cooldown)
+      const play2 = sound.playDogSound();
+      const playBark = sound.playDogBark();
+      const playWhine = sound.playDogWhine();
+
+      // Test simulated UI update / day advance does not reset cooldown
+      window.gameState.advanceDay();
+      const playAfterDayAdvance = sound.playDogSound();
+
+      // Test expiration after 300,000ms
+      sound.lastDogTime = Date.now() - 300005;
+      const playAfterCooldown = sound.playDogSound();
+
+      return {
+        cooldownMs: sound.DOG_COOLDOWN_MS,
+        play1,
+        play2,
+        playBark,
+        playWhine,
+        playAfterDayAdvance,
+        playAfterCooldown,
+        storedMatches: String(time1) === storedTime1
+      };
     });
 
-    assert('Dog Sound Cooldown & Anti-Spam', dogTest.played && dogTest.cooldownBlocked, 'Triggered & protected from frame spam');
+    assert('Dog 5-Minute Cooldown Config', dogTest.cooldownMs === 300000, 'DOG_COOLDOWN_MS is exactly 300,000ms (5 minutes)');
+    assert('Dog Shared Cooldown Enforced', dogTest.play1 === true && dogTest.play2 === false && dogTest.playBark === false && dogTest.playWhine === false,
+      'First play succeeds; subsequent bark/whine calls within 5 minutes are rejected');
+    assert('Dog Cooldown Immune to Day Advance', dogTest.playAfterDayAdvance === false, 'In-game day change does not reset real-life timer');
+    assert('Dog Plays After 5-Minute Expiry', dogTest.playAfterCooldown === true, 'Can play again after 300,000ms expires');
+    assert('Dog Timer LocalStorage Persistence', dogTest.storedMatches, 'lastDogTime persisted to localStorage');
 
     // 6. Test Wind System (Normal vs Harsh + Tree Wind)
     const windTest = await page.evaluate(async () => {

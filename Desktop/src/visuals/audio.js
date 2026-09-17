@@ -2,7 +2,25 @@
  * FARMDB Audio Controller
  * Manages official sound effects, ambient weather/wind system, animal vocalizations,
  * machinery, water flow, and celebratory feedback using authentic audio assets.
+ * Features real-life 5-minute dog cooldown, audio segment trimming, loop fade controls,
+ * and duplicate-instance prevention.
  */
+
+export const AUDIO_DURATIONS = {
+  'cow moo 1.mp3': 2.32,
+  'cow moo 2.mp3': 1.32,
+  'Dog barking.mp3': 4.32,
+  'Dog Whining.mp3': 7.80,
+  'farm hen.mp3': 40.92,
+  'harsh wind.mp3': 13.39,
+  'level up.mp3': 4.83,
+  'money received.mp3': 2.48,
+  'moving water.mp3': 10.34,
+  'rooster.mp3': 2.80,
+  'tractor.mp3': 43.78,
+  'tree wind.mp3': 23.38,
+  'wind.mp3': 8.05
+};
 
 class SoundController {
   constructor() {
@@ -14,18 +32,27 @@ class SoundController {
       this.muted = false;
     }
 
+    // Real-Life Shared Dog Cooldown (300,000ms = 5 minutes)
+    this.DOG_COOLDOWN_MS = 300000;
+    try {
+      const savedDogTime = localStorage.getItem('farmdb_last_dog_time');
+      this.lastDogTime = savedDogTime ? parseInt(savedDogTime, 10) : 0;
+    } catch (e) {
+      this.lastDogTime = 0;
+    }
+
     // Cooldown & State tracking
     this.lastCowTime = 0;
     this.cowIndex = 0;
-    this.lastDogTime = 0;
-    this.dogIndex = 0;
     this.lastHenTime = 0;
     this.lastRoosterDay = -1;
     this.lastWaterTime = 0;
-    this.lastNormalWindTime = 0;
 
-    // Looping / Continuous instances
+    // Active Audio Instances and fade timers
     this.audioCache = {};
+    this.fadeTimers = {};
+    this.segmentTimeouts = {};
+
     this.windAudio = null;
     this.harshWindAudio = null;
     this.treeWindAudio = null;
@@ -46,14 +73,14 @@ class SoundController {
     }
   }
 
-  getAudio(filename, loop = false, volume = 0.5) {
+  getAudio(filename, loop = false, defaultVolume = 0.5) {
     if (typeof window === 'undefined' || typeof Audio === 'undefined') return null;
     const key = `${filename}_${loop ? 'loop' : 'oneshot'}`;
     if (!this.audioCache[key]) {
       try {
         const audio = new Audio(`/audio/${encodeURIComponent(filename)}`);
         audio.loop = loop;
-        audio.volume = volume;
+        audio.volume = defaultVolume;
         audio.preload = 'auto';
         this.audioCache[key] = audio;
       } catch (e) {
@@ -64,77 +91,163 @@ class SoundController {
     return this.audioCache[key];
   }
 
-  playFile(filename, volume = 0.5) {
+  /**
+   * Controlled playback for short sounds or bounded segments of long files
+   */
+  playSegment(filename, volume = 0.5, maxDuration = null) {
     if (this.muted) return;
     try {
       const audio = this.getAudio(filename, false, volume);
       if (audio) {
+        // Clear any previous segment timeout for this file
+        if (this.segmentTimeouts[filename]) {
+          clearTimeout(this.segmentTimeouts[filename]);
+          delete this.segmentTimeouts[filename];
+        }
+
         audio.currentTime = 0;
         audio.volume = volume;
         const promise = audio.play();
         if (promise && typeof promise.catch === 'function') {
           promise.catch(() => { /* Catch browser autoplay restrictions silently */ });
         }
+
+        // Auto-stop after maxDuration if configured
+        if (maxDuration && maxDuration > 0) {
+          this.segmentTimeouts[filename] = setTimeout(() => {
+            try {
+              if (!audio.paused) {
+                audio.pause();
+                audio.currentTime = 0;
+              }
+            } catch (e) {}
+            delete this.segmentTimeouts[filename];
+          }, maxDuration * 1000);
+        }
       }
     } catch (e) {}
   }
 
+  playFile(filename, volume = 0.5, maxDuration = null) {
+    this.playSegment(filename, volume, maxDuration);
+  }
+
+  /**
+   * Smooth volume fade helper for loops
+   */
+  fadeAudio(audio, targetVolume, durationMs = 300, onComplete = null) {
+    if (!audio) return;
+    const fadeKey = audio.src || 'loop';
+    if (this.fadeTimers[fadeKey]) {
+      clearInterval(this.fadeTimers[fadeKey]);
+      delete this.fadeTimers[fadeKey];
+    }
+
+    const startVol = audio.volume;
+    const steps = 10;
+    const stepTime = durationMs / steps;
+    const volStep = (targetVolume - startVol) / steps;
+    let currentStep = 0;
+
+    this.fadeTimers[fadeKey] = setInterval(() => {
+      currentStep++;
+      const nextVol = Math.max(0, Math.min(1, startVol + (volStep * currentStep)));
+      try {
+        audio.volume = nextVol;
+      } catch (e) {}
+
+      if (currentStep >= steps) {
+        clearInterval(this.fadeTimers[fadeKey]);
+        delete this.fadeTimers[fadeKey];
+        try { audio.volume = targetVolume; } catch (e) {}
+        if (onComplete) onComplete();
+      }
+    }, stepTime);
+  }
+
   // ==========================================================
-  // 1. COW SOUNDS ('cow moo 1.mp3', 'cow moo 2.mp3')
+  // 1. DOG AUDIO (Shared 5-Minute Real-Life Cooldown & Segment Control)
+  // ==========================================================
+  canPlayDogSound() {
+    const now = Date.now();
+    return (now - this.lastDogTime >= this.DOG_COOLDOWN_MS);
+  }
+
+  playDogSound() {
+    if (this.muted) return false;
+    const now = Date.now();
+    if (now - this.lastDogTime < this.DOG_COOLDOWN_MS) {
+      // Still on 5-minute real-life cooldown
+      return false;
+    }
+
+    this.lastDogTime = now;
+    try {
+      localStorage.setItem('farmdb_last_dog_time', String(now));
+    } catch (e) {}
+
+    // Randomly pick either Dog barking OR Dog Whining
+    const dogFiles = [
+      { file: 'Dog barking.mp3', duration: 3.5, volume: 0.60 },
+      { file: 'Dog Whining.mp3', duration: 3.5, volume: 0.55 }
+    ];
+    const chosen = dogFiles[Math.floor(Math.random() * dogFiles.length)];
+
+    // Play controlled short segment without playing the full recording
+    this.playFile(chosen.file, chosen.volume, chosen.duration);
+    return true;
+  }
+
+  playDogBark() {
+    if (this.muted || !this.canPlayDogSound()) return false;
+    const now = Date.now();
+    this.lastDogTime = now;
+    try { localStorage.setItem('farmdb_last_dog_time', String(now)); } catch (e) {}
+    this.playFile('Dog barking.mp3', 0.60, 3.5);
+    return true;
+  }
+
+  playDogWhine() {
+    if (this.muted || !this.canPlayDogSound()) return false;
+    const now = Date.now();
+    this.lastDogTime = now;
+    try { localStorage.setItem('farmdb_last_dog_time', String(now)); } catch (e) {}
+    this.playFile('Dog Whining.mp3', 0.55, 3.5);
+    return true;
+  }
+
+  // ==========================================================
+  // 2. COW AUDIO (cow moo 1, cow moo 2)
   // ==========================================================
   playCowMoo() {
     if (this.muted) return;
     const now = Date.now();
     if (now - this.lastCowTime < 3000) return; // 3.0s cooldown
     this.lastCowTime = now;
-    const cowFiles = ['cow moo 1.mp3', 'cow moo 2.mp3'];
+
+    const cowFiles = [
+      { file: 'cow moo 1.mp3', duration: 2.3, volume: 0.65 },
+      { file: 'cow moo 2.mp3', duration: 1.3, volume: 0.65 }
+    ];
     const chosen = cowFiles[this.cowIndex % cowFiles.length];
     this.cowIndex++;
-    this.playFile(chosen, 0.65);
+    this.playFile(chosen.file, chosen.volume, chosen.duration);
   }
 
   // ==========================================================
-  // 2. DOG SOUNDS ('Dog barking.mp3', 'Dog Whining.mp3')
-  // ==========================================================
-  playDogSound() {
-    if (this.muted) return;
-    const now = Date.now();
-    if (now - this.lastDogTime < 3500) return; // 3.5s cooldown
-    this.lastDogTime = now;
-    const dogFiles = ['Dog barking.mp3', 'Dog Whining.mp3'];
-    const chosen = dogFiles[Math.floor(Math.random() * dogFiles.length)];
-    this.playFile(chosen, 0.6);
-  }
-
-  playDogBark() {
-    if (this.muted) return;
-    const now = Date.now();
-    if (now - this.lastDogTime < 3000) return;
-    this.lastDogTime = now;
-    this.playFile('Dog barking.mp3', 0.6);
-  }
-
-  playDogWhine() {
-    if (this.muted) return;
-    const now = Date.now();
-    if (now - this.lastDogTime < 3000) return;
-    this.lastDogTime = now;
-    this.playFile('Dog Whining.mp3', 0.55);
-  }
-
-  // ==========================================================
-  // 3. HENS ('farm hen.mp3')
+  // 3. HEN AUDIO (farm hen)
   // ==========================================================
   playHenSound() {
     if (this.muted) return;
     const now = Date.now();
     if (now - this.lastHenTime < 4000) return;
     this.lastHenTime = now;
-    this.playFile('farm hen.mp3', 0.5);
+    // Controlled 3.0s segment from farm hen.mp3
+    this.playFile('farm hen.mp3', 0.50, 3.0);
   }
 
   // ==========================================================
-  // 4. WIND SYSTEM ('wind.mp3', 'harsh wind.mp3', 'tree wind.mp3')
+  // 4. WIND AUDIO (wind, harsh wind, tree wind)
   // ==========================================================
   startNormalWind() {
     if (this.muted || this.isHarshWindActive) return;
@@ -149,7 +262,7 @@ class SoundController {
     }
   }
 
-  stopNormalWind() {
+  stopNormalWind(fade = false) {
     if (this.windAudio) {
       try {
         this.windAudio.pause();
@@ -161,10 +274,10 @@ class SoundController {
   startHarshWind() {
     if (this.muted) return;
     this.isHarshWindActive = true;
-    this.stopNormalWind();
+    this.stopNormalWind(false);
 
     if (!this.harshWindAudio) {
-      this.harshWindAudio = this.getAudio('harsh wind.mp3', true, 0.4);
+      this.harshWindAudio = this.getAudio('harsh wind.mp3', true, 0.40);
     }
     if (!this.treeWindAudio) {
       this.treeWindAudio = this.getAudio('tree wind.mp3', true, 0.35);
@@ -172,20 +285,20 @@ class SoundController {
 
     if (this.harshWindAudio && this.harshWindAudio.paused) {
       this.harshWindAudio.currentTime = 0;
-      this.harshWindAudio.volume = 0.4;
-      const promise = this.harshWindAudio.play();
-      if (promise && typeof promise.catch === 'function') promise.catch(() => {});
+      this.harshWindAudio.volume = 0.40;
+      const p1 = this.harshWindAudio.play();
+      if (p1 && typeof p1.catch === 'function') p1.catch(() => {});
     }
 
     if (this.treeWindAudio && this.treeWindAudio.paused) {
       this.treeWindAudio.currentTime = 0;
       this.treeWindAudio.volume = 0.35;
-      const promise = this.treeWindAudio.play();
-      if (promise && typeof promise.catch === 'function') promise.catch(() => {});
+      const p2 = this.treeWindAudio.play();
+      if (p2 && typeof p2.catch === 'function') p2.catch(() => {});
     }
   }
 
-  stopHarshWind() {
+  stopHarshWind(fade = false) {
     this.isHarshWindActive = false;
     if (this.harshWindAudio) {
       try {
@@ -202,7 +315,7 @@ class SoundController {
   }
 
   // ==========================================================
-  // 5. ROOSTER ('rooster.mp3')
+  // 5. ROOSTER AUDIO (rooster)
   // ==========================================================
   playRooster(dayNum = null) {
     if (this.muted) return;
@@ -210,23 +323,24 @@ class SoundController {
     if (dayNum !== null) {
       this.lastRoosterDay = dayNum;
     }
-    this.playFile('rooster.mp3', 0.65);
+    // Rooster crow ~2.8s
+    this.playFile('rooster.mp3', 0.65, 2.8);
   }
 
   // ==========================================================
-  // 6. LEVEL UP ('level up.mp3')
+  // 6. LEVEL-UP AUDIO (level up)
   // ==========================================================
   playLevelUp() {
     if (this.muted) return;
-    this.playFile('level up.mp3', 0.75);
+    this.playFile('level up.mp3', 0.75, 3.5);
   }
 
   // ==========================================================
-  // 7. MONEY RECEIVED ('money received.mp3')
+  // 7. MONEY RECEIVED AUDIO (money received)
   // ==========================================================
   playMoneyReceived() {
     if (this.muted) return;
-    this.playFile('money received.mp3', 0.7);
+    this.playFile('money received.mp3', 0.70, 2.0);
   }
 
   playCoin() {
@@ -234,23 +348,23 @@ class SoundController {
   }
 
   // ==========================================================
-  // 8. MOVING WATER ('moving water.mp3')
+  // 8. MOVING WATER AUDIO (moving water)
   // ==========================================================
   startMovingWater() {
     if (this.muted) return;
     this.isWaterFlowing = true;
     if (!this.waterAudio) {
-      this.waterAudio = this.getAudio('moving water.mp3', true, 0.4);
+      this.waterAudio = this.getAudio('moving water.mp3', true, 0.40);
     }
     if (this.waterAudio && this.waterAudio.paused) {
       this.waterAudio.currentTime = 0;
-      this.waterAudio.volume = 0.4;
+      this.waterAudio.volume = 0.40;
       const promise = this.waterAudio.play();
       if (promise && typeof promise.catch === 'function') promise.catch(() => {});
     }
   }
 
-  stopMovingWater() {
+  stopMovingWater(fade = false) {
     this.isWaterFlowing = false;
     if (this.waterAudio) {
       try {
@@ -264,12 +378,12 @@ class SoundController {
     if (this.muted) return;
     this.startMovingWater();
     setTimeout(() => {
-      this.stopMovingWater();
+      this.stopMovingWater(false);
     }, duration * 1000);
   }
 
   // ==========================================================
-  // 9. TRACTOR ('tractor.mp3')
+  // 9. TRACTOR AUDIO (tractor)
   // ==========================================================
   startTractor() {
     if (this.muted) return;
@@ -285,7 +399,7 @@ class SoundController {
     }
   }
 
-  stopTractor() {
+  stopTractor(fade = false) {
     this.isTractorMoving = false;
     if (this.tractorAudio) {
       try {
@@ -299,7 +413,7 @@ class SoundController {
     if (this.muted) return;
     this.startTractor();
     setTimeout(() => {
-      this.stopTractor();
+      this.stopTractor(false);
     }, duration * 1000);
   }
 
@@ -317,10 +431,10 @@ class SoundController {
   mute() {
     this.muted = true;
     try { localStorage.setItem('farmdb_audio_muted', 'true'); } catch (e) {}
-    this.stopNormalWind();
-    this.stopHarshWind();
-    this.stopTractor();
-    this.stopMovingWater();
+    this.stopNormalWind(false);
+    this.stopHarshWind(false);
+    this.stopTractor(false);
+    this.stopMovingWater(false);
   }
 
   unmute() {
@@ -502,8 +616,8 @@ class SoundController {
   }
 
   stopAmbient() {
-    this.stopNormalWind();
-    this.stopHarshWind();
+    this.stopNormalWind(false);
+    this.stopHarshWind(false);
   }
 }
 
