@@ -602,42 +602,102 @@ class Farm3DWorld {
 
   buildCountrysideRiver() {
     const curvePoints = [
-      new THREE.Vector3(120, 0.08, -320),
-      new THREE.Vector3(95, 0.08, -210),
-      new THREE.Vector3(82, 0.08, -120),
-      new THREE.Vector3(68, 0.08, -35),
-      new THREE.Vector3(56, 0.08, 45),
-      new THREE.Vector3(78, 0.08, 140),
-      new THREE.Vector3(110, 0.08, 230),
-      new THREE.Vector3(135, 0.08, 330)
+      new THREE.Vector3(120, 0.12, -320),
+      new THREE.Vector3(95, 0.12, -210),
+      new THREE.Vector3(82, 0.12, -120),
+      new THREE.Vector3(68, 0.12, -35),
+      new THREE.Vector3(56, 0.12, 45),
+      new THREE.Vector3(78, 0.12, 140),
+      new THREE.Vector3(110, 0.12, 230),
+      new THREE.Vector3(135, 0.12, 330)
     ];
 
     const riverCurve = new THREE.CatmullRomCurve3(curvePoints);
-    const riverGeo = new THREE.TubeGeometry(riverCurve, 64, 5.8, 4, false);
-    riverGeo.scale(1.0, 0.02, 1.0);
+    const divisions = 120;
+    const points = riverCurve.getPoints(divisions);
+
+    // Build solid water surface ribbon
+    const riverGeo = new THREE.BufferGeometry();
+    const vertices = [];
+    const uvs = [];
+    const indices = [];
+    const riverWidth = 9.0;
+    const bankWidth = 13.0;
+
+    for (let i = 0; i <= divisions; i++) {
+      const pt = points[i];
+      const tangent = riverCurve.getTangent(i / divisions).normalize();
+      const normal = new THREE.Vector3(-tangent.z, 0, tangent.x).normalize();
+
+      const leftX = pt.x + normal.x * (riverWidth * 0.5);
+      const leftZ = pt.z + normal.z * (riverWidth * 0.5);
+      const rightX = pt.x - normal.x * (riverWidth * 0.5);
+      const rightZ = pt.z - normal.z * (riverWidth * 0.5);
+
+      vertices.push(leftX, 0.12, leftZ);
+      vertices.push(rightX, 0.12, rightZ);
+
+      const v = i / divisions;
+      uvs.push(0, v * 12);
+      uvs.push(1, v * 12);
+
+      if (i < divisions) {
+        const base = i * 2;
+        indices.push(base, base + 1, base + 2);
+        indices.push(base + 1, base + 3, base + 2);
+      }
+    }
+
+    riverGeo.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+    riverGeo.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+    riverGeo.setIndex(indices);
+    riverGeo.computeVertexNormals();
 
     this.riverMat = new THREE.MeshStandardMaterial({
-      color: 0x3289A8,
-      roughness: 0.12,
-      metalness: 0.28,
+      color: 0x2A8EA8,
+      roughness: 0.08,
+      metalness: 0.35,
       transparent: true,
-      opacity: 0.88
+      opacity: 0.92
     });
 
     const riverMesh = new THREE.Mesh(riverGeo, this.riverMat);
-    riverMesh.position.y = 0.05;
     riverMesh.receiveShadow = true;
     this.countrysideGroup.add(riverMesh);
 
-    // Riverbank sand & pebble borders
-    const bankGeo = new THREE.TubeGeometry(riverCurve, 64, 7.2, 4, false);
-    bankGeo.scale(1.0, 0.015, 1.0);
+    // Riverbank & submerged riverbed underlayer
+    const bankVertices = [];
+    const bankIndices = [];
+    for (let i = 0; i <= divisions; i++) {
+      const pt = points[i];
+      const tangent = riverCurve.getTangent(i / divisions).normalize();
+      const normal = new THREE.Vector3(-tangent.z, 0, tangent.x).normalize();
+
+      const leftX = pt.x + normal.x * (bankWidth * 0.5);
+      const leftZ = pt.z + normal.z * (bankWidth * 0.5);
+      const rightX = pt.x - normal.x * (bankWidth * 0.5);
+      const rightZ = pt.z - normal.z * (bankWidth * 0.5);
+
+      bankVertices.push(leftX, 0.06, leftZ);
+      bankVertices.push(rightX, 0.06, rightZ);
+
+      if (i < divisions) {
+        const base = i * 2;
+        bankIndices.push(base, base + 1, base + 2);
+        bankIndices.push(base + 1, base + 3, base + 2);
+      }
+    }
+
+    const bankGeo = new THREE.BufferGeometry();
+    bankGeo.setAttribute('position', new THREE.Float32BufferAttribute(bankVertices, 3));
+    bankGeo.setIndex(bankIndices);
+    bankGeo.computeVertexNormals();
+
     const bankMat = new THREE.MeshStandardMaterial({
-      color: 0x827768,
+      color: 0x5C5042,
       roughness: 0.95
     });
     const bankMesh = new THREE.Mesh(bankGeo, bankMat);
-    bankMesh.position.y = 0.02;
     bankMesh.receiveShadow = true;
     this.countrysideGroup.add(bankMesh);
   }
@@ -2931,6 +2991,7 @@ class Farm3DWorld {
 
     this.flockGroup.position.copy(this.flockStart);
     this.flockGroup.lookAt(this.flockEnd);
+    this.flockGroup.rotateY(Math.PI); // Orient bird group forward so beaks point toward destination
     this.flockGroup.visible = true;
     this.flockActive = true;
     this.flockProgress = 0;
@@ -3690,20 +3751,36 @@ class Farm3DWorld {
       }
     } catch (e) { }
     const originalPos = this.tractorGroup.position.clone();
+    const originalRot = this.tractorGroup.rotation.y;
     let driveProgress = 0;
 
     const driveLoop = () => {
-      driveProgress += 0.02;
-      this.tractorGroup.position.z -= 0.6;
-      this.tractorGroup.position.y = Math.sin(driveProgress * 15) * 0.08;
+      driveProgress += 0.015;
 
-      if (driveProgress < 1.4) {
+      if (driveProgress <= 0.5) {
+        // Drive down the field aisle smoothly
+        const p = driveProgress / 0.5;
+        this.tractorGroup.position.x = THREE.MathUtils.lerp(originalPos.x, originalPos.x + 8, p);
+        this.tractorGroup.position.z = THREE.MathUtils.lerp(originalPos.z, originalPos.z - 36, p);
+        this.tractorGroup.position.y = Math.sin(driveProgress * 25) * 0.06;
+        this.tractorGroup.rotation.y = -Math.PI / 2;
+      } else if (driveProgress <= 1.0) {
+        // Turn and return smoothly to original pad
+        const p = (driveProgress - 0.5) / 0.5;
+        this.tractorGroup.position.x = THREE.MathUtils.lerp(originalPos.x + 8, originalPos.x, p);
+        this.tractorGroup.position.z = THREE.MathUtils.lerp(originalPos.z - 36, originalPos.z, p);
+        this.tractorGroup.position.y = Math.sin(driveProgress * 25) * 0.06;
+        this.tractorGroup.rotation.y = Math.PI / 2;
+      }
+
+      if (driveProgress < 1.0) {
         requestAnimationFrame(driveLoop);
       } else {
         setTimeout(() => {
           this.tractorGroup.position.copy(originalPos);
+          this.tractorGroup.rotation.y = originalRot;
           this.isHarvestingAnim = false;
-        }, 500);
+        }, 300);
       }
     };
     driveLoop();

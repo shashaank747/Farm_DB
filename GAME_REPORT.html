@@ -1,0 +1,1108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FARMDB — Visual Game Design & 10-Level Story Master Guide</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0B0F19;
+      --card-bg: #111827;
+      --card-border: #1F2937;
+      --accent: #10B981;
+      --accent-glow: rgba(16, 185, 129, 0.2);
+      --amber: #F59E0B;
+      --blue: #3B82F6;
+      --purple: #8B5CF6;
+      --text: #F3F4F6;
+      --text-muted: #9CA3AF;
+      --font: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      --mono: 'JetBrains Mono', monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: var(--font);
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      padding-bottom: 80px;
+    }
+
+    /* Top Navigation Header */
+    header {
+      background: rgba(17, 24, 39, 0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--card-border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      padding: 16px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-logo {
+      font-size: 28px;
+      background: linear-gradient(135deg, #10B981, #059669);
+      width: 44px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px var(--accent-glow);
+    }
+
+    .brand h1 {
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+
+    .brand span {
+      font-size: 13px;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .btn {
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid transparent;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #064E3B;
+      font-weight: 700;
+    }
+    .btn-primary:hover { background: #34D399; }
+
+    .btn-outline {
+      background: transparent;
+      border-color: var(--card-border);
+      color: var(--text);
+    }
+    .btn-outline:hover { background: #1F2937; }
+
+    /* Hero Section */
+    .hero {
+      max-width: 1200px;
+      margin: 40px auto 24px;
+      padding: 0 24px;
+      text-align: center;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      color: #34D399;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 4px 12px;
+      border-radius: 20px;
+      margin-bottom: 16px;
+    }
+
+    .hero h2 {
+      font-size: 38px;
+      font-weight: 800;
+      letter-spacing: -1px;
+      margin-bottom: 12px;
+      background: linear-gradient(135deg, #FFFFFF 40%, #9CA3AF);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero p {
+      font-size: 16px;
+      color: var(--text-muted);
+      max-width: 750px;
+      margin: 0 auto 32px;
+    }
+
+    /* Global Tabs */
+    .tabs-container {
+      max-width: 1200px;
+      margin: 0 auto 32px;
+      padding: 0 24px;
+      display: flex;
+      gap: 8px;
+      border-bottom: 1px solid var(--card-border);
+    }
+
+    .tab-btn {
+      padding: 12px 20px;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-family: var(--font);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-bottom: 2px solid transparent;
+      transition: all 0.2s ease;
+    }
+
+    .tab-btn:hover { color: var(--text); }
+    .tab-btn.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+
+    /* Main Container */
+    .main-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    .tab-pane { display: none; }
+    .tab-pane.active { display: block; }
+
+    /* Quick Stat Cards */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    .stat-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .stat-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+    }
+
+    .stat-green { background: rgba(16, 185, 129, 0.15); color: #34D399; }
+    .stat-blue { background: rgba(59, 130, 246, 0.15); color: #60A5FA; }
+    .stat-amber { background: rgba(245, 158, 11, 0.15); color: #FBBF24; }
+    .stat-purple { background: rgba(139, 92, 246, 0.15); color: #A78BFA; }
+
+    .stat-info h3 { font-size: 24px; font-weight: 800; }
+    .stat-info p { font-size: 13px; color: var(--text-muted); font-weight: 500; }
+
+    /* Level Navigator Pills */
+    .level-pills-bar {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 12px;
+      margin-bottom: 24px;
+    }
+
+    .level-pill {
+      padding: 8px 16px;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 30px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s ease;
+    }
+
+    .level-pill:hover { color: var(--text); border-color: #374151; }
+    .level-pill.active {
+      background: var(--accent);
+      color: #064E3B;
+      border-color: var(--accent);
+      font-weight: 700;
+    }
+
+    /* Master Level Card */
+    .level-detail-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 18px;
+      padding: 32px;
+      margin-bottom: 24px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    }
+
+    .level-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      border-bottom: 1px solid var(--card-border);
+      padding-bottom: 20px;
+      margin-bottom: 24px;
+    }
+
+    .level-title-group h3 {
+      font-size: 26px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .level-badge {
+      font-size: 12px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 6px;
+      background: #1F2937;
+      color: #9CA3AF;
+    }
+
+    .level-role {
+      margin-top: 6px;
+      font-size: 14px;
+      color: var(--amber);
+      font-weight: 600;
+    }
+
+    .sql-concept-tag {
+      background: rgba(59, 130, 246, 0.15);
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      color: #93C5FD;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-family: var(--mono);
+      font-weight: 600;
+    }
+
+    /* Story Box */
+    .story-box {
+      background: rgba(31, 41, 55, 0.5);
+      border-left: 4px solid var(--accent);
+      border-radius: 0 12px 12px 0;
+      padding: 16px 20px;
+      margin-bottom: 24px;
+    }
+
+    .story-box h4 {
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--accent);
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .story-box p {
+      font-size: 14px;
+      color: #E5E7EB;
+      line-height: 1.6;
+    }
+
+    /* Missions Accordion / Cards */
+    .missions-title {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .mission-grid {
+      display: grid;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .mission-item {
+      background: #0D131F;
+      border: 1px solid #1E293B;
+      border-radius: 12px;
+      padding: 16px 20px;
+      transition: all 0.2s ease;
+    }
+
+    .mission-item:hover {
+      border-color: #334155;
+      background: #101726;
+    }
+
+    .mission-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .mission-id {
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 700;
+      color: #64748B;
+    }
+
+    .mission-name {
+      font-size: 15px;
+      font-weight: 700;
+      color: #F8FAFC;
+    }
+
+    .mission-desc {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+
+    .dialogue-bubble {
+      background: rgba(245, 158, 11, 0.1);
+      border-left: 3px solid var(--amber);
+      padding: 8px 12px;
+      border-radius: 0 6px 6px 0;
+      font-size: 12px;
+      color: #FCD34D;
+      margin-bottom: 12px;
+      font-style: italic;
+    }
+
+    .code-preview {
+      background: #020617;
+      border: 1px solid #1E293B;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-family: var(--mono);
+      font-size: 12px;
+      color: #38BDF8;
+      overflow-x: auto;
+      white-space: pre-wrap;
+    }
+
+    /* 3D Visual Objects Grid */
+    .objects-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 20px;
+    }
+
+    .object-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 24px;
+    }
+
+    .object-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .object-header h4 {
+      font-size: 17px;
+      font-weight: 700;
+    }
+
+    .object-list {
+      list-style: none;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .object-list li {
+      margin-bottom: 8px;
+      padding-left: 18px;
+      position: relative;
+    }
+
+    .object-list li::before {
+      content: "•";
+      color: var(--accent);
+      position: absolute;
+      left: 0;
+      font-weight: bold;
+    }
+
+    /* Summary Table */
+    .table-container {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      text-align: left;
+    }
+
+    th {
+      background: #1F2937;
+      color: #9CA3AF;
+      font-weight: 600;
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--card-border);
+    }
+
+    td {
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--card-border);
+      color: #D1D5DB;
+    }
+
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(255, 255, 255, 0.02); }
+
+    .tag {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .tag-green { background: rgba(16, 185, 129, 0.2); color: #34D399; }
+    .tag-blue { background: rgba(59, 130, 246, 0.2); color: #60A5FA; }
+
+    @media print {
+      header, .tabs-container, .level-pills-bar, .header-actions { display: none !important; }
+      body { background: #FFFFFF; color: #000000; }
+      .level-detail-card, .object-card, .table-container { box-shadow: none; border-color: #CCCCCC; page-break-inside: avoid; }
+      .tab-pane { display: block !important; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Navigation -->
+  <header>
+    <div class="brand">
+      <div class="brand-logo">🌱</div>
+      <div>
+        <h1>FARMDB</h1>
+        <span>Game Bible & 10-Level Master Guide</span>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-outline" onclick="window.print()">🖨️ Print / Save as PDF</button>
+      <a class="btn btn-primary" href="Desktop/index.html" target="_blank">🎮 Launch Game ❯</a>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="hero-badge">✨ 100% Complete Campaign • SQLite + 3D WebGL</div>
+    <h2>Living Agricultural Database Simulator</h2>
+    <p>A comprehensive visual design document and walkthrough detailing the 3D world, interactive mechanics, Uncle Somu's storyline, and all 10 SQL learning chapters.</p>
+  </section>
+
+  <!-- Navigation Tabs -->
+  <div class="tabs-container">
+    <button class="tab-btn active" onclick="switchMainTab('levels', this)">📖 10-Level Campaign</button>
+    <button class="tab-btn" onclick="switchMainTab('visuals', this)">🎨 3D Visual Objects</button>
+    <button class="tab-btn" onclick="switchMainTab('roadmap', this)">🗺️ Progression Matrix</button>
+    <button class="tab-btn" onclick="switchMainTab('engine', this)">⚙️ Engine & Architecture</button>
+  </div>
+
+  <main class="main-container">
+
+    <!-- ================= TAB 1: 10-LEVEL CAMPAIGN ================= -->
+    <div id="tab-levels" class="tab-pane active">
+
+      <!-- Stats Grid -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon stat-green">🌾</div>
+          <div class="stat-info">
+            <h3>10 Chapters</h3>
+            <p>100% Playable Campaign</p>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon stat-blue">💾</div>
+          <div class="stat-info">
+            <h3>54 Missions</h3>
+            <p>Step-by-Step SQL Quests</p>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon stat-amber">🚜</div>
+          <div class="stat-info">
+            <h3>5 Plot Columns</h3>
+            <p>10 Sub-Beds (A1.1 – A5.2)</p>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon stat-purple">👑</div>
+          <div class="stat-info">
+            <h3>Farm CEO</h3>
+            <p>Ultimate Career Graduation</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Level Switcher Bar -->
+      <div class="level-pills-bar">
+        <button class="level-pill active" onclick="showLevel(1, this)">L1: The Empty Farm</button>
+        <button class="level-pill" onclick="showLevel(2, this)">L2: First Harvest</button>
+        <button class="level-pill" onclick="showLevel(3, this)">L3: Farm Gets Busy</button>
+        <button class="level-pill" onclick="showLevel(4, this)">L4: Supply Problem</button>
+        <button class="level-pill" onclick="showLevel(5, this)">L5: The Market</button>
+        <button class="level-pill" onclick="showLevel(6, this)">L6: Farm Manager</button>
+        <button class="level-pill" onclick="showLevel(7, this)">L7: Forensic Audit</button>
+        <button class="level-pill" onclick="showLevel(8, this)">L8: Expansion</button>
+        <button class="level-pill" onclick="showLevel(9, this)">L9: Empire</button>
+        <button class="level-pill" onclick="showLevel(10, this)">L10: Grand Finale</button>
+      </div>
+
+      <!-- Level Containers (1 to 10) -->
+      <div id="level-views">
+
+        <!-- LEVEL 1 -->
+        <div class="level-detail-card" id="lvl-card-1">
+          <div class="level-header">
+            <div class="level-title-group">
+              <h3><span>🌱</span> Level 1: THE EMPTY FARM</h3>
+              <div class="level-role">Role: New Farmer • Plot A1 Active</div>
+            </div>
+            <span class="sql-concept-tag">CREATE TABLE • INSERT • SELECT</span>
+          </div>
+          <div class="story-box">
+            <h4>📖 Story & Cinematic: Chapter 1 — The Inherited Homestead</h4>
+            <p>You step onto your grandfather's quiet farmstead with his worn notebook. Uncle Somu greets you: "Your grandfather had the heart of a farmer, but a modern farm needs a memory. Welcome to FARMDB." You index starting seeds, cows, and the old tractor into SQLite.</p>
+          </div>
+          <div class="missions-title">🎯 Chapter Missions</div>
+          <div class="mission-grid">
+            <div class="mission-item">
+              <div class="mission-top"><span class="mission-name">1. Create the Seeds Table</span><span class="mission-id">L1_M0</span></div>
+              <p class="mission-desc">Define a new SQLite table to store seed inventories.</p>
+              <div class="dialogue-bubble">Uncle Somu: "Look in the shed—we have bags of seeds, but no catalog. Create a seeds table!"</div>
+              <div class="code-preview">CREATE TABLE seeds (seed_id INTEGER PRIMARY KEY, seed_name TEXT, quantity INTEGER, price INTEGER);</div>
+            </div>
+            <div class="mission-item">
+              <div class="mission-top"><span class="mission-name">2. Add Starting Seeds</span><span class="mission-id">L1_M1</span></div>
+              <p class="mission-desc">Record Tomato, Rice, and Wheat seeds from grandfather's notebook.</p>
+              <div class="code-preview">INSERT INTO seeds (seed_name, quantity, price) VALUES ('Tomato', 10, 20), ('Rice', 15, 15), ('Wheat', 20, 12);</div>
+            </div>
+            <div class="mission-item">
+              <div class="mission-top"><span class="mission-name">3. Register the Cows & Tractor</span><span class="mission-id">L1_M3 - L1_M5</span></div>
+              <p class="mission-desc">Create animals and equipment tables to index Daisy, Bella, and Old Red.</p>
+              <div class="code-preview">CREATE TABLE animals (animal_id INTEGER PRIMARY KEY, animal_type TEXT, name TEXT, age INTEGER, health TEXT);
+INSERT INTO animals VALUES (1, 'Cow', 'Daisy', 3, 'Healthy'), (2, 'Cow', 'Bella', 4, 'Healthy');</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- LEVEL 2 -->
+        <div class="level-detail-card" id="lvl-card-2" style="display:none;">
+          <div class="level-header">
+            <div class="level-title-group">
+              <h3><span>🌾</span> Level 2: FIRST HARVEST</h3>
+              <div class="level-role">Role: Farmer • Crop Lifecycle on Plot A1</div>
+            </div>
+            <span class="sql-concept-tag">WHERE • UPDATE • Day Advancement</span>
+          </div>
+          <div class="story-box">
+            <h4>📖 Story & Cinematic: Chapter 2 — First Harvest & Morning Dew</h4>
+            <p>Starting cash (₹500) won't last long. Uncle Somu guides you to locate available soil, sow tomato seeds, water them over consecutive farm days, harvest 40kg of tomatoes with the tractor, and sell them for ₹800 revenue!</p>
+          </div>
+          <div class="missions-title">🎯 Chapter Missions</div>
+          <div class="mission-grid">
+            <div class="mission-item">
+              <div class="mission-top"><span class="mission-name">1. Query Available Plots & Plant Seed</span><span class="mission-id">L2_M0 - L2_M2</span></div>
+              <p class="mission-desc">Filter plots with status = 'available', deduct 1 seed, and record planting in farming table.</p>
+              <div class="code-preview">UPDATE seeds SET quantity = quantity - 1 WHERE seed_name = 'Tomato';
+INSERT INTO farming (plot_id, crop_id, status, growth_percent) VALUES ('A1', 'Tomato', 'growing', 0);
+UPDATE plots SET status = 'occupied' WHERE plot_id = 'A1';</div>
+            </div>
+            <div class="mission-item">
+              <div class="mission-top"><span class="mission-name">2. Advance Day & Harvest 40kg Yield</span><span class="mission-id">L2_M3 - L2_M4</span></div>
+              <p class="mission-desc">Advance days until tomatoes reach 100% growth, then store 40kg in warehouse stock.</p>
+              <div class="code-preview">UPDATE farming SET status = 'harvested' WHERE plot_id = 'A1';
+UPDATE plots SET status = 'available' WHERE plot_id = 'A1';
+INSERT INTO stock (product_name, quantity, unit, price) VALUES ('Tomato', 40, 'kg', 20);</div>
+            </div>
+            <div class="mission-item">
+              <div class="mission-top"><span class="mission-name">3. Sell Produce at Market</span><span class="mission-id">L2_M5</span></div>
+              <p class="mission-desc">Fulfill Green Grocers order and collect ₹800 cash.</p>
+              <div class="code-preview">UPDATE stock SET quantity = quantity - 40 WHERE product_name = 'Tomato';</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- LEVEL 3 -->
+        <div class="level-detail-card" id="lvl-card-3" style="display:none;">
+          <div class="level-header">
+            <div class="level-title-group">
+              <h3><span>📊</span> Level 3: THE FARM GETS BUSY</h3>
+              <div class="level-role">Role: Farm Operator • Plot A2 Unlocked</div>
+            </div>
+            <span class="sql-concept-tag">ORDER BY • GROUP BY • COUNT / SUM / AVG • HAVING</span>
+          </div>
+          <div class="story-box">
+            <h4>📖 Story & Cinematic: Chapter 3 — The Bustling Farmland</h4>
+            <p>Harvest revenue pays off the lease for Plot A2! With Wheat, Rice, Corn, and Tomatoes pouring in, Uncle Somu teaches statistical aggregation to benchmark high-yield crops.</p>
+          </div>
+          <div class="mission-grid">
+            <div class="mission-item">
+              <div class="mission-top"><span class="mission-name">Sort & Aggregate Warehouse Inventory</span><span class="mission-id">L3_M2 - L3_M5</span></div>
+              <div class="code-preview">SELECT product_name, SUM(quantity) AS total_yield, AVG(price) AS avg_price 
+FROM stock 
+GROUP BY product_name 
+HAVING SUM(quantity) >= 80 
+ORDER BY total_yield DESC;</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- LEVEL 4 -->
+        <div class="level-detail-card" id="lvl-card-4" style="display:none;">
+          <div class="level-header">
+            <div class="level-title-group">
+              <h3><span>📦</span> Level 4: THE SUPPLY PROBLEM</h3>
+              <div class="level-role">Role: Supply Manager • Plot A3 Unlocked</div>
+            </div>
+            <span class="sql-concept-tag">AND / OR • IN • BETWEEN • LIKE • CASE WHEN</span>
+          </div>
+          <div class="story-box">
+            <h4>📖 Story & Cinematic: Chapter 4 — Supply Train & Logistics</h4>
+            <p>Fertilizer and feed shortages hit the farm! Build supplier directories and use CASE WHEN conditional logic to triage urgent reorders.</p>
+          </div>
+          <div class="mission-grid">
+            <div class="mission-item">
+              <div class="mission-top"><span class="mission-name">Inventory Triage with CASE WHEN</span><span class="mission-id">L4_M5</span></div>
+              <div class="code-preview">SELECT item_name, stock_level, reorder_level,
+  CASE WHEN stock_level <= reorder_level THEN 'Reorder Needed' ELSE 'Sufficient' END AS stock_status 
+FROM supplies;</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- LEVEL 5 -->
+        <div class="level-detail-card" id="lvl-card-5" style="display:none;">
+          <div class="level-header">
+            <div class="level-title-group">
+              <h3><span>🏷️</span> Level 5: THE MARKET</h3>
+              <div class="level-role">Role: Market Seller • Plot A4 Unlocked</div>
+            </div>
+            <span class="sql-concept-tag">date('now') • Calculated Fields • Contracts</span>
+          </div>
+          <div class="story-box">
+            <h4>📖 Story & Cinematic: Chapter 5 — The Vibrant Town Market</h4>
+            <p>Commercial restaurant contracts arrive from Italian Bistros and Curry Houses. Calculate revenues and enforce 7-day delivery deadlines with SQLite date functions.</p>
+          </div>
+          <div class="mission-grid">
+            <div class="mission-item">
+              <div class="mission-top"><span class="mission-name">Filter Active Pending Orders</span><span class="mission-id">L5_M3</span></div>
+              <div class="code-preview">SELECT customer_name, (quantity_kg * unit_price) AS total_revenue 
+FROM orders 
+WHERE status = 'pending' AND date(order_date) >= date('now', '-7 days');</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- LEVEL 6 -->
+        <div class="level-detail-card" id="lvl-card-6" style="display:none;">
+          <div class="level-header">
+            <div class="level-title-group">
+              <h3><span>👔</span> Level 6: FARM MANAGER</h3>
+              <div class="level-role">Role: Farm Manager • Plot A5 (100% Unlocked)</div>
+            </div>
+            <span class="sql-concept-tag">INNER JOIN • LEFT JOIN • Foreign Keys</span>
+          </div>
+          <div class="story-box">
+            <h4>📖 Story & Cinematic: Chapter 6 — The Farm Workforce</h4>
+            <p>All 5 plots (10 sub-beds) are active! Hire specialists (Agronomist, Irrigation Tech, Tractor Driver, Supervisor) and join personnel records to duty rosters.</p>
+          </div>
+          <div class="mission-grid">
+            <div class="mission-item">
+              <div class="mission-top"><span class="mission-name">Master Roster & Unassigned Audit</span><span class="mission-id">L6_M3 - L6_M4</span></div>
+              <div class="code-preview">-- Master Roster (INNER JOIN)
+SELECT w.name, w.role, a.plot_id, a.shift 
+FROM workers w INNER JOIN assignments a ON w.worker_id = a.worker_id;
+
+-- Audit Unassigned Personnel (LEFT JOIN)
+SELECT w.name, w.role 
+FROM workers w LEFT JOIN assignments a ON w.worker_id = a.worker_id 
+WHERE a.assignment_id IS NULL;</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- LEVEL 7 -->
+        <div class="level-detail-card" id="lvl-card-7" style="display:none;">
+          <div class="level-header">
+            <div class="level-title-group">
+              <h3><span>🔍</span> Level 7: THE NUMBERS DON'T MATCH</h3>
+              <div class="level-role">Role: Financial Auditor • Forensic Audit</div>
+            </div>
+            <span class="sql-concept-tag">Subqueries • NOT IN • NOT EXISTS • DELETE</span>
+          </div>
+          <div class="story-box">
+            <h4>📖 Story & Cinematic: Chapter 7 — Midnight Financial Audit</h4>
+            <p>A midnight audit discovers ₹49,000 missing from the treasury! Use nested subqueries and NOT EXISTS to isolate the rogue VIP Drone charge and expunge it.</p>
+          </div>
+          <div class="mission-grid">
+            <div class="mission-item">
+              <div class="mission-top"><span class="mission-name">Detect Rogue Charge & Delete</span><span class="mission-id">L7_M1 - L7_M4</span></div>
+              <div class="code-preview">-- Find expenses exceeding company averages
+SELECT * FROM expenses WHERE amount > (SELECT AVG(amount) FROM expenses);
+
+-- Expunge fraudulent charge
+DELETE FROM expenses WHERE expense_id = 4;</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- LEVEL 8 -->
+        <div class="level-detail-card" id="lvl-card-8" style="display:none;">
+          <div class="level-header">
+            <div class="level-title-group">
+              <h3><span>🌐</span> Level 8: THE EXPANSION</h3>
+              <div class="level-role">Role: Expansion Manager • 4 Regional Facilities</div>
+            </div>
+            <span class="sql-concept-tag">WITH Common Table Expressions (CTEs)</span>
+          </div>
+          <div class="story-box">
+            <h4>📖 Story & Cinematic: Chapter 8 — Regional Farm Expansion</h4>
+            <p>Farm North, Farm South, Farm East, and Home Farm unite into an 83-acre enterprise. Write modular WITH CTEs to benchmark cost-per-ton efficiency.</p>
+          </div>
+          <div class="mission-grid">
+            <div class="mission-item">
+              <div class="mission-top"><span class="mission-name">Benchmark Facility Unit Costs with CTE</span><span class="mission-id">L8_M4</span></div>
+              <div class="code-preview">WITH UnitCostCTE AS (
+  SELECT facility_id, SUM(yield_tons) AS total_tons, SUM(production_cost) AS total_cost,
+         ROUND(SUM(production_cost) / SUM(yield_tons), 2) AS cost_per_ton 
+  FROM regional_production GROUP BY facility_id
+)
+SELECT * FROM UnitCostCTE ORDER BY cost_per_ton ASC;</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- LEVEL 9 -->
+        <div class="level-detail-card" id="lvl-card-9" style="display:none;">
+          <div class="level-header">
+            <div class="level-title-group">
+              <h3><span>👑</span> Level 9: THE AGRICULTURAL EMPIRE</h3>
+              <div class="level-role">Role: Agribusiness Executive • Statewide Analytics</div>
+            </div>
+            <span class="sql-concept-tag">Window Functions • RANK() • ROW_NUMBER() • OVER(PARTITION)</span>
+          </div>
+          <div class="story-box">
+            <h4>📖 Story & Cinematic: Chapter 9 — The Agribusiness Empire</h4>
+            <p>Step into the corporate boardroom! Compute running cumulative cash flows and partition top-ranked crops per division without collapsing individual rows.</p>
+          </div>
+          <div class="mission-grid">
+            <div class="mission-item">
+              <div class="mission-top"><span class="mission-name">Running Totals & Crop Rankings</span><span class="mission-id">L9_M1 - L9_M4</span></div>
+              <div class="code-preview">-- Running Cumulative Revenue
+SELECT *, SUM(monthly_revenue) OVER (PARTITION BY division ORDER BY month_num) AS running_rev FROM empire_revenue;
+
+-- Rank Crops per Facility
+SELECT facility_id, crop_name, yield_tons, RANK() OVER (PARTITION BY facility_id ORDER BY yield_tons DESC) AS yield_rank 
+FROM regional_production;</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- LEVEL 10 -->
+        <div class="level-detail-card" id="lvl-card-10" style="display:none;">
+          <div class="level-header">
+            <div class="level-title-group">
+              <h3><span>🏆</span> Level 10: THE HARVEST DECISION (GRAND FINALE)</h3>
+              <div class="level-role">Role: Farm CEO • Centennial Drought Crisis</div>
+            </div>
+            <span class="sql-concept-tag">Full-Stack SQL Synthesis • JOIN + CTE + CASE</span>
+          </div>
+          <div class="story-box">
+            <h4>📖 Story & Cinematic: Chapter 10 — The Regional Drought Crisis</h4>
+            <p>The worst drought in 50 years hits the valley! Only 18,000L of water remain. Synthesize water consumption, profit margins, and warehouse valuations in SQL to allocate crisis quotas and crown your journey as Sovereign Farm CEO!</p>
+          </div>
+          <div class="mission-grid">
+            <div class="mission-item">
+              <div class="mission-top"><span class="mission-name">Optimize Profit Margin per Liter & Final Triumph</span><span class="mission-id">L10_M1 - L10_M4</span></div>
+              <div class="code-preview">WITH WaterEfficiency AS (
+  SELECT crop_name, ROUND(CAST(expected_market_price - cultivation_cost AS REAL) / water_liters_per_kg, 2) AS profit_per_liter
+  FROM drought_metrics
+)
+SELECT * FROM WaterEfficiency ORDER BY profit_per_liter DESC;
+
+-- Sovereign Grand Victory Query
+SELECT 'FARMDB EMPIRE SURVIVED & TRIUMPHED' AS status, SUM(s.quantity * d.expected_market_price) AS final_treasury_revenue 
+FROM stock s INNER JOIN drought_metrics d ON LOWER(s.product_name) = LOWER(d.crop_name);</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ================= TAB 2: 3D VISUAL OBJECTS ================= -->
+    <div id="tab-visuals" class="tab-pane">
+      <div class="objects-grid">
+        <div class="object-card">
+          <div class="object-header">
+            <span style="font-size:24px;">🏡</span>
+            <h4>Barn, Pasture & Livestock</h4>
+          </div>
+          <ul class="object-list">
+            <li><strong>Red Timber Barn</strong>: American gambrel roof, shingled roofing, hayloft window, sliding doors, metal silo, and animated weather vane rooster.</li>
+            <li><strong>Holstein Cows (Daisy & Bella)</strong>: Procedural black-and-white coats, grazing head-bob, tail swishing, and interactive click mooing.</li>
+            <li><strong>Pasture Enclosure</strong>: Rail fences, hay feeder, and fresh water trough.</li>
+          </ul>
+        </div>
+
+        <div class="object-card">
+          <div class="object-header">
+            <span style="font-size:24px;">🚰</span>
+            <h4>Water Reservoir & Hydrology</h4>
+          </div>
+          <ul class="object-list">
+            <li><strong>Dynamic Water Mesh</strong>: Translucent water volume that raises/lowers dynamically with SQLite table capacity (0 – 100,000L).</li>
+            <li><strong>Glass Sight Gauge & Buoy</strong>: Vertical tube with volume markings and bobbing yellow float.</li>
+            <li><strong>Interactive Water Physics</strong>: Click reservoir to generate concentric water ripples with droplet audio.</li>
+          </ul>
+        </div>
+
+        <div class="object-card">
+          <div class="object-header">
+            <span style="font-size:24px;">🚜</span>
+            <h4>Equipment Yard & Tractor</h4>
+          </div>
+          <ul class="object-list">
+            <li><strong>3D Red Tractor</strong>: Detailed engine block, ribbed rear tires, front steerable axle, and smoking vertical exhaust pipe.</li>
+            <li><strong>Harvest Driving Route</strong>: Tractor automatically drives along plot rows when harvest queries execute.</li>
+            <li><strong>Workshop Pad</strong>: Oil drums, spare tires, and tool racks.</li>
+          </ul>
+        </div>
+
+        <div class="object-card">
+          <div class="object-header">
+            <span style="font-size:24px;">🐕</span>
+            <h4>German Shepherd Dogs (2x AI)</h4>
+          </div>
+          <ul class="object-list">
+            <li><strong>FBX Skeletal Rigging</strong>: Loaded with PBR textures (BaseColor, Normal, Roughness).</li>
+            <li><strong>4 Animation States</strong>: Idle Breathing, Playing/Barking, Walk Loop, and Run Loop.</li>
+            <li><strong>Autonomous AI</strong>: Roams around the barn and south plots; click to trigger barking and play animation.</li>
+          </ul>
+        </div>
+
+        <div class="object-card">
+          <div class="object-header">
+            <span style="font-size:24px;">🌾</span>
+            <h4>Procedural Crops & 10 Sub-Beds</h4>
+          </div>
+          <ul class="object-list">
+            <li><strong>5 Major Plots (A1 – A5)</strong>: Split into 10 half-acre North/South beds (A1.1 to A5.2).</li>
+            <li><strong>4 Crop Varieties</strong>: Tomatoes, Golden Wheat, Rice shoots, and Corn stalks.</li>
+            <li><strong>5 Growth Stages</strong>: 0% (Sown), 25% (Sprouts), 50% (Vegetative), 75% (Budding), 100% (Ripe).</li>
+          </ul>
+        </div>
+
+        <div class="object-card">
+          <div class="object-header">
+            <span style="font-size:24px;">🚚</span>
+            <h4>Logistics, Windmills & Environment</h4>
+          </div>
+          <ul class="object-list">
+            <li><strong>Vintage Delivery Truck</strong>: Flatbed green truck driving in to deliver supplies or collect market orders.</li>
+            <li><strong>Lattice Windpump & Turbine</strong>: Rotating wind fan (spin boost on click) + modern ridge turbine.</li>
+            <li><strong>Atmosphere</strong>: Dynamic day/night sun cycle, drifting puffy clouds, bird flocks, perching birds, and illuminated street lamps.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= TAB 3: PROGRESSION MATRIX ================= -->
+    <div id="tab-roadmap" class="tab-pane">
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Lvl</th>
+              <th>Chapter Title</th>
+              <th>Role</th>
+              <th>Plot Expansion</th>
+              <th>Unlocked 3D Asset</th>
+              <th>Key SQL Mastery</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>1</strong></td>
+              <td>The Empty Farm</td>
+              <td>New Farmer</td>
+              <td>Plot A1 (A1.1, A1.2)</td>
+              <td>3D Barn, 2 Cows, Tractor Pad</td>
+              <td><span class="tag tag-green">CREATE TABLE, INSERT, SELECT</span></td>
+            </tr>
+            <tr>
+              <td><strong>2</strong></td>
+              <td>First Harvest</td>
+              <td>Farmer</td>
+              <td>Plot A1</td>
+              <td>Crop Growth Stages, Tractor Route</td>
+              <td><span class="tag tag-green">WHERE, UPDATE, Advance Day</span></td>
+            </tr>
+            <tr>
+              <td><strong>3</strong></td>
+              <td>The Farm Gets Busy</td>
+              <td>Farm Operator</td>
+              <td>Plot A2 Unlocks</td>
+              <td>Multi-Crop 3D Models (Wheat, Corn, Rice)</td>
+              <td><span class="tag tag-blue">ORDER BY, GROUP BY, SUM, HAVING</span></td>
+            </tr>
+            <tr>
+              <td><strong>4</strong></td>
+              <td>The Supply Problem</td>
+              <td>Supply Manager</td>
+              <td>Plot A3 Unlocks</td>
+              <td>Logistics Depot, Supply Sacks</td>
+              <td><span class="tag tag-blue">AND/OR, IN, BETWEEN, LIKE, CASE</span></td>
+            </tr>
+            <tr>
+              <td><strong>5</strong></td>
+              <td>The Market</td>
+              <td>Market Seller</td>
+              <td>Plot A4 Unlocks</td>
+              <td>Vintage Delivery Flatbed Truck</td>
+              <td><span class="tag tag-blue">date('now'), Calculated Fields</span></td>
+            </tr>
+            <tr>
+              <td><strong>6</strong></td>
+              <td>Farm Manager</td>
+              <td>Manager</td>
+              <td>Plot A5 (100% Open)</td>
+              <td>4 Specialists Hired, Duty Rosters</td>
+              <td><span class="tag tag-purple">INNER JOIN, LEFT JOIN, Foreign Keys</span></td>
+            </tr>
+            <tr>
+              <td><strong>7</strong></td>
+              <td>The Numbers Don't Match</td>
+              <td>Auditor</td>
+              <td>All 5 Plots</td>
+              <td>Midnight Rain Mode & Audit Ledgers</td>
+              <td><span class="tag tag-purple">Subqueries, NOT IN, NOT EXISTS, DELETE</span></td>
+            </tr>
+            <tr>
+              <td><strong>8</strong></td>
+              <td>The Expansion</td>
+              <td>Director</td>
+              <td>4 Regional Farms</td>
+              <td>Regional Map & Modern Wind Turbine</td>
+              <td><span class="tag tag-purple">WITH Common Table Expressions (CTEs)</span></td>
+            </tr>
+            <tr>
+              <td><strong>9</strong></td>
+              <td>Agricultural Empire</td>
+              <td>Executive</td>
+              <td>Statewide Scope</td>
+              <td>Executive Suite Dashboard</td>
+              <td><span class="tag tag-amber">Window Functions: RANK(), ROW_NUMBER()</span></td>
+            </tr>
+            <tr>
+              <td><strong>10</strong></td>
+              <td>The Harvest Decision</td>
+              <td>Farm CEO</td>
+              <td>Drought Rationing</td>
+              <td>Crisis Water Physics & Grand Victory</td>
+              <td><span class="tag tag-amber">Full-Stack Strategic Relational Synthesis</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ================= TAB 4: ENGINE & ARCHITECTURE ================= -->
+    <div id="tab-engine" class="tab-pane">
+      <div class="level-detail-card">
+        <div class="level-header">
+          <div class="level-title-group">
+            <h3><span>⚙️</span> Client Architecture & Technologies</h3>
+          </div>
+          <span class="sql-concept-tag">Three.js • SQLite WASM • Vanilla CSS</span>
+        </div>
+        <div class="story-box">
+          <h4>🚀 High Performance Zero-Dependency Architecture</h4>
+          <p>FARMDB executes 100% in the client browser with zero server latency. Query mutations immediately trigger listeners that re-render 3D meshes, update water volumes, advance crop growth, and animate vehicles in real time.</p>
+        </div>
+        <div class="mission-grid">
+          <div class="mission-item">
+            <div class="mission-top"><span class="mission-name">SQLite WebAssembly Core (sql.js)</span></div>
+            <p class="mission-desc">Direct in-memory relational engine executing standard ANSI SQL. Handles schema creation, relational integrity, transactions, joins, subqueries, and window functions.</p>
+          </div>
+          <div class="mission-item">
+            <div class="mission-top"><span class="mission-name">Three.js WebGL 3D World</span></div>
+            <p class="mission-desc">High-framerate 3D rendering with OrbitControls, directional shadows (PCFShadowMap), ACES Filmic tone mapping, skeletal FBX dog animations, and procedural instanced crops.</p>
+          </div>
+          <div class="mission-item">
+            <div class="mission-top"><span class="mission-name">Web Audio API Sound Engine</span></div>
+            <p class="mission-desc">Synthesized audio effects for water droplets, tractor engines, celebratory chimes, animal vocalizations, and ambient bird calls.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <script>
+    function switchMainTab(tabId, btn) {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('tab-' + tabId).classList.add('active');
+    }
+
+    function showLevel(lvlNum, btn) {
+      document.querySelectorAll('.level-pill').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      for (let i = 1; i <= 10; i++) {
+        const card = document.getElementById('lvl-card-' + i);
+        if (card) card.style.display = (i === lvlNum) ? 'block' : 'none';
+      }
+    }
+  </script>
+</body>
+</html>

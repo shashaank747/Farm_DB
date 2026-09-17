@@ -477,8 +477,8 @@
           <span class="trainer-icon">👨‍🏫</span>
           <span class="trainer-text">Trainer Portal</span>
         </a>
-        <button class="btn-icon" id="btn-toggle-sound" title="Toggle Farm Audio (Muted by default)">
-          <span id="sound-icon">🔇</span>
+        <button class="btn-icon" id="btn-toggle-sound" title="Toggle Farm Audio (Unmuted by default)">
+          <span id="sound-icon">🔊</span>
         </button>
         <button class="btn-icon" id="btn-show-story" title="View Grandfather's Notebook & Story">
           <span>📖</span>
@@ -1137,6 +1137,50 @@ SELECT * FROM seeds;"></textarea>
           <button id="dbg-btn-clear-storage"
             style="background: #F59E0B; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer;">Clear
             LocalStorage & Reset</button>
+    <!-- ==========================================================
+         PLAYER PROFILE / CAREER STATS MODAL
+         ========================================================== -->
+    <div class="modal-overlay" id="profile-modal-overlay">
+      <div class="modal-card profile-modal-card" style="max-width: 520px; background: #FFFFFF; border-radius: 16px; padding: 24px; box-shadow: 0 20px 40px rgba(0,0,0,0.3); border: 1px solid #E2E8F0; position: relative;">
+        <button class="modal-close-btn" id="btn-close-profile-modal" style="position: absolute; top: 16px; right: 16px; background: #F1F5F9; border: none; font-size: 18px; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; color: #64748B;">✕</button>
+        
+        <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 20px;">
+          <div style="width: 64px; height: 64px; border-radius: 50%; background: linear-gradient(135deg, #10B981, #059669); display: flex; align-items: center; justify-content: center; font-size: 32px; box-shadow: 0 4px 12px rgba(16,185,129,0.3);">👨‍🌾</div>
+          <div>
+            <h3 id="profile-modal-name" style="font-size: 20px; font-weight: 800; color: #0F172A; margin: 0;">Farmer Player</h3>
+            <div id="profile-modal-role" style="font-size: 13px; font-weight: 600; color: #D97706; margin-top: 2px;">Lvl 1: New Farmer</div>
+            <div style="font-size: 12px; color: #64748B;">FARMDB Agricultural Database Enterprise</div>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;">
+          <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; padding: 12px;">
+            <div style="font-size: 11px; color: #64748B; font-weight: 600; text-transform: uppercase;">Treasury Cash</div>
+            <div id="profile-modal-cash" style="font-size: 18px; font-weight: 800; color: #16A34A; margin-top: 4px;">₹500</div>
+          </div>
+          <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; padding: 12px;">
+            <div style="font-size: 11px; color: #64748B; font-weight: 600; text-transform: uppercase;">Active Plots</div>
+            <div id="profile-modal-plots" style="font-size: 18px; font-weight: 800; color: #2563EB; margin-top: 4px;">1 / 5 (2 Beds)</div>
+          </div>
+          <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; padding: 12px;">
+            <div style="font-size: 11px; color: #64748B; font-weight: 600; text-transform: uppercase;">Water Reserves</div>
+            <div id="profile-modal-water" style="font-size: 18px; font-weight: 800; color: #0284C7; margin-top: 4px;">72,000 L</div>
+          </div>
+          <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; padding: 12px;">
+            <div style="font-size: 11px; color: #64748B; font-weight: 600; text-transform: uppercase;">Database Tables</div>
+            <div id="profile-modal-tables" style="font-size: 18px; font-weight: 800; color: #7C3AED; margin-top: 4px;">2 Tables</div>
+          </div>
+        </div>
+
+        <div style="background: #F1F5F9; border-radius: 10px; padding: 14px; margin-bottom: 20px;">
+          <div style="font-size: 12px; font-weight: 700; color: #334155; margin-bottom: 8px;">🏆 Career Progress & Badges</div>
+          <div id="profile-modal-badges" style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <span style="background: #E2E8F0; padding: 4px 8px; border-radius: 6px; font-size: 12px;">🌱 Database Pioneer</span>
+          </div>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 10px;">
+          <button class="btn-primary" id="btn-profile-continue" style="padding: 8px 18px; border-radius: 8px; font-size: 13px; font-weight: 700; background: #10B981; color: #064E3B; border: none; cursor: pointer;">Close Profile</button>
         </div>
       </div>
     </div>

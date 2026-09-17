@@ -16,6 +16,7 @@ class GameState {
     this.xp = 0;
     this.badges = [];
     this.completedMissions = [];
+    this.droughtInitialized = false;
     this.weather = { type: 'Sunny', temp: '24°C', icon: '☀️' };
     this.listeners = [];
   }
@@ -151,13 +152,17 @@ class GameState {
     }
   }
 
-  completeCurrentMission() {
+  completeCurrentMission(rewardMoney = 0, rewardXp = 0) {
     const missionKey = `L${this.currentLevel}_M${this.currentMissionIndex}`;
-    if (!this.completedMissions.includes(missionKey)) {
+    const isNew = !this.completedMissions.includes(missionKey);
+    if (isNew) {
       this.completedMissions.push(missionKey);
+      if (rewardMoney > 0) this.money += rewardMoney;
+      if (rewardXp > 0) this.xp += rewardXp;
     }
     this.currentMissionIndex += 1;
     this.notify();
+    return isNew;
   }
 
   setLevel(levelNum) {
@@ -180,7 +185,8 @@ class GameState {
         money: this.money,
         xp: this.xp,
         badges: this.badges,
-        completedMissions: this.completedMissions
+        completedMissions: this.completedMissions,
+        droughtInitialized: this.droughtInitialized
       };
       localStorage.setItem('farmdb_gamestate', JSON.stringify(data));
     } catch (e) {}
@@ -203,13 +209,18 @@ class GameState {
         this.xp = data.xp || 0;
         this.badges = data.badges || [];
         this.completedMissions = data.completedMissions || [];
+        this.droughtInitialized = !!data.droughtInitialized;
       }
     } catch (e) {}
   }
 
   resetAll() {
-    localStorage.removeItem('farmdb_gamestate');
-    localStorage.removeItem('farmdb_terminal_pos');
+    try {
+      if (typeof localStorage !== 'undefined') {
+        localStorage.removeItem('farmdb_gamestate');
+        localStorage.removeItem('farmdb_terminal_pos');
+      }
+    } catch (e) {}
     this.currentLevel = 1;
     this.currentMissionIndex = 0;
     this.season = 1;
@@ -222,6 +233,7 @@ class GameState {
     this.xp = 0;
     this.badges = [];
     this.completedMissions = [];
+    this.droughtInitialized = false;
     this.notify();
   }
 }

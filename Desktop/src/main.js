@@ -87,8 +87,12 @@ class FarmDBApp {
     const resizeHandleEl = document.getElementById('terminal-resize-handle');
     this.terminalController = setupDraggableWindow(terminalEl, titlebarEl, resizeHandleEl);
 
-    // Global hook for live minimized farm report
+    // Global hooks for live minimized farm report and test automation
     window.renderFarmQuickReport = () => this.renderMinimizedFarmReport();
+    window.sqlEngine = sqlEngine;
+    window.gameState = gameState;
+    window.farm3D = farm3D;
+    window.simulation = simulation;
 
     // Bring terminal to front on click
     if (terminalEl) {
@@ -1209,6 +1213,9 @@ class FarmDBApp {
     // Toggle Sound
     const btnToggleSound = document.getElementById('btn-toggle-sound');
     const soundIcon = document.getElementById('sound-icon');
+    if (soundIcon) {
+      soundIcon.textContent = sound.muted ? '🔇' : '🔊';
+    }
     if (btnToggleSound) {
       btnToggleSound.addEventListener('click', () => {
         const isSoundOn = sound.toggleMute();
@@ -1216,6 +1223,19 @@ class FarmDBApp {
         this.showToast(isSoundOn ? 'Sound effects enabled 🔊' : 'Sound muted 🔇', 'info');
       });
     }
+
+    // Auto-resume AudioContext on first user interaction so sounds play unmuted
+    const unlockAudio = () => {
+      sound.init();
+      if (sound.ctx && sound.ctx.state === 'suspended' && !sound.muted) {
+        sound.ctx.resume();
+        sound.startAmbient();
+      }
+      document.removeEventListener('pointerdown', unlockAudio);
+      document.removeEventListener('keydown', unlockAudio);
+    };
+    document.addEventListener('pointerdown', unlockAudio, { once: true });
+    document.addEventListener('keydown', unlockAudio, { once: true });
 
     // Show Story Notebook
     const btnShowStory = document.getElementById('btn-show-story');
@@ -1317,6 +1337,46 @@ class FarmDBApp {
     const btnOpenFromMission = document.getElementById('btn-open-terminal-from-mission');
     if (btnOpenFromMission) {
       btnOpenFromMission.addEventListener('click', () => this.openTerminal());
+    }
+
+    // Farmer Profile Area & Level Pill Click to Open Profile Modal
+    const farmerCard = document.querySelector('.sidebar-farmer-card');
+    if (farmerCard) {
+      farmerCard.style.cursor = 'pointer';
+      farmerCard.title = 'Click to open Farmer Career Profile & Stats';
+      farmerCard.addEventListener('click', () => this.openProfileModal());
+    }
+
+    const levelPill = document.getElementById('level-pill');
+    if (levelPill) {
+      levelPill.style.cursor = 'pointer';
+      levelPill.title = 'Click to view Farmer Profile & Career Milestones';
+      levelPill.addEventListener('click', () => this.openProfileModal());
+    }
+
+    const btnCloseProfile = document.getElementById('btn-close-profile-modal');
+    if (btnCloseProfile) {
+      btnCloseProfile.addEventListener('click', () => {
+        const modal = document.getElementById('profile-modal-overlay');
+        if (modal) modal.classList.remove('active');
+      });
+    }
+
+    const btnProfileContinue = document.getElementById('btn-profile-continue');
+    if (btnProfileContinue) {
+      btnProfileContinue.addEventListener('click', () => {
+        const modal = document.getElementById('profile-modal-overlay');
+        if (modal) modal.classList.remove('active');
+      });
+    }
+
+    const profileOverlay = document.getElementById('profile-modal-overlay');
+    if (profileOverlay) {
+      profileOverlay.addEventListener('click', (e) => {
+        if (e.target === profileOverlay) {
+          profileOverlay.classList.remove('active');
+        }
+      });
     }
 
     // Floating Quest HUD Controls & Dragging
@@ -1776,6 +1836,54 @@ class FarmDBApp {
       }
       modal.classList.add('active');
     }
+  }
+
+  openProfileModal() {
+    const modal = document.getElementById('profile-modal-overlay');
+    if (!modal) return;
+
+    const roleEl = document.getElementById('profile-modal-role');
+    const cashEl = document.getElementById('profile-modal-cash');
+    const plotsEl = document.getElementById('profile-modal-plots');
+    const waterEl = document.getElementById('profile-modal-water');
+    const tablesEl = document.getElementById('profile-modal-tables');
+    const badgesEl = document.getElementById('profile-modal-badges');
+
+    const lvlData = MISSIONS_DATA[gameState.currentLevel];
+    if (roleEl) roleEl.textContent = `Lvl ${gameState.currentLevel}: ${lvlData ? lvlData.role : 'Farmer'}`;
+    if (cashEl) cashEl.textContent = `₹${(gameState.money || 500).toLocaleString()}`;
+
+    // Compute active plots
+    const plotsData = (sqlEngine && sqlEngine.isReady) ? (sqlEngine.getTableData('plots') || []) : [];
+    const activePlots = plotsData.filter(p => p.status !== 'locked' && p.plot_id && p.plot_id.includes('.')).length;
+    if (plotsEl) plotsEl.textContent = `${Math.min(5, Math.ceil(activePlots / 2))} / 5 Plots (${activePlots} Beds)`;
+
+    // Compute water reserves
+    const water = simulation.getWaterLevel();
+    if (waterEl) waterEl.textContent = `${(water.current || 0).toLocaleString()} L`;
+
+    // Compute table count
+    const schema = (sqlEngine && sqlEngine.isReady) ? sqlEngine.getSchema() : {};
+    const tableCount = Object.keys(schema).length;
+    if (tablesEl) tablesEl.textContent = `${tableCount} Tables`;
+
+    // Badges list
+    if (badgesEl) {
+      const badges = [];
+      for (let i = 1; i <= gameState.currentLevel; i++) {
+        const d = MISSIONS_DATA[i];
+        if (d && d.completion && d.completion.badge) {
+          badges.push(`<span style="background: #E2E8F0; padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: 600;">${d.completion.badge}</span>`);
+        }
+      }
+      if (badges.length === 0) {
+        badges.push('<span style="background: #E2E8F0; padding: 4px 8px; border-radius: 6px; font-size: 12px;">🌱 Database Pioneer</span>');
+      }
+      badgesEl.innerHTML = badges.join('');
+    }
+
+    modal.classList.add('active');
+    sound.playPlotSelect();
   }
 
   fullReset() {

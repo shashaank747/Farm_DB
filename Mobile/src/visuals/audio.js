@@ -7,7 +7,13 @@
 class SoundController {
   constructor() {
     this.ctx = null;
-    this.muted = true; // Muted by default per user requirement
+    // Default to unmuted per user specification, unless user explicitly muted
+    try {
+      const savedMute = localStorage.getItem('farmdb_audio_muted');
+      this.muted = savedMute !== null ? savedMute === 'true' : false;
+    } catch (e) {
+      this.muted = false;
+    }
     this.ambientInterval = null;
   }
 
@@ -26,11 +32,13 @@ class SoundController {
       this.ctx.resume();
     }
     this.muted = false;
+    try { localStorage.setItem('farmdb_audio_muted', 'false'); } catch (e) {}
     this.startAmbient();
   }
 
   mute() {
     this.muted = true;
+    try { localStorage.setItem('farmdb_audio_muted', 'true'); } catch (e) {}
     this.stopAmbient();
   }
 
@@ -40,6 +48,7 @@ class SoundController {
       this.ctx.resume();
     }
     this.muted = !this.muted;
+    try { localStorage.setItem('farmdb_audio_muted', String(this.muted)); } catch (e) {}
     if (!this.muted) {
       this.startAmbient();
       this.playChime();
