@@ -64,6 +64,16 @@ async function runAccountingVerification() {
 
       // Create stock table and insert exactly 40kg of Tomato @ ₹20/kg
       window.sqlEngine.execute(`
+        CREATE TABLE IF NOT EXISTS farming (
+          farming_id INTEGER PRIMARY KEY AUTOINCREMENT,
+          plot_id TEXT,
+          crop_id TEXT,
+          status TEXT,
+          growth_percent INTEGER
+        );
+        INSERT OR REPLACE INTO farming (farming_id, plot_id, crop_id, status, growth_percent)
+        VALUES (1, 'A1.1', 'Tomato', 'harvested', 100);
+
         CREATE TABLE IF NOT EXISTS stock (
           stock_id INTEGER PRIMARY KEY AUTOINCREMENT,
           product_name TEXT,

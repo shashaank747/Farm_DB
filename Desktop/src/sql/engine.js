@@ -319,6 +319,27 @@ class SQLEngine {
           );
         `);
       }
+
+      // 4. Stock table non-negative & dedup triggers
+      if (this.tableExists('stock')) {
+        this.db.exec(`
+          CREATE TRIGGER IF NOT EXISTS trg_stock_non_negative_update
+          BEFORE UPDATE ON stock
+          FOR EACH ROW
+          WHEN NEW.quantity < 0
+          BEGIN
+            SELECT RAISE(ABORT, 'Stock quantity cannot be negative.');
+          END;
+
+          CREATE TRIGGER IF NOT EXISTS trg_stock_non_negative_insert
+          BEFORE INSERT ON stock
+          FOR EACH ROW
+          WHEN NEW.quantity < 0
+          BEGIN
+            SELECT RAISE(ABORT, 'Stock quantity cannot be negative.');
+          END;
+        `);
+      }
     } catch (e) {
       // Ignore partial schema check errors
     }

@@ -342,6 +342,70 @@ async function runAllTests() {
   reporter.assert(parityCount === 54, `Desktop/Mobile Parity: 100% of missions (${parityCount}/54) have identical IDs and concepts`);
 
   // =========================================================================
+  // SUITE 8: Production Market Sale Accounting & Anti-Exploit
+  // =========================================================================
+  console.log('\n--- SUITE 8: Production Market Sale Accounting & Anti-Exploit ---');
+  const marketEngine = new TestSQLEngine(SQL);
+  marketEngine.execute(`
+    CREATE TABLE stock (
+      stock_id INTEGER PRIMARY KEY AUTOINCREMENT,
+      product_name TEXT,
+      quantity INTEGER,
+      unit TEXT,
+      price INTEGER
+    );
+    INSERT INTO stock (product_name, quantity, unit, price) VALUES ('Tomato', 40, 'kg', 20);
+  `);
+
+  const simInstance = new SimulationEngine();
+  const testState = {
+    money: 500,
+    addMoney(amt) { this.money += amt; }
+  };
+
+  // 1. Valid sale of 40kg @ ₹20/kg
+  const validSale = simInstance.executeValidatedSale({
+    productName: 'Tomato',
+    quantity: 40,
+    engine: marketEngine,
+    state: testState
+  });
+  reporter.assert(validSale.success === true, 'Market Sale: Valid sale succeeds');
+  reporter.assert(validSale.revenue === 800, 'Market Sale: Exact revenue is 40kg * ₹20 = ₹800');
+  reporter.assert(testState.money === 1300, 'Market Sale: Treasury correctly increased from ₹500 to ₹1,300');
+  reporter.assert(validSale.remainingStock === 0, 'Market Sale: Remaining stock in table is 0kg');
+
+  // 2. Attempt sale when stock is 0kg -> Must be rejected
+  const zeroStockSale = simInstance.executeValidatedSale({
+    productName: 'Tomato',
+    quantity: 40,
+    engine: marketEngine,
+    state: testState
+  });
+  reporter.assert(zeroStockSale.success === false, 'Anti-Exploit: Sale with 0kg stock is rejected');
+  reporter.assert(testState.money === 1300, 'Anti-Exploit: Treasury remains unchanged at ₹1,300');
+
+  // 3. Attempt sale with negative quantity -> Must be rejected
+  const negQtySale = simInstance.executeValidatedSale({
+    productName: 'Tomato',
+    quantity: -10,
+    engine: marketEngine,
+    state: testState
+  });
+  reporter.assert(negQtySale.success === false, 'Anti-Exploit: Negative quantity sale is rejected');
+  reporter.assert(testState.money === 1300, 'Anti-Exploit: Treasury remains unchanged at ₹1,300');
+
+  // 4. Attempt sale of non-existent product -> Must be rejected
+  const nonExistentSale = simInstance.executeValidatedSale({
+    productName: 'Golden_Apple',
+    quantity: 5,
+    engine: marketEngine,
+    state: testState
+  });
+  reporter.assert(nonExistentSale.success === false, 'Anti-Exploit: Non-existent product sale is rejected');
+  reporter.assert(testState.money === 1300, 'Anti-Exploit: Treasury remains unchanged at ₹1,300');
+
+  // =========================================================================
   // SUMMARY & EXIT CODE
   // =========================================================================
   const allPassed = reporter.summary();

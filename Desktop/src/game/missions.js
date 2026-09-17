@@ -317,10 +317,14 @@ export const MISSIONS_DATA = {
         ],
         solution: "UPDATE stock SET quantity = quantity - 40 WHERE product_name = 'Tomato';",
         quickFill: "UPDATE stock SET quantity = quantity - 40 WHERE product_name = 'Tomato';",
-        validate: (db) => {
+        validate: (db, queryResult) => {
+          if (!queryResult || !queryResult.success) return false;
           const stock = db.getTableData('stock');
+          if (!stock || stock.length === 0) return false;
           const tomato = stock.find(s => (s.product_name || '').toLowerCase() === 'tomato');
-          return tomato && tomato.quantity === 0;
+          const farming = db.getTableData('farming');
+          const hasHarvestRecord = farming && farming.some(f => f.status === 'harvested' || f.crop_id?.toLowerCase() === 'tomato');
+          return Boolean(hasHarvestRecord && tomato && Number(tomato.quantity) === 0);
         }
       }
     ]

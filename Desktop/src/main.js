@@ -681,7 +681,10 @@ class FarmDBApp {
   handleMissionSuccess(mission) {
     sound.playHarvestSuccess();
     this.showToast(`🎯 Mission Complete: ${mission.title}!`, 'success');
-    gameState.addXP(25);
+    const isNew = !gameState.completedMissions.includes(mission.id);
+    if (isNew) {
+      gameState.addXP(25);
+    }
 
     // Specific in-game consequences per mission
     if (mission.id === 'L1_M4' || mission.id === 'L1_M5') {
@@ -702,31 +705,45 @@ class FarmDBApp {
         farm3D.playTruckDeliveryAnimation('Seeds & Fertilizer');
       }
     } else if (mission.id === 'L2_M5') {
-      gameState.addMoney(800);
-      sound.playCoin();
-      this.showToast('💰 Order fulfilled! Earned ₹800 cash!', 'success');
+      if (isNew) {
+        const stock = sqlEngine.getTableData('stock');
+        const tomato = stock.find(s => (s.product_name || '').toLowerCase() === 'tomato');
+        const unitPrice = (tomato && Number(tomato.price) > 0) ? Number(tomato.price) : 20;
+        const saleRevenue = 40 * unitPrice; // 40kg * ₹20/kg = ₹800
+        gameState.addMoney(saleRevenue);
+        sound.playCoin();
+        this.showToast(`💰 Order fulfilled! Earned ₹${saleRevenue.toLocaleString()} cash!`, 'success');
+      }
     } else if (mission.id === 'L3_M4') {
       this.showToast('🔓 High-Yield plots filtered! Plot A2 unlocked for cultivation.', 'success');
     } else if (mission.id === 'L4_M4') {
-      gameState.addMoney(1200);
-      sound.playCoin();
-      this.showToast('💰 Priority orders dispatched! Earned ₹1,200 bonus!', 'success');
+      if (isNew) {
+        gameState.addMoney(1200);
+        sound.playCoin();
+        this.showToast('💰 Priority orders dispatched! Earned ₹1,200 bonus!', 'success');
+      }
     } else if (mission.id === 'L5_M4') {
-      gameState.addMoney(3500);
-      sound.playCoin();
-      this.showToast('💰 Wholesale orders invoiced! Earned ₹3,500!', 'success');
+      if (isNew) {
+        gameState.addMoney(3500);
+        sound.playCoin();
+        this.showToast('💰 Wholesale orders invoiced! Earned ₹3,500!', 'success');
+      }
     } else if (mission.id === 'L6_M4') {
       this.showToast('🚜 Machinery fleet deployed to field crews!', 'success');
     } else if (mission.id === 'L7_M4') {
-      gameState.addMoney(5000);
-      sound.playCoin();
-      this.showToast('⚖️ Forensic audit recovered ₹5,000 in lost revenue!', 'success');
+      if (isNew) {
+        gameState.addMoney(5000);
+        sound.playCoin();
+        this.showToast('⚖️ Forensic audit recovered ₹5,000 in lost revenue!', 'success');
+      }
     } else if (mission.id === 'L10_M3') {
-      gameState.addMoney(10000);
-      sound.playCoin();
-      farmRenderer.playHarvestAnimation();
-      if (this.is3DMode) farm3D.playHarvestAnimation();
-      this.showToast('🏆 Emergency drought relief contract completed! Earned ₹10,000!', 'success');
+      if (isNew) {
+        gameState.addMoney(10000);
+        sound.playCoin();
+        farmRenderer.playHarvestAnimation();
+        if (this.is3DMode) farm3D.playHarvestAnimation();
+        this.showToast('🏆 Emergency drought relief contract completed! Earned ₹10,000!', 'success');
+      }
     }
 
     if (this.is3DMode) {

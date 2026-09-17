@@ -330,6 +330,70 @@ export class SimulationEngine {
     const seeds = engine.getTableData('seeds');
     return { stock, seeds };
   }
+
+  /**
+   * Authoritative Market Sale Execution & Accounting
+   * Validates product existence, non-zero quantity, available stock, positive price,
+   * prevents negative stock, computes revenue = qty * price, and updates treasury.
+   */
+  executeValidatedSale({ productName, quantity, engine = sqlEngine, state = gameState }) {
+    if (!engine || !engine.isReady) {
+      return { success: false, error: 'Database engine not ready' };
+    }
+    if (!productName || typeof productName !== 'string') {
+      return { success: false, error: 'Invalid product name' };
+    }
+    const saleQty = Number(quantity);
+    if (isNaN(saleQty) || saleQty <= 0) {
+      return { success: false, error: 'Sale quantity must be greater than zero' };
+    }
+
+    const stockRows = engine.getTableData('stock');
+    if (!stockRows || stockRows.length === 0) {
+      return { success: false, error: 'Warehouse stock table is empty or does not exist' };
+    }
+
+    const item = stockRows.find(s => (s.product_name || '').toLowerCase() === productName.toLowerCase());
+    if (!item) {
+      return { success: false, error: `Product "${productName}" not found in warehouse stock` };
+    }
+
+    const currentQty = Number(item.quantity) || 0;
+    if (currentQty < saleQty) {
+      return {
+        success: false,
+        error: `Insufficient stock for ${productName}. Available: ${currentQty}, Requested: ${saleQty}`
+      };
+    }
+
+    const unitPrice = Number(item.price) >= 0 ? Number(item.price) : 20;
+    const revenue = saleQty * unitPrice;
+
+    // Deduct stock in SQLite safely
+    const updateRes = engine.execute(`
+      UPDATE stock
+      SET quantity = quantity - ${saleQty}
+      WHERE LOWER(product_name) = '${productName.toLowerCase()}';
+    `);
+
+    if (!updateRes.success) {
+      return { success: false, error: updateRes.error || 'Failed to update stock table' };
+    }
+
+    // Credit treasury
+    state.addMoney(revenue);
+
+    return {
+      success: true,
+      productName: item.product_name,
+      soldQty: saleQty,
+      unitPrice: unitPrice,
+      revenue: revenue,
+      remainingStock: currentQty - saleQty,
+      treasuryBalance: state.money
+    };
+  }
 }
 
 export const simulation = new SimulationEngine();
+
