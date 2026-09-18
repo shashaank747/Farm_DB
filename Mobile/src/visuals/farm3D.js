@@ -319,8 +319,8 @@ class Farm3DWorld {
     this.sunLight = new THREE.DirectionalLight(0xFFF3D0, 1.4);
     this.sunLight.position.set(30, 45, 25);
     this.sunLight.castShadow = true;
-    this.sunLight.shadow.mapSize.width = 1024;
-    this.sunLight.shadow.mapSize.height = 1024;
+    this.sunLight.shadow.mapSize.width = 2048;
+    this.sunLight.shadow.mapSize.height = 2048;
     this.sunLight.shadow.camera.near = 0.5;
     this.sunLight.shadow.camera.far = 160;
     this.sunLight.shadow.camera.left = -50;
@@ -782,7 +782,71 @@ class Farm3DWorld {
     this.scene.add(this.barnGroup);
     this.clickableEntities.push(this.barnGroup);
 
-    this.buildProceduralBarn();
+    // Load 3D Barn Model (Barn.obj)
+    const objLoader = new OBJLoader();
+    objLoader.load(
+      '/models/barn/Barn.obj',
+      (barnModel) => {
+        const box = new THREE.Box3().setFromObject(barnModel);
+
+        // Container group that applies scaling and ground alignment
+        const baseContainer = new THREE.Group();
+        baseContainer.add(barnModel);
+
+        // Scale factor: raw width 2.78, height 2.46, depth 4.37.
+        // Scale of 4.7 gives ~13.0m wide, 11.5m tall, 20.5m deep.
+        const scale = 4.7;
+        baseContainer.scale.set(scale, scale, scale);
+
+        // Align front entrance (max.z) to local Z = 7.0 so it matches the pasture & road line
+        const zOffset = (7.0 / scale) - box.max.z;
+        barnModel.position.set(0, -box.min.y, zOffset);
+
+        // Enhance PBR materials for Barn structure, Roof, and Weather Vane
+        const wallMat = new THREE.MeshStandardMaterial({
+          color: 0xB91C1C, // Heritage rustic barn red
+          roughness: 0.72,
+          metalness: 0.08,
+          side: THREE.DoubleSide
+        });
+        const roofMat = new THREE.MeshStandardMaterial({
+          color: 0x334155, // Weathered dark slate / charcoal shingle
+          roughness: 0.65,
+          metalness: 0.15,
+          side: THREE.DoubleSide
+        });
+        const vaneMat = new THREE.MeshStandardMaterial({
+          color: 0xF59E0B, // Polished antique brass / gold
+          roughness: 0.28,
+          metalness: 0.82,
+          side: THREE.DoubleSide
+        });
+
+        barnModel.traverse((child) => {
+          if (child.isMesh) {
+            child.castShadow = true;
+            child.receiveShadow = true;
+
+            const name = child.name ? child.name.toLowerCase() : '';
+            if (name.includes('roof')) {
+              child.material = roofMat;
+            } else if (name.includes('vane')) {
+              child.material = vaneMat;
+            } else {
+              child.material = wallMat;
+            }
+          }
+        });
+
+        this.barnGroup.add(baseContainer);
+        console.log('🏚️ Successfully deployed realistic 3D Barn from Barn.obj.');
+      },
+      undefined,
+      (err) => {
+        console.warn('Could not load Barn.obj, using procedural fallback:', err);
+        this.buildProceduralBarn();
+      }
+    );
 
     // Pasture Pen with Cows (dynamically synced with SQLite animals table)
     const cow1 = this.createCowModel('Daisy');
@@ -1193,7 +1257,79 @@ class Farm3DWorld {
     this.scene.add(this.tractorGroup);
     this.clickableEntities.push(this.tractorGroup);
 
-    this.buildProceduralTractor();
+    // Setup loading manager with TGALoader for any raytrace textures
+    const manager = new THREE.LoadingManager();
+    manager.addHandler(/\.tga$/i, new TGALoader());
+
+    const mtlLoader = new MTLLoader(manager);
+    mtlLoader.setPath('/models/tractor/');
+    mtlLoader.load(
+      'Tractor.mtl',
+      (materials) => {
+        materials.preload();
+
+        const objLoader = new OBJLoader(manager);
+        objLoader.setMaterials(materials);
+        objLoader.setPath('/models/tractor/');
+        objLoader.load(
+          'Tractor.obj',
+          (tractorModel) => {
+            // Compute bounding box and center pivot at ground level
+            const box = new THREE.Box3().setFromObject(tractorModel);
+            const centerZ = (box.min.z + box.max.z) / 2;
+
+            // Center tractor at pivot: X=0, ground Y=0, Z centered
+            tractorModel.position.set(0, -box.min.y, -centerZ);
+
+            // Container group that applies the scaling in world units
+            const baseContainer = new THREE.Group();
+            baseContainer.add(tractorModel);
+
+            // Scale factor: model height is ~50.8 units; scale of 0.068 gives realistic ~3.45 units height
+            const scale = 0.068;
+            baseContainer.scale.set(scale, scale, scale);
+
+            // Enhance materials for PBR lighting & shadows
+            tractorModel.traverse((child) => {
+              if (child.isMesh) {
+                child.castShadow = true;
+                child.receiveShadow = true;
+
+                const mats = Array.isArray(child.material) ? child.material : [child.material];
+                mats.forEach((m) => {
+                  if (!m) return;
+                  m.side = THREE.DoubleSide;
+                  if (m.name === 'body' || m.name === 'traktor_eu_red') {
+                    m.color.setHex(0xDC2626); // Rich classic Old Red
+                    m.roughness = 0.35;
+                    m.metalness = 0.18;
+                  } else if (m.name === 'traktor_eu_chrome' || m.name === 'metal') {
+                    m.roughness = 0.22;
+                    m.metalness = 0.82;
+                  } else if (m.name === 'tyre' || m.name === 'Material__25') {
+                    m.roughness = 0.88;
+                    m.metalness = 0.05;
+                  }
+                });
+              }
+            });
+
+            this.tractorGroup.add(baseContainer);
+            console.log('🚜 Successfully deployed realistic 3D Tractor from Tractor.obj.');
+          },
+          undefined,
+          (err) => {
+            console.warn('Could not load Tractor.obj, using procedural fallback:', err);
+            this.buildProceduralTractor();
+          }
+        );
+      },
+      undefined,
+      (err) => {
+        console.warn('Could not load Tractor.mtl, using procedural fallback:', err);
+        this.buildProceduralTractor();
+      }
+    );
   }
 
   buildProceduralTractor() {
@@ -1249,91 +1385,110 @@ class Farm3DWorld {
     this.scene.add(this.windmillGroup);
     this.clickableEntities.push(this.windmillGroup);
 
-    this.buildProceduralWindmill();
+    const loader = new OBJLoader();
+    loader.load(
+      '/models/windmill/windmill.obj',
+      (wmModel) => {
+        const baseContainer = new THREE.Group();
+        baseContainer.add(wmModel);
+
+        // Scale factor: raw height is ~815; scale 0.018 gives ~14.7m realistic windpump height
+        const scale = 0.018;
+        baseContainer.scale.set(scale, scale, scale);
+
+        // PBR Materials
+        const steelMat = new THREE.MeshStandardMaterial({
+          color: 0x94A3B8,
+          metalness: 0.78,
+          roughness: 0.32,
+          side: THREE.DoubleSide
+        });
+        const bladeMat = new THREE.MeshStandardMaterial({
+          color: 0xE2E8F0,
+          metalness: 0.84,
+          roughness: 0.22,
+          side: THREE.DoubleSide
+        });
+        const vaneMat = new THREE.MeshStandardMaterial({
+          color: 0xDC2626, // Classic Red Rudder Accent
+          metalness: 0.25,
+          roughness: 0.55,
+          side: THREE.DoubleSide
+        });
+        const shaftMat = new THREE.MeshStandardMaterial({
+          color: 0x334155,
+          metalness: 0.82,
+          roughness: 0.28,
+          side: THREE.DoubleSide
+        });
+        const tankMat = new THREE.MeshStandardMaterial({
+          color: 0x475569,
+          metalness: 0.45,
+          roughness: 0.52,
+          side: THREE.DoubleSide
+        });
+
+        wmModel.traverse((child) => {
+          if (child.isMesh) {
+            child.castShadow = true;
+            child.receiveShadow = true;
+
+            const name = child.name ? child.name.toLowerCase() : '';
+            if (name.includes('ventilateur')) {
+              child.material = bladeMat;
+
+              // Center geometry on its local hub axis so rotation spins smoothly
+              const fanBox = new THREE.Box3().setFromObject(child);
+              const hubCenter = fanBox.getCenter(new THREE.Vector3());
+              child.geometry.center();
+              child.position.copy(hubCenter);
+              this.windmillRotor = child;
+            } else if (name.includes('girouette')) {
+              child.material = vaneMat;
+            } else if (name.includes('shaft')) {
+              child.material = shaftMat;
+            } else if (name.includes('reservoir')) {
+              child.material = tankMat;
+            } else {
+              child.material = steelMat;
+            }
+          }
+        });
+
+        this.windmillGroup.add(baseContainer);
+        console.log('💨 Successfully deployed Operational 3D Farm Windpump.');
+      },
+      undefined,
+      (err) => {
+        console.warn('Could not load windmill.obj, using procedural fallback:', err);
+        this.buildProceduralWindmill();
+      }
+    );
   }
 
   buildProceduralWindmill() {
     const towerMat = new THREE.MeshStandardMaterial({ color: 0x94A3B8, metalness: 0.8, roughness: 0.3 });
     const bladeMat = new THREE.MeshStandardMaterial({ color: 0xE2E8F0, metalness: 0.85, roughness: 0.2 });
-    const vaneMat = new THREE.MeshStandardMaterial({ color: 0xDC2626, roughness: 0.5 });
-    const tankMat = new THREE.MeshStandardMaterial({ color: 0x475569, metalness: 0.4, roughness: 0.6 });
 
-    // 4-Leg Lattice Steel Tower
-    const towerHeight = 14;
-    const legGeo = new THREE.CylinderGeometry(0.08, 0.12, towerHeight, 6);
-    const offsets = [
-      [-1.4, -1.4, -0.45, -0.45],
-      [1.4, -1.4, 0.45, -0.45],
-      [1.4, 1.4, 0.45, 0.45],
-      [-1.4, 1.4, -0.45, 0.45]
-    ];
-    offsets.forEach(([bx, bz, tx, tz]) => {
-      const leg = new THREE.Mesh(legGeo, towerMat);
-      leg.position.set((bx + tx) / 2, towerHeight / 2, (bz + tz) / 2);
-      const dir = new THREE.Vector3(tx - bx, towerHeight, tz - bz).normalize();
-      leg.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir);
-      leg.castShadow = true;
-      this.windmillGroup.add(leg);
-    });
+    const tower = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 2.2, 14, 4), towerMat);
+    tower.position.y = 7;
+    tower.castShadow = true;
+    this.windmillGroup.add(tower);
 
-    // Horizontal Ring Braces
-    for (let h = 3.5; h < towerHeight; h += 3.5) {
-      const rSize = (towerHeight - h) * 0.18 + 0.9;
-      const ringGeo = new THREE.BoxGeometry(rSize * 2, 0.1, rSize * 2);
-      const ring = new THREE.Mesh(ringGeo, towerMat);
-      ring.position.y = h;
-      this.windmillGroup.add(ring);
-    }
-
-    // Base Water Collection Tank
-    const tankGeo = new THREE.CylinderGeometry(1.6, 1.6, 1.8, 16);
-    const tank = new THREE.Mesh(tankGeo, tankMat);
-    tank.position.y = 0.9;
-    tank.castShadow = true;
-    this.windmillGroup.add(tank);
-
-    // Gearbox Housing on Top
-    const gearBox = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.7, 1.4), towerMat);
-    gearBox.position.set(0, towerHeight + 0.4, 0);
-    this.windmillGroup.add(gearBox);
-
-    // Red Tail Vane (points south)
-    const tailVane = new THREE.Mesh(new THREE.BoxGeometry(0.06, 1.6, 2.2), vaneMat);
-    tailVane.position.set(0, towerHeight + 0.6, -2.4);
-    tailVane.castShadow = true;
-    this.windmillGroup.add(tailVane);
-
-    // Multi-Blade Fan Wheel (Rotor)
     const rotor = new THREE.Group();
-    rotor.position.set(0, towerHeight + 0.4, 0.8);
-
-    // Spinner Hub
-    const hub = new THREE.Mesh(new THREE.ConeGeometry(0.4, 0.5, 12), towerMat);
-    hub.rotateX(Math.PI / 2);
-    rotor.add(hub);
-
-    // Outer Stabilizing Ring
-    const hoop = new THREE.Mesh(new THREE.TorusGeometry(2.5, 0.04, 6, 24), towerMat);
-    rotor.add(hoop);
-
-    // 16 Aerodynamic Radial Blades
-    for (let i = 0; i < 16; i++) {
-      const blade = new THREE.Mesh(new THREE.BoxGeometry(0.35, 2.3, 0.03), bladeMat);
-      blade.position.y = 1.35;
-      blade.rotation.y = 0.3;
-      blade.castShadow = true;
-      const spoke = new THREE.Group();
-      spoke.rotation.z = (i * Math.PI * 2) / 16;
-      spoke.add(blade);
-      rotor.add(spoke);
+    rotor.position.set(0, 14, 0.6);
+    for (let i = 0; i < 8; i++) {
+      const blade = new THREE.Mesh(new THREE.BoxGeometry(0.35, 3.6, 0.05), bladeMat);
+      blade.position.y = 1.8;
+      blade.rotation.z = (i * Math.PI) / 4;
+      rotor.add(blade);
     }
-
     this.windmillGroup.add(rotor);
     this.windmillRotor = rotor;
   }
 
   // ==========================================================
-  // GREEN ENERGY HORIZON WIND TURBINE
+  // GREEN ENERGY HORIZON WIND TURBINE (EolicOBJ.obj)
   // Unlocked on Level 4+; hidden until Level 4!
   // ==========================================================
   buildWindTurbine() {
@@ -1344,62 +1499,95 @@ class Farm3DWorld {
     this.scene.add(this.turbineGroup);
     this.clickableEntities.push(this.turbineGroup);
 
-    this.buildProceduralWindTurbine();
+    // Initial check: hidden until Level 4
     this.updateWindTurbineVisibility();
-  }
 
-  buildProceduralWindTurbine() {
-    const turbineMat = new THREE.MeshStandardMaterial({
-      color: 0xF8FAFC,
-      roughness: 0.32,
-      metalness: 0.18,
-      side: THREE.DoubleSide
-    });
-    const hubMat = new THREE.MeshStandardMaterial({
-      color: 0xE2E8F0,
-      roughness: 0.25,
-      metalness: 0.28
-    });
+    const loader = new OBJLoader();
+    loader.load(
+      '/models/whitewindmill/EolicOBJ.obj',
+      (turbineModel) => {
+        const baseContainer = new THREE.Group();
 
-    // Mast Tower (tapered 26m)
-    const towerGeo = new THREE.CylinderGeometry(0.7, 1.5, 26, 16);
-    const tower = new THREE.Mesh(towerGeo, turbineMat);
-    tower.position.y = 13;
-    tower.castShadow = true;
-    this.turbineGroup.add(tower);
+        // Scale factor: model mast is ~28 units, total ~55.8 units; scale 0.65 gives ~18.2m mast and ~36m total height
+        const scale = 0.65;
+        baseContainer.scale.set(scale, scale, scale);
 
-    // Nacelle Housing
-    const nacelleGeo = new THREE.BoxGeometry(1.8, 1.6, 4.0);
-    const nacelle = new THREE.Mesh(nacelleGeo, hubMat);
-    nacelle.position.set(0, 26.2, 0.6);
-    nacelle.castShadow = true;
-    this.turbineGroup.add(nacelle);
+        const turbineMat = new THREE.MeshStandardMaterial({
+          color: 0xF8FAFC, // Aerodynamic turbine white
+          roughness: 0.32,
+          metalness: 0.18,
+          side: THREE.DoubleSide
+        });
+        const hubMat = new THREE.MeshStandardMaterial({
+          color: 0xE2E8F0,
+          roughness: 0.25,
+          metalness: 0.28
+        });
+        const knollMat = new THREE.MeshStandardMaterial({
+          color: 0x3F6212, // Countryside grass mound
+          roughness: 0.85
+        });
+        const stoneMat = new THREE.MeshStandardMaterial({
+          color: 0x64748B,
+          roughness: 0.8
+        });
 
-    // Nosecone Spinner & Rotor Group
-    const rotorGroup = new THREE.Group();
-    rotorGroup.position.set(0, 26.2, 2.8);
+        // Collect the 3 turbine blades and the spinner nosecone for rotating group
+        const bladeMeshes = [];
+        const staticMeshes = [];
 
-    const spinnerGeo = new THREE.ConeGeometry(0.8, 1.4, 16);
-    spinnerGeo.rotateX(Math.PI / 2);
-    const spinner = new THREE.Mesh(spinnerGeo, hubMat);
-    rotorGroup.add(spinner);
+        turbineModel.traverse((child) => {
+          if (child.isMesh) {
+            child.castShadow = true;
+            child.receiveShadow = true;
 
-    // 3 Aerodynamic Turbine Propeller Blades
-    for (let b = 0; b < 3; b++) {
-      const bladeGroup = new THREE.Group();
-      bladeGroup.rotation.z = b * (Math.PI * 2 / 3);
+            const name = child.name || '';
+            if (name.includes('Roundcube.001')) {
+              child.material = knollMat;
+              staticMeshes.push(child);
+            } else if (name.startsWith('Plane')) {
+              child.material = stoneMat;
+              staticMeshes.push(child);
+            } else if (name.includes('Cube')) {
+              child.material = hubMat; // Nacelle housing on top of mast
+              staticMeshes.push(child);
+            } else if (name === 'Cylinder.003') {
+              child.material = turbineMat; // Mast tower
+              staticMeshes.push(child);
+            } else if (name === 'Roundcube') {
+              child.material = hubMat; // Nosecone spinner
+              bladeMeshes.push(child);
+            } else {
+              // 3 aerodynamic blades (Cylinder, Cylinder.001, Cylinder.002)
+              child.material = turbineMat;
+              bladeMeshes.push(child);
+            }
+          }
+        });
 
-      const bladeGeo = new THREE.BoxGeometry(0.42, 13.5, 0.1);
-      const blade = new THREE.Mesh(bladeGeo, turbineMat);
-      blade.position.y = 6.8;
-      blade.castShadow = true;
-      bladeGroup.add(blade);
+        // Add static parts to base container
+        staticMeshes.forEach(m => baseContainer.add(m));
 
-      rotorGroup.add(bladeGroup);
-    }
+        // Create rotor group pivoted exactly at hub center (Y: 27.85, Z: 1.62)
+        const rotorGroup = new THREE.Group();
+        rotorGroup.position.set(0, 27.85, 1.62);
 
-    this.turbineGroup.add(rotorGroup);
-    this.turbineRotor = rotorGroup;
+        bladeMeshes.forEach(blade => {
+          blade.position.set(0, -27.85, -1.62);
+          rotorGroup.add(blade);
+        });
+
+        baseContainer.add(rotorGroup);
+        this.turbineRotor = rotorGroup;
+        this.turbineGroup.add(baseContainer);
+        this.updateWindTurbineVisibility();
+        console.log('⚡ Successfully deployed Horizon Wind Turbine from EolicOBJ.obj.');
+      },
+      undefined,
+      (err) => {
+        console.warn('Could not load EolicOBJ.obj, using fallback:', err);
+      }
+    );
   }
 
   updateWindTurbineVisibility(level = (gameState ? gameState.currentLevel : 1)) {
@@ -1974,7 +2162,121 @@ class Farm3DWorld {
       [-38, -12], [-36, 16], [-38, 26]
     ];
 
-    this.buildProceduralTrees(treePositions);
+    const loader = new TDSLoader();
+    loader.setResourcePath('/models/trees/');
+
+    // Invert the leaf alpha mask and disable mipmap erosion
+    const createInvertedAlpha = (src) => {
+      const canvas = document.createElement('canvas');
+      const texture = new THREE.CanvasTexture(canvas);
+      texture.colorSpace = THREE.NoColorSpace;
+      texture.minFilter = THREE.LinearFilter;
+      texture.magFilter = THREE.LinearFilter;
+      texture.generateMipmaps = false;
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+        const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const d = imgData.data;
+        for (let i = 0; i < d.length; i += 4) {
+          const inv = 255 - d[i];
+          d[i] = inv;
+          d[i + 1] = inv;
+          d[i + 2] = inv;
+          d[i + 3] = 255;
+        }
+        ctx.putImageData(imgData, 0, 0);
+        texture.needsUpdate = true;
+      };
+      img.src = src;
+      return texture;
+    };
+
+    const leafAlpha = createInvertedAlpha('/models/trees/blatt1_a.jpg');
+
+    loader.load(
+      '/models/trees/Tree1.3ds',
+      (treeObj) => {
+        // 3DS coordinates use Z-up; rotate to Three.js Y-up
+        treeObj.rotation.x = -Math.PI / 2;
+
+        const baseGroup = new THREE.Group();
+        baseGroup.add(treeObj);
+
+        // Align base of tree directly onto ground level (Y = 0)
+        const box = new THREE.Box3().setFromObject(baseGroup);
+        treeObj.position.y = -box.min.y;
+
+        // Process materials: Convert 3DS phong specular to matte MeshStandardMaterial with deep lush green foliage
+        baseGroup.traverse((child) => {
+          if (child.isMesh) {
+            child.castShadow = true;
+            child.receiveShadow = true;
+
+            const updateMat = (mat) => {
+              if (!mat) return mat;
+              const isLeaf = mat.name && (mat.name.toLowerCase().includes('leaf') || mat.name.toLowerCase().includes('blatt'));
+              if (isLeaf) {
+                const leafMat = new THREE.MeshStandardMaterial({
+                  name: mat.name || 'TreeLeafMat',
+                  color: 0x3E7D30, // Deep lush foliage green - never appears white at distance!
+                  map: mat.map || null,
+                  alphaMap: leafAlpha,
+                  transparent: false, // Pure alpha cutout: prevents depth sorting haze and distance bleaching
+                  alphaTest: 0.44,
+                  roughness: 0.96, // completely matte - kills the white specular sun glare that made trees white!
+                  metalness: 0.0,
+                  side: THREE.DoubleSide,
+                  depthWrite: true
+                });
+                if (leafMat.map) leafMat.map.colorSpace = THREE.SRGBColorSpace;
+                return leafMat;
+              } else {
+                const barkMat = new THREE.MeshStandardMaterial({
+                  name: mat.name || 'TreeBarkMat',
+                  color: 0x5D4037,
+                  map: mat.map || null,
+                  roughness: 0.9,
+                  metalness: 0.05
+                });
+                if (barkMat.map) barkMat.map.colorSpace = THREE.SRGBColorSpace;
+                return barkMat;
+              }
+            };
+
+            if (Array.isArray(child.material)) {
+              child.material = child.material.map(updateMat);
+            } else {
+              child.material = updateMat(child.material);
+            }
+          }
+        });
+
+        // Deploy realistic 3D tree instances around the farm
+        treePositions.forEach((pos, idx) => {
+          const treeInstance = baseGroup.clone(true);
+          // Scale: Tree1 height is ~15.8 units; scale 0.50 - 0.68 yields realistic ~7.8 - 10.5 units height
+          const scale = 0.50 + ((idx * 41) % 15) * 0.012;
+          treeInstance.scale.set(scale, scale, scale);
+          treeInstance.position.set(pos[0], 0, pos[1]);
+          treeInstance.rotation.y = ((idx * 83) % 360) * (Math.PI / 180);
+
+          this.scene.add(treeInstance);
+          this.treeMeshes.push(treeInstance);
+        });
+
+        console.log(`🌲 Deployed ${this.treeMeshes.length} realistic 3D trees from Tree1.3ds.`);
+      },
+      undefined,
+      (err) => {
+        console.warn('Could not load Tree1.3ds, falling back to procedural trees:', err);
+        this.buildProceduralTrees(treePositions);
+      }
+    );
   }
 
   buildProceduralTrees(treePositions) {
@@ -2107,7 +2409,43 @@ class Farm3DWorld {
       { id: 'lamp_path_e', x: 26, y: 0, z: -4.2, rotY: -Math.PI / 2, label: 'East Meadow Walkway Lamp' }
     ];
 
-    this.setupProceduralLampPosts(this.lampConfigs);
+    const manager = new THREE.LoadingManager();
+    const mtlLoader = new MTLLoader(manager);
+    mtlLoader.setPath('/models/lamppost/');
+    mtlLoader.load(
+      'rv_lamp_post_4.mtl',
+      (materials) => {
+        materials.preload();
+        const objLoader = new OBJLoader(manager);
+        objLoader.setMaterials(materials);
+        objLoader.setPath('/models/lamppost/');
+        objLoader.load(
+          'rv_lamp_post_4.obj',
+          (lampObj) => {
+            this.setupLampPosts(lampObj, this.lampConfigs);
+          },
+          undefined,
+          (err) => {
+            console.warn('Could not load lamp post OBJ, using procedural fallback:', err);
+            this.setupProceduralLampPosts(this.lampConfigs);
+          }
+        );
+      },
+      undefined,
+      (err) => {
+        console.warn('Could not load lamp post MTL, loading OBJ directly or fallback:', err);
+        const objLoader = new OBJLoader(manager);
+        objLoader.setPath('/models/lamppost/');
+        objLoader.load(
+          'rv_lamp_post_4.obj',
+          (lampObj) => {
+            this.setupLampPosts(lampObj, this.lampConfigs);
+          },
+          undefined,
+          () => this.setupProceduralLampPosts(this.lampConfigs)
+        );
+      }
+    );
   }
 
   setupLampPosts(baseModel, configs) {
