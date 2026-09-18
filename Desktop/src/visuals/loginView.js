@@ -194,7 +194,7 @@ class LoginViewController {
   }
 
   /**
-   * 13. Desktop Mouse Parallax with smooth lerp
+   * 13. Desktop Mouse Parallax with smooth lerp & lifecycle management
    */
   setupMouseParallax() {
     // Check if device is desktop and prefers motion
@@ -206,16 +206,41 @@ class LoginViewController {
     this.isParallaxActive = true;
 
     window.addEventListener('mousemove', (e) => {
+      if (!this.isParallaxActive || this.isLoggedIn) return;
       const x = (e.clientX / window.innerWidth) - 0.5;
       const y = (e.clientY / window.innerHeight) - 0.5;
       this.targetMouse = { x, y };
+      this.startParallaxLoop();
     });
 
-    const loop = () => {
-      if (!this.isParallaxActive) return;
+    // Pause parallax when page is not visible
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        this.stopParallaxLoop();
+      } else if (!this.isLoggedIn && this.screenEl && !this.screenEl.classList.contains('hidden')) {
+        this.startParallaxLoop();
+      }
+    });
 
-      this.currentMouse.x += (this.targetMouse.x - this.currentMouse.x) * 0.08;
-      this.currentMouse.y += (this.targetMouse.y - this.currentMouse.y) * 0.08;
+    this.startParallaxLoop();
+  }
+
+  startParallaxLoop() {
+    if (this.rafId || !this.isParallaxActive || this.isLoggedIn) return;
+    if (typeof document !== 'undefined' && document.hidden) return;
+
+    const loop = () => {
+      if (!this.isParallaxActive || this.isLoggedIn || (typeof document !== 'undefined' && document.hidden)) {
+        this.stopParallaxLoop();
+        return;
+      }
+
+      const dx = this.targetMouse.x - this.currentMouse.x;
+      const dy = this.targetMouse.y - this.currentMouse.y;
+
+      // Smooth lerp
+      this.currentMouse.x += dx * 0.08;
+      this.currentMouse.y += dy * 0.08;
 
       const mx = this.currentMouse.x;
       const my = this.currentMouse.y;
@@ -234,10 +259,23 @@ class LoginViewController {
       root.style.setProperty('--parallax-card-x', `${(mx * 2.5).toFixed(2)}px`);
       root.style.setProperty('--parallax-card-y', `${(my * 2).toFixed(2)}px`);
 
+      // If mouse motion settled to nearly 0, stop loop to free main thread
+      if (Math.abs(dx) < 0.0001 && Math.abs(dy) < 0.0001) {
+        this.rafId = null;
+        return;
+      }
+
       this.rafId = requestAnimationFrame(loop);
     };
 
     this.rafId = requestAnimationFrame(loop);
+  }
+
+  stopParallaxLoop() {
+    if (this.rafId) {
+      cancelAnimationFrame(this.rafId);
+      this.rafId = null;
+    }
   }
 
   /**
@@ -318,15 +356,18 @@ class LoginViewController {
       this.screenEl.style.display = '';
       this.screenEl.classList.remove('hidden');
     }
+    this.startParallaxLoop();
   }
 
   hide() {
+    this.stopParallaxLoop();
     if (this.screenEl) {
       this.screenEl.classList.add('hidden');
     }
   }
 
   hideImmediate() {
+    this.stopParallaxLoop();
     if (this.screenEl) {
       this.screenEl.classList.add('hidden');
       this.screenEl.style.display = 'none';
@@ -341,6 +382,7 @@ class LoginViewController {
       void this.screenEl.offsetWidth;
       this.screenEl.classList.remove('hidden');
     }
+    this.startParallaxLoop();
     sound.playBirdChirp();
   }
 }

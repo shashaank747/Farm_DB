@@ -100,6 +100,15 @@ class Farm3DWorld {
 
     this.startTime = performance.now();
     this.isInitialized = false;
+
+    // Lifecycle, Visibility & Idle Management
+    this.rafId = null;
+    this.isPaused = false;
+    this.isTabVisible = typeof document !== 'undefined' ? !document.hidden : true;
+    this.isElementVisible = true;
+    this.lastRenderTime = performance.now();
+    this.lastUserActivity = performance.now();
+    this.boundAnimate = (time) => this.animate(time);
   }
 
   init(containerEl) {
@@ -186,7 +195,10 @@ class Farm3DWorld {
     this.syncLightingAndTime();
     this.syncFromDatabase();
     this.updateWindTurbineVisibility();
-    this.animate();
+
+    // 9. Visibility, Lifecycle & Inactivity Management
+    this.setupLifecycleManagement();
+    this.startAnimationLoop();
 
     window.addEventListener('resize', () => this.onWindowResize());
     this.isInitialized = true;
@@ -3798,12 +3810,104 @@ class Farm3DWorld {
   }
 
   // ==========================================================
+  // LIFECYCLE, VISIBILITY & PERFORMANCE MANAGEMENT
+  // ==========================================================
+  setupLifecycleManagement() {
+    // 1. Page Visibility API (Pause RAF when tab hidden / in background)
+    if (typeof document !== 'undefined') {
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+          this.isTabVisible = false;
+          this.stopAnimationLoop();
+        } else {
+          this.isTabVisible = true;
+          this.dogClock.getDelta(); // flush delta spike
+          this.lastRenderTime = performance.now();
+          this.lastUserActivity = performance.now();
+          this.startAnimationLoop();
+        }
+      });
+    }
+
+    // 2. Element Visibility (IntersectionObserver for canvas container)
+    if (typeof IntersectionObserver !== 'undefined' && this.container) {
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          this.isElementVisible = entry.isIntersecting;
+          if (this.isElementVisible && this.isTabVisible && !this.isPaused) {
+            this.dogClock.getDelta();
+            this.lastRenderTime = performance.now();
+            this.startAnimationLoop();
+          } else {
+            this.stopAnimationLoop();
+          }
+        });
+      }, { threshold: 0.05 });
+      observer.observe(this.container);
+    }
+
+    // 3. User Activity Tracking (for smart idle frame-rate throttling)
+    const onActivity = () => {
+      this.lastUserActivity = performance.now();
+      if (!this.rafId && this.isTabVisible && this.isElementVisible && !this.isPaused) {
+        this.startAnimationLoop();
+      }
+    };
+    ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll', 'wheel'].forEach(evt => {
+      window.addEventListener(evt, onActivity, { passive: true });
+    });
+  }
+
+  startAnimationLoop() {
+    if (this.rafId) return;
+    if (!this.isTabVisible || !this.isElementVisible || this.isPaused) return;
+    this.rafId = requestAnimationFrame(this.boundAnimate);
+  }
+
+  stopAnimationLoop() {
+    if (this.rafId) {
+      cancelAnimationFrame(this.rafId);
+      this.rafId = null;
+    }
+  }
+
+  pause() {
+    this.isPaused = true;
+    this.stopAnimationLoop();
+  }
+
+  resume() {
+    this.isPaused = false;
+    this.dogClock.getDelta();
+    this.lastRenderTime = performance.now();
+    this.lastUserActivity = performance.now();
+    this.startAnimationLoop();
+  }
+
+  // ==========================================================
   // MAIN ANIMATION RENDER LOOP
   // ==========================================================
-  animate() {
-    requestAnimationFrame(() => this.animate());
+  animate(now = performance.now()) {
+    if (!this.isTabVisible || !this.isElementVisible || this.isPaused) {
+      this.stopAnimationLoop();
+      return;
+    }
 
-    const elapsed = (performance.now() - this.startTime) * 0.001;
+    // Smart Inactivity Throttling:
+    // If no user interaction has occurred for > 25 seconds, throttle to 15 FPS (66ms interval)
+    // to keep CPU/GPU idle for Lighthouse audits, battery savings, and background efficiency.
+    const isIdle = (now - this.lastUserActivity) > 25000;
+    const minFrameInterval = isIdle ? 66 : 0;
+
+    if (minFrameInterval > 0 && (now - this.lastRenderTime) < minFrameInterval) {
+      this.rafId = requestAnimationFrame(this.boundAnimate);
+      return;
+    }
+
+    this.lastRenderTime = now;
+    this.rafId = requestAnimationFrame(this.boundAnimate);
+
+    const elapsed = (now - this.startTime) * 0.001;
 
     // 1. Controls update
     if (this.controls) this.controls.update();

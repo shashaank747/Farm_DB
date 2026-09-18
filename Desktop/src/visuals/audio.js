@@ -71,6 +71,37 @@ class SoundController {
         this.ctx = new AudioCtx();
       }
     }
+
+    if (typeof document !== 'undefined' && !this.visibilityListenerAttached) {
+      this.visibilityListenerAttached = true;
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+          this.pauseAllLoops();
+        } else {
+          this.resumeAllLoops();
+        }
+      });
+    }
+  }
+
+  pauseAllLoops() {
+    Object.values(this.audioCache).forEach(audio => {
+      if (audio && audio.loop && !audio.paused) {
+        audio._wasPlayingBeforeHide = true;
+        audio.pause();
+      }
+    });
+  }
+
+  resumeAllLoops() {
+    if (this.muted) return;
+    Object.values(this.audioCache).forEach(audio => {
+      if (audio && audio.loop && audio._wasPlayingBeforeHide) {
+        audio._wasPlayingBeforeHide = false;
+        const p = audio.play();
+        if (p && typeof p.catch === 'function') p.catch(() => {});
+      }
+    });
   }
 
   getAudio(filename, loop = false, defaultVolume = 0.5) {

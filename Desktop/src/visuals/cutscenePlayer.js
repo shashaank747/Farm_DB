@@ -146,6 +146,21 @@ class CutscenePlayer {
     window.addEventListener('resize', () => {
       this.resizeCanvas();
     });
+
+    // Visibility handling (pause when tab hidden)
+    document.addEventListener('visibilitychange', () => {
+      const overlay = document.getElementById('cutscene-modal-overlay');
+      if (overlay && overlay.classList.contains('active')) {
+        if (document.hidden) {
+          if (this.animFrameId) cancelAnimationFrame(this.animFrameId);
+          if (this.particleFrameId) cancelAnimationFrame(this.particleFrameId);
+        } else if (this.isPlaying) {
+          this.lastTimestamp = performance.now();
+          this.startPlaybackLoop();
+          this.initParticles(this.activeCutscene ? this.activeCutscene.mood : 'peaceful');
+        }
+      }
+    });
   }
 
   playCutscene(cutsceneData, levelNumber, levelRole, onComplete = null) {
