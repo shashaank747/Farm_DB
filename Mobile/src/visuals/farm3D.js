@@ -137,51 +137,59 @@ class Farm3DWorld {
     this.setCameraPreset('isometric', false);
 
     // 3. Renderer Setup
-    this.renderer = new THREE.WebGLRenderer({
-      canvas: this.canvas,
-      antialias: true,
-      powerPreference: 'high-performance'
-    });
-    this.renderer.setSize(this.container.clientWidth, this.container.clientHeight);
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    this.renderer.shadowMap.enabled = true;
-    this.renderer.shadowMap.type = THREE.PCFShadowMap;
-    this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.1;
+    try {
+      this.renderer = new THREE.WebGLRenderer({
+        canvas: this.canvas,
+        antialias: true,
+        powerPreference: 'high-performance'
+      });
+      const width = this.container.clientWidth || 800;
+      const height = this.container.clientHeight || 500;
+      this.renderer.setSize(width, height);
+      this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+      this.renderer.shadowMap.enabled = true;
+      this.renderer.shadowMap.type = THREE.PCFShadowMap;
+      this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      this.renderer.toneMappingExposure = 1.1;
 
-    // 4. OrbitControls
-    this.controls = new OrbitControls(this.camera, this.renderer.domElement);
-    this.controls.enableDamping = true;
-    this.controls.dampingFactor = 0.06;
-    this.controls.maxPolarAngle = Math.PI / 2.05; // Don't go below ground
-    this.controls.minDistance = 8;
-    this.controls.maxDistance = 340; // Zoom out to enjoy expansive countryside view
-    this.controls.target.set(0, 2, 0);
+      // 4. OrbitControls
+      this.controls = new OrbitControls(this.camera, this.renderer.domElement);
+      this.controls.enableDamping = true;
+      this.controls.dampingFactor = 0.06;
+      this.controls.maxPolarAngle = Math.PI / 2.05; // Don't go below ground
+      this.controls.minDistance = 8;
+      this.controls.maxDistance = 340; // Zoom out to enjoy expansive countryside view
+      this.controls.target.set(0, 2, 0);
 
-    // 5. Build 3D World
-    this.setupLighting();
-    this.buildTerrain();
-    this.buildInfiniteCountryside();
-    this.buildFencesAndPaths();
-    this.buildPlots();
-    this.buildBarnAndPasture();
-    this.buildWaterReservoir();
-    this.buildEquipmentYard();
-    this.buildWindpump();
-    this.buildWindTurbine();
-    this.buildFarmer();
-    this.buildDeliveryTruck();
-    this.buildGrassAndWildflowers();
-    this.buildFireflies();
-    this.buildEnvironmentProps();
-    this.buildLampPosts();
-    this.buildBirdFlock();
-    this.buildPerchingBird();
-    this.buildClouds();
-    this.buildDog();
+      // 5. Build 3D World
+      this.setupLighting();
+      this.buildTerrain();
+      this.buildInfiniteCountryside();
+      this.buildFencesAndPaths();
+      this.buildPlots();
+      this.buildBarnAndPasture();
+      this.buildWaterReservoir();
+      this.buildEquipmentYard();
+      this.buildWindpump();
+      this.buildWindTurbine();
+      this.buildFarmer();
+      this.buildDeliveryTruck();
+      this.buildGrassAndWildflowers();
+      this.buildFireflies();
+      this.buildEnvironmentProps();
+      this.buildLampPosts();
+      this.buildBirdFlock();
+      this.buildPerchingBird();
+      this.buildClouds();
+      this.buildDog();
 
-    // 6. Event Listeners
-    this.setupInteractivity();
+      // 6. Event Listeners
+      this.setupInteractivity();
+    } catch (err) {
+      console.warn('⚠️ WebGL unavailable or headless environment detected. 3D farm disabled gracefully:', err);
+      this.isInitialized = true;
+      return;
+    }
 
     // 7. Subscribe to DB & GameState Updates
     sqlEngine.addChangeListener(() => this.syncFromDatabase());
