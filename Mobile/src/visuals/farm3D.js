@@ -160,7 +160,6 @@ class Farm3DWorld {
       this.controls.minDistance = 8;
       this.controls.maxDistance = 340; // Zoom out to enjoy expansive countryside view
       this.controls.target.set(0, 2, 0);
-      this.controls.addEventListener('change', () => this.requestRender());
 
       // 5. Build 3D World
       this.setupLighting();
@@ -200,15 +199,18 @@ class Farm3DWorld {
       this.updateWindTurbineVisibility(state ? state.currentLevel : undefined);
     });
 
-    // 8. Initial Sync & Static Render
+    // 8. Initial Sync & Start Loop
     this.syncLightingAndTime();
     this.syncFromDatabase();
     this.updateWindTurbineVisibility();
-    this.render();
+
+    // 9. Visibility, Lifecycle & Inactivity Management
+    this.setupLifecycleManagement();
+    this.startAnimationLoop();
 
     window.addEventListener('resize', () => this.onWindowResize());
     this.isInitialized = true;
-    console.log('🎮 FARMDB 3D WebGL World Initialized (Static On-Demand Mode).');
+    console.log('🎮 FARMDB 3D WebGL World Initialized.');
   }
 
   createControlsOverlay() {
@@ -283,7 +285,6 @@ class Farm3DWorld {
       if (this.camera) {
         this.camera.position.copy(targetPos);
         if (this.controls) this.controls.target.copy(targetLook);
-        this.requestRender();
       }
       return;
     }
@@ -297,7 +298,6 @@ class Farm3DWorld {
       progress += 0.05;
       this.camera.position.lerpVectors(startPos, targetPos, progress);
       this.controls.target.lerpVectors(startLook, targetLook, progress);
-      this.render();
       if (progress < 1) {
         requestAnimationFrame(glide);
       }
@@ -422,25 +422,17 @@ class Farm3DWorld {
   // TERRAIN & ENVIRONMENT
   // ==========================================================
   buildTerrain() {
-    // Flat extended countryside ground plane
-    const groundGeo = new THREE.PlaneGeometry(800, 800);
-    groundGeo.rotateX(-Math.PI / 2);
+    // Main Farm Soil & Grass Platform
+    const groundGeo = new THREE.BoxGeometry(124, 2, 104);
     const groundMat = new THREE.MeshStandardMaterial({
       color: 0x567D46,
-      roughness: 0.88,
-      metalness: 0.02
+      roughness: 0.85,
+      metalness: 0.05
     });
     const ground = new THREE.Mesh(groundGeo, groundMat);
-    ground.position.y = -0.02;
+    ground.position.y = -1;
     ground.receiveShadow = true;
     this.scene.add(ground);
-
-    // Main Farm Soil & Grass Platform
-    const farmBoxGeo = new THREE.BoxGeometry(124, 2, 104);
-    const farmBox = new THREE.Mesh(farmBoxGeo, groundMat);
-    farmBox.position.y = -1;
-    farmBox.receiveShadow = true;
-    this.scene.add(farmBox);
 
     // Dirt Roads & Cobblestone Path
     const roadGeo = new THREE.PlaneGeometry(8, 96);
@@ -464,19 +456,270 @@ class Farm3DWorld {
   }
 
   // ==========================================================
-  // COUNTRYSIDE ENVIRONMENT (HILLS, MOUNTAINS & HILL TREES REMOVED)
+  // EXPANSIVE INFINITE COUNTRYSIDE (Mountains, Foothills, Pines & River)
   // ==========================================================
   buildInfiniteCountryside() {
     this.countrysideGroup = new THREE.Group();
     this.scene.add(this.countrysideGroup);
+
+    // 1. Vast Rolling Countryside Valley Mesh (radius ~450m)
+    const groundGeo = new THREE.PlaneGeometry(850, 850, 64, 64);
+    groundGeo.rotateX(-Math.PI / 2);
+
+    const posAttr = groundGeo.attributes.position;
+    for (let i = 0; i < posAttr.count; i++) {
+      const x = posAttr.getX(i);
+      const z = posAttr.getZ(i);
+
+      // Keep central farm plateau (x: [-62, 62], z: [-52, 52]) level at Y = 0
+      const distFromFarmEdge = Math.max(0, Math.max(Math.abs(x) - 62, Math.abs(z) - 52));
+
+      if (distFromFarmEdge === 0) {
+        posAttr.setY(i, 0);
+      } else {
+        const blend = Math.min(1.0, distFromFarmEdge / 35.0);
+        const wave = Math.sin(x * 0.015) * Math.cos(z * 0.015) * 4.5
+                   + Math.sin(x * 0.035 + 0.8) * 2.0
+                   + Math.sin(z * 0.028) * 2.2;
+        posAttr.setY(i, wave * blend - 0.08);
+      }
+    }
+    groundGeo.computeVertexNormals();
+
+    const valleyMat = new THREE.MeshStandardMaterial({
+      color: 0x4D7A3E, // Lush countryside green matching farm soil grass
+      roughness: 0.9,
+      metalness: 0.03
+    });
+    const valleyMesh = new THREE.Mesh(groundGeo, valleyMat);
+    valleyMesh.receiveShadow = true;
+    this.countrysideGroup.add(valleyMesh);
+
+    // 2. Layered Distant Mountain Ridges (Low-Poly Alpine Horizons)
+    const mountainMat = new THREE.MeshStandardMaterial({
+      color: 0x3A5243, // Atmospheric slate-green mountain rock
+      roughness: 0.85,
+      metalness: 0.05,
+      flatShading: true
+    });
+
+    const createMountainRidge = (width, depth, lengthSegs, widthSegs, posX, posZ, rotY, maxHeight) => {
+      const ridgeGeo = new THREE.PlaneGeometry(width, depth, lengthSegs, widthSegs);
+      ridgeGeo.rotateX(-Math.PI / 2);
+      const rPos = ridgeGeo.attributes.position;
+
+      for (let i = 0; i < rPos.count; i++) {
+        const lx = rPos.getX(i);
+        const lz = rPos.getZ(i);
+        const depthFactor = 1.0 - Math.min(1.0, Math.abs(lz) / (depth * 0.5));
+        const peakHarmonics = Math.abs(Math.sin(lx * 0.012) * 0.6 + Math.sin(lx * 0.028 + 1.1) * 0.3 + Math.sin(lx * 0.06) * 0.1);
+        const h = peakHarmonics * maxHeight * Math.pow(depthFactor, 1.4);
+        rPos.setY(i, h);
+      }
+      ridgeGeo.computeVertexNormals();
+
+      const ridgeMesh = new THREE.Mesh(ridgeGeo, mountainMat);
+      ridgeMesh.position.set(posX, 0, posZ);
+      ridgeMesh.rotation.y = rotY;
+      ridgeMesh.receiveShadow = true;
+      this.countrysideGroup.add(ridgeMesh);
+      return ridgeMesh;
+    };
+
+    // North Mountain Range (behind the barn & wind turbine horizon)
+    createMountainRidge(800, 220, 50, 20, 0, -280, 0, 95);
+    createMountainRidge(650, 160, 40, 16, -60, -200, 0.08, 55);
+
+    // South Horizon Mountains (framing countryside road entrance)
+    createMountainRidge(800, 200, 50, 18, 0, 280, Math.PI, 75);
+    createMountainRidge(600, 140, 40, 14, 40, 210, Math.PI - 0.06, 45);
+
+    // East Horizon Mountains (behind windmill & river valley)
+    createMountainRidge(750, 200, 48, 18, 300, 0, -Math.PI / 2, 85);
+
+    // West Horizon Mountains (pasture & countryside grove flank)
+    createMountainRidge(750, 200, 48, 18, -300, 0, Math.PI / 2, 80);
+
+    // 3. Mountain Conifer & Pine Forests
+    this.buildMountainPineForests();
+
+    // 4. Meandering Countryside River
+    this.buildCountrysideRiver();
   }
 
   buildMountainPineForests() {
-    // Removed
+    const pineTrunkMat = new THREE.MeshStandardMaterial({ color: 0x4A3728, roughness: 0.9 });
+    const pineFoliageMat1 = new THREE.MeshStandardMaterial({ color: 0x1E4620, roughness: 0.85, flatShading: true });
+    const pineFoliageMat2 = new THREE.MeshStandardMaterial({ color: 0x245427, roughness: 0.85, flatShading: true });
+
+    const clusterCenters = [
+      // North Foothills
+      { x: -140, z: -150, count: 18, radius: 45, baseY: 6 },
+      { x: -60, z: -160, count: 22, radius: 50, baseY: 8 },
+      { x: 30, z: -155, count: 20, radius: 45, baseY: 7 },
+      { x: 120, z: -170, count: 24, radius: 55, baseY: 12 },
+      { x: -180, z: -210, count: 25, radius: 60, baseY: 22 },
+      { x: 80, z: -220, count: 25, radius: 65, baseY: 26 },
+
+      // East Ridges & River Flank
+      { x: 140, z: -60, count: 18, radius: 40, baseY: 5 },
+      { x: 170, z: 20, count: 20, radius: 45, baseY: 8 },
+      { x: 190, z: 90, count: 22, radius: 50, baseY: 12 },
+      { x: 230, z: -10, count: 25, radius: 60, baseY: 20 },
+
+      // West Rolling Hills
+      { x: -130, z: -40, count: 16, radius: 35, baseY: 4 },
+      { x: -160, z: 40, count: 20, radius: 45, baseY: 7 },
+      { x: -190, z: 120, count: 22, radius: 50, baseY: 14 },
+      { x: -240, z: -20, count: 25, radius: 55, baseY: 22 },
+
+      // South Mountain Shoulders
+      { x: -110, z: 170, count: 18, radius: 45, baseY: 9 },
+      { x: 40, z: 180, count: 20, radius: 48, baseY: 10 },
+      { x: 130, z: 190, count: 22, radius: 50, baseY: 15 }
+    ];
+
+    const pineForestGroup = new THREE.Group();
+
+    clusterCenters.forEach(cluster => {
+      for (let i = 0; i < cluster.count; i++) {
+        const ang = Math.random() * Math.PI * 2;
+        const dist = Math.sqrt(Math.random()) * cluster.radius;
+        const px = cluster.x + Math.cos(ang) * dist;
+        const pz = cluster.z + Math.sin(ang) * dist;
+        const py = cluster.baseY + (Math.sin(px * 0.02) + Math.cos(pz * 0.02)) * 3.5;
+
+        const treeGroup = new THREE.Group();
+        treeGroup.position.set(px, Math.max(0.1, py), pz);
+
+        const treeScale = 0.8 + Math.random() * 0.7;
+        treeGroup.scale.set(treeScale, treeScale, treeScale);
+
+        const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.35, 2.0, 5), pineTrunkMat);
+        trunk.position.y = 1.0;
+        treeGroup.add(trunk);
+
+        const folMat = Math.random() > 0.5 ? pineFoliageMat1 : pineFoliageMat2;
+        const c1 = new THREE.Mesh(new THREE.ConeGeometry(2.0, 3.0, 5), folMat);
+        c1.position.y = 2.8;
+        treeGroup.add(c1);
+
+        const c2 = new THREE.Mesh(new THREE.ConeGeometry(1.5, 2.5, 5), folMat);
+        c2.position.y = 4.3;
+        treeGroup.add(c2);
+
+        const c3 = new THREE.Mesh(new THREE.ConeGeometry(0.9, 2.0, 5), folMat);
+        c3.position.y = 5.6;
+        treeGroup.add(c3);
+
+        treeGroup.rotation.y = Math.random() * Math.PI * 2;
+        pineForestGroup.add(treeGroup);
+      }
+    });
+
+    this.countrysideGroup.add(pineForestGroup);
   }
 
   buildCountrysideRiver() {
-    // Removed
+    const curvePoints = [
+      new THREE.Vector3(120, 0.12, -320),
+      new THREE.Vector3(95, 0.12, -210),
+      new THREE.Vector3(82, 0.12, -120),
+      new THREE.Vector3(68, 0.12, -35),
+      new THREE.Vector3(56, 0.12, 45),
+      new THREE.Vector3(78, 0.12, 140),
+      new THREE.Vector3(110, 0.12, 230),
+      new THREE.Vector3(135, 0.12, 330)
+    ];
+
+    const riverCurve = new THREE.CatmullRomCurve3(curvePoints);
+    const divisions = 120;
+    const points = riverCurve.getPoints(divisions);
+
+    // Build solid water surface ribbon
+    const riverGeo = new THREE.BufferGeometry();
+    const vertices = [];
+    const uvs = [];
+    const indices = [];
+    const riverWidth = 9.0;
+    const bankWidth = 13.0;
+
+    for (let i = 0; i <= divisions; i++) {
+      const pt = points[i];
+      const tangent = riverCurve.getTangent(i / divisions).normalize();
+      const normal = new THREE.Vector3(-tangent.z, 0, tangent.x).normalize();
+
+      const leftX = pt.x + normal.x * (riverWidth * 0.5);
+      const leftZ = pt.z + normal.z * (riverWidth * 0.5);
+      const rightX = pt.x - normal.x * (riverWidth * 0.5);
+      const rightZ = pt.z - normal.z * (riverWidth * 0.5);
+
+      vertices.push(leftX, 0.12, leftZ);
+      vertices.push(rightX, 0.12, rightZ);
+
+      const v = i / divisions;
+      uvs.push(0, v * 12);
+      uvs.push(1, v * 12);
+
+      if (i < divisions) {
+        const base = i * 2;
+        indices.push(base, base + 1, base + 2);
+        indices.push(base + 1, base + 3, base + 2);
+      }
+    }
+
+    riverGeo.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+    riverGeo.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+    riverGeo.setIndex(indices);
+    riverGeo.computeVertexNormals();
+
+    this.riverMat = new THREE.MeshStandardMaterial({
+      color: 0x2A8EA8,
+      roughness: 0.08,
+      metalness: 0.35,
+      transparent: true,
+      opacity: 0.92
+    });
+
+    const riverMesh = new THREE.Mesh(riverGeo, this.riverMat);
+    riverMesh.receiveShadow = true;
+    this.countrysideGroup.add(riverMesh);
+
+    // Riverbank & submerged riverbed underlayer
+    const bankVertices = [];
+    const bankIndices = [];
+    for (let i = 0; i <= divisions; i++) {
+      const pt = points[i];
+      const tangent = riverCurve.getTangent(i / divisions).normalize();
+      const normal = new THREE.Vector3(-tangent.z, 0, tangent.x).normalize();
+
+      const leftX = pt.x + normal.x * (bankWidth * 0.5);
+      const leftZ = pt.z + normal.z * (bankWidth * 0.5);
+      const rightX = pt.x - normal.x * (bankWidth * 0.5);
+      const rightZ = pt.z - normal.z * (bankWidth * 0.5);
+
+      bankVertices.push(leftX, 0.06, leftZ);
+      bankVertices.push(rightX, 0.06, rightZ);
+
+      if (i < divisions) {
+        const base = i * 2;
+        bankIndices.push(base, base + 1, base + 2);
+        bankIndices.push(base + 1, base + 3, base + 2);
+      }
+    }
+
+    const bankGeo = new THREE.BufferGeometry();
+    bankGeo.setAttribute('position', new THREE.Float32BufferAttribute(bankVertices, 3));
+    bankGeo.setIndex(bankIndices);
+    bankGeo.computeVertexNormals();
+
+    const bankMat = new THREE.MeshStandardMaterial({
+      color: 0x5C5042,
+      roughness: 0.95
+    });
+    const bankMesh = new THREE.Mesh(bankGeo, bankMat);
+    bankMesh.receiveShadow = true;
+    this.countrysideGroup.add(bankMesh);
   }
 
   buildFencesAndPaths() {
@@ -2000,28 +2243,89 @@ class Farm3DWorld {
   }
 
   playTruckDeliveryAnimation(itemName = 'Supplies') {
-    if (!this.deliveryTruckGroup) return;
-
-    // Ensure truck stays firmly parked at its home position
-    if (this.truckHomePos) {
-      this.deliveryTruckGroup.position.copy(this.truckHomePos);
-      this.deliveryTruckGroup.position.y = 0;
-    }
-    if (this.deliverySack) {
-      this.deliverySack.visible = true;
-      this.deliverySack.position.set(0, 1.7, -1.4);
-      this.deliverySack.rotation.set(0, 0, 0);
-    }
+    if (!this.deliveryTruckGroup || this.isTruckAnimating) return;
+    this.isTruckAnimating = true;
 
     try {
-      if (sound && typeof sound.playChime === 'function') sound.playChime();
-      if (sound && typeof sound.playTruckHorn === 'function') sound.playTruckHorn();
+      if (sound && typeof sound.playTractorMotor === 'function') sound.playTractorMotor(2.2);
     } catch (e) { }
 
-    if (window.farmdb && window.farmdb.showToast) {
-      window.farmdb.showToast(`🚚 Delivery logged: 1x Bag of ${itemName} stored in the Barn.`, 'success');
-    }
-    this.requestRender();
+    const startPos = this.truckHomePos.clone();
+    const barnDropPos = new THREE.Vector3(-25, 0, -8);
+    const barnDoorPos = new THREE.Vector3(-32, 2.5, -11);
+
+    let phase = 'drive_to_barn'; // drive_to_barn -> unload_sack -> honk -> drive_back
+    let progress = 0;
+
+    const truckAnim = () => {
+      if (phase === 'drive_to_barn') {
+        progress += 0.02;
+        this.deliveryTruckGroup.position.lerpVectors(startPos, barnDropPos, progress);
+        this.deliveryTruckGroup.position.y = Math.sin(progress * 30) * 0.05;
+
+        if (progress >= 1) {
+          progress = 0;
+          phase = 'unload_sack';
+          this.deliveryTruckGroup.position.copy(barnDropPos);
+          this.deliverySack.visible = true;
+        }
+        requestAnimationFrame(truckAnim);
+
+      } else if (phase === 'unload_sack') {
+        progress += 0.025;
+        // Float sack towards barn door
+        const currentSackPos = new THREE.Vector3().lerpVectors(
+          barnDropPos.clone().add(new THREE.Vector3(0, 1.7, -1.4)),
+          barnDoorPos,
+          progress
+        );
+        currentSackPos.y += Math.sin(progress * Math.PI) * 1.6; // Arc height
+
+        this.deliverySack.position.copy(this.deliveryTruckGroup.worldToLocal(currentSackPos));
+        this.deliverySack.rotation.x += 0.08;
+        this.deliverySack.rotation.y += 0.08;
+
+        if (progress >= 1) {
+          progress = 0;
+          phase = 'honk';
+          this.deliverySack.visible = false;
+          this.deliverySack.position.set(0, 1.7, -1.4);
+          this.deliverySack.rotation.set(0, 0, 0);
+
+          try {
+            if (sound && typeof sound.playChime === 'function') sound.playChime();
+            if (sound && typeof sound.playTruckHorn === 'function') sound.playTruckHorn();
+          } catch (e) { }
+
+          if (window.farmdb && window.farmdb.showToast) {
+            window.farmdb.showToast(`🚚 Delivery truck arrived! 1x Bag of ${itemName} stored in the Barn.`, 'success');
+          }
+        }
+        requestAnimationFrame(truckAnim);
+
+      } else if (phase === 'honk') {
+        progress += 0.03;
+        if (progress >= 1) {
+          progress = 0;
+          phase = 'drive_back';
+        }
+        requestAnimationFrame(truckAnim);
+
+      } else if (phase === 'drive_back') {
+        progress += 0.02;
+        this.deliveryTruckGroup.position.lerpVectors(barnDropPos, startPos, progress);
+        this.deliveryTruckGroup.position.y = Math.sin(progress * 30) * 0.05;
+
+        if (progress >= 1) {
+          this.deliveryTruckGroup.position.copy(startPos);
+          this.deliverySack.visible = true;
+          this.isTruckAnimating = false;
+        } else {
+          requestAnimationFrame(truckAnim);
+        }
+      }
+    };
+    truckAnim();
   }
 
   // ==========================================================
@@ -2116,10 +2420,125 @@ class Farm3DWorld {
   }
 
   // ==========================================================
-  // 3D GRASS TUFTS & WILDFLOWERS (REMOVED)
+  // LUSH 3D GRASS TUFTS & WILDFLOWERS ENVIRONMENT (ORIGINAL STYLIZED)
   // ==========================================================
   buildGrassAndWildflowers() {
     this.grassMeshes = [];
+
+    // Helper to test if coordinates are in an open green meadow zone
+    const isMeadowZone = (x, z) => {
+      // Main north-south dirt road
+      if (x >= -10 && x <= -2 && z >= -35 && z <= 35) return false;
+      // Cross path
+      if (z >= -3.5 && z <= 3.5 && x >= -15 && x <= 40) return false;
+      // Cultivated Plot beds
+      if (x >= -24 && x <= 24 && z >= -15 && z <= -5) return false;
+      if (x >= -24 && x <= 24 && z >= 5 && z <= 15) return false;
+      // Barn
+      if (x >= -38 && x <= -26 && z >= -25 && z <= -11) return false;
+      // Tractor yard
+      if (x >= -19 && x <= -11 && z >= 14 && z <= 22) return false;
+      // Water reservoir
+      const rx = this.waterReservoirGroup ? this.waterReservoirGroup.position.x : -15;
+      const rz = this.waterReservoirGroup ? this.waterReservoirGroup.position.z : -25;
+      if (Math.hypot(x - rx, z - rz) < 4.2) return false;
+      // Windpump
+      const wx = this.windmillGroup ? this.windmillGroup.position.x : 24;
+      const wz = this.windmillGroup ? this.windmillGroup.position.z : -18;
+      if (Math.hypot(x - wx, z - wz) < 5.5) return false;
+      // Platform boundaries
+      if (Math.abs(x) > 42 || Math.abs(z) > 37) return false;
+      return true;
+    };
+
+    // Diverse color palette for grass
+    const grassColors = [0x22C55E, 0x16A34A, 0x15803D, 0x65A30D, 0x84CC16];
+    const grassMaterials = grassColors.map(c => new THREE.MeshStandardMaterial({
+      color: c,
+      roughness: 0.85,
+      side: THREE.DoubleSide
+    }));
+
+    // Flower petal materials
+    const flowerMaterials = [
+      new THREE.MeshStandardMaterial({ color: 0xEF4444, roughness: 0.6 }), // Poppy Red
+      new THREE.MeshStandardMaterial({ color: 0xFACC15, roughness: 0.5 }), // Dandelion Yellow
+      new THREE.MeshStandardMaterial({ color: 0xF8FAFC, roughness: 0.7 }), // Daisy White
+      new THREE.MeshStandardMaterial({ color: 0x818CF8, roughness: 0.6 })  // Lavender
+    ];
+    const flowerCenterMat = new THREE.MeshStandardMaterial({ color: 0xF59E0B, roughness: 0.4 });
+    const stemMat = new THREE.MeshStandardMaterial({ color: 0x166534 });
+
+    // Seeded random cluster distribution across key areas
+    const candidateZones = [
+      // Along North and South Perimeter Fences
+      { xMin: -40, xMax: 40, zMin: -34, zMax: -30, count: 40 },
+      { xMin: -40, xMax: 40, zMin: 30, zMax: 34, count: 40 },
+      // East Boundary Field
+      { xMin: 28, xMax: 42, zMin: -30, zMax: 30, count: 35 },
+      // Roadside grass fringes
+      { xMin: -11.5, xMax: -10.2, zMin: -30, zMax: 30, count: 25 },
+      { xMin: -1.8, xMax: -0.5, zMin: -30, zMax: 30, count: 25 },
+      // Pasture meadow & cow pen edges
+      { xMin: -42, xMax: -26, zMin: 0, zMax: 20, count: 30 },
+      // Water reservoir surrounds
+      { xMin: -22, xMax: -8, zMin: -32, zMax: -18, count: 20 }
+    ];
+
+    let totalSpawned = 0;
+    candidateZones.forEach(zone => {
+      for (let i = 0; i < zone.count; i++) {
+        const x = zone.xMin + Math.random() * (zone.xMax - zone.xMin);
+        const z = zone.zMin + Math.random() * (zone.zMax - zone.zMin);
+        if (!isMeadowZone(x, z)) continue;
+
+        const tuft = new THREE.Group();
+        tuft.position.set(x, 0, z);
+
+        const bladeCount = 3 + Math.floor(Math.random() * 3);
+        const mat = grassMaterials[Math.floor(Math.random() * grassMaterials.length)];
+        const tuftHeight = 0.5 + Math.random() * 0.4;
+
+        for (let b = 0; b < bladeCount; b++) {
+          const bladeGeo = new THREE.ConeGeometry(0.06, tuftHeight * (0.8 + Math.random() * 0.4), 4);
+          bladeGeo.translate(0, (tuftHeight * 0.9) / 2, 0); // pivot at base
+          const blade = new THREE.Mesh(bladeGeo, mat);
+
+          const angle = (b / bladeCount) * Math.PI * 2 + Math.random() * 0.4;
+          blade.position.set(Math.cos(angle) * 0.08, 0, Math.sin(angle) * 0.08);
+          blade.rotation.y = angle;
+          blade.rotation.z = (Math.random() - 0.5) * 0.25;
+          blade.rotation.x = (Math.random() - 0.5) * 0.25;
+          tuft.add(blade);
+        }
+
+        // Add occasional wildflower (approx 20% of tufts)
+        if (Math.random() < 0.22) {
+          const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.03, tuftHeight * 1.1, 4), stemMat);
+          stem.position.y = (tuftHeight * 1.1) / 2;
+          tuft.add(stem);
+
+          const fMat = flowerMaterials[Math.floor(Math.random() * flowerMaterials.length)];
+          const flowerHead = new THREE.Mesh(new THREE.SphereGeometry(0.12, 6, 6), fMat);
+          flowerHead.position.y = tuftHeight * 1.1;
+          flowerHead.scale.set(1.2, 0.7, 1.2);
+          tuft.add(flowerHead);
+
+          const center = new THREE.Mesh(new THREE.SphereGeometry(0.05, 5, 5), flowerCenterMat);
+          center.position.y = tuftHeight * 1.1 + 0.05;
+          tuft.add(center);
+        }
+
+        tuft.userData = {
+          phaseX: Math.random() * Math.PI * 2,
+          phaseZ: Math.random() * Math.PI * 2
+        };
+
+        this.scene.add(tuft);
+        this.grassMeshes.push(tuft);
+        totalSpawned++;
+      }
+    });
   }
 
   // ==========================================================
@@ -2303,14 +2722,122 @@ class Farm3DWorld {
     });
   }
 
-  // 3D ANIMATED DOGS (REMOVED)
+  // ==========================================================
+  // ANIMATED GERMAN SHEPHERD DOGS (2x FBX with Skeleton Animations)
   // ==========================================================
   buildDog() {
-    this.dogs = [];
+    const fbxLoader = new FBXLoader();
+    const textureLoader = new THREE.TextureLoader();
+
+    // Two dogs with different spawn positions
+    const dogSpawns = [
+      { pos: new THREE.Vector3(-30, 0, -18), rotY: Math.PI / 4 },   // Near the barn
+      { pos: new THREE.Vector3(15, 0, 20), rotY: -Math.PI / 3 }     // Near the south plots
+    ];
+
+    // Load textures once (shared between both dogs)
+    const baseColorMap = textureLoader.load('/models/dog/T_GermanShepherd_B.png');
+    const normalMap = textureLoader.load('/models/dog/T_GermanShepherd_N.png');
+    const roughnessMap = textureLoader.load('/models/dog/T_GermanShepherd_R.png');
+
+    const dogMaterial = new THREE.MeshStandardMaterial({
+      map: baseColorMap,
+      normalMap: normalMap,
+      roughnessMap: roughnessMap,
+      roughness: 0.75,
+      metalness: 0.05
+    });
+
+    const animFiles = {
+      idle: '/models/dog/1 type_Idle Breathing_v01.fbx',
+      play: '/models/dog/1 type_Idle_Playing_v01.fbx',
+      walk: '/models/dog/1 type_Walk Loop_v01.fbx',
+      run: '/models/dog/1 type_Run Loop_v01.fbx'
+    };
+
+    // Helper: set up one dog instance from a freshly loaded model
+    const setupDog = (model, spawnInfo, dogIndex) => {
+      model.scale.set(0.03, 0.03, 0.03);
+      model.position.copy(spawnInfo.pos);
+      model.rotation.y = spawnInfo.rotY;
+
+      model.traverse((child) => {
+        if (child.isMesh) {
+          child.castShadow = true;
+          child.receiveShadow = true;
+          child.material = dogMaterial.clone();
+        }
+      });
+
+      this.scene.add(model);
+      model.userData = { type: 'dog', dogIndex };
+      this.clickableEntities.push(model);
+
+      const dogData = {
+        group: model,
+        mixer: new THREE.AnimationMixer(model),
+        animations: {},
+        currentAction: null,
+        state: 'IDLE',
+        stateTimer: 3.0 + Math.random() * 4.0,
+        walkTarget: new THREE.Vector3()
+      };
+
+      this.dogs.push(dogData);
+
+      // Load animations for this dog
+      const animKeys = Object.keys(animFiles);
+      let loaded = 0;
+      animKeys.forEach((key) => {
+        const animLoader = new FBXLoader();
+        animLoader.load(animFiles[key], (animFBX) => {
+          if (animFBX.animations && animFBX.animations.length > 0) {
+            const clip = animFBX.animations[0];
+            clip.name = key;
+            const action = dogData.mixer.clipAction(clip);
+            dogData.animations[key] = action;
+          }
+          loaded++;
+          if (loaded === animKeys.length) {
+            if (dogData.animations.idle) {
+              dogData.animations.idle.play();
+              dogData.currentAction = dogData.animations.idle;
+            }
+            console.log(`🐕 Mobile Dog ${dogIndex + 1} loaded with ${Object.keys(dogData.animations).length} animations!`);
+          }
+        }, undefined, (err) => {
+          console.warn(`Could not load dog animation ${key}:`, err);
+          loaded++;
+        });
+      });
+    };
+
+    // Load each dog as a separate FBX instance (clone() breaks SkinnedMesh skeletons)
+    dogSpawns.forEach((spawnInfo, idx) => {
+      const loader = new FBXLoader();
+      loader.load('/models/dog/SK_GermanShepherd_01.fbx', (dogModel) => {
+        setupDog(dogModel, spawnInfo, idx);
+      }, undefined, (err) => {
+        console.warn(`Could not load German Shepherd FBX model for dog ${idx + 1}:`, err);
+      });
+    });
   }
 
+  /**
+   * Smoothly transition a specific dog's animation clip
+   */
   switchDogAnimation(dogIndex, newAnimName, fadeDuration = 0.35) {
-    // No-op
+    const dogData = this.dogs[dogIndex];
+    if (!dogData) return;
+    const newAction = dogData.animations[newAnimName];
+    if (!newAction || newAction === dogData.currentAction) return;
+
+    newAction.reset();
+    newAction.play();
+    if (dogData.currentAction) {
+      dogData.currentAction.crossFadeTo(newAction, fadeDuration, true);
+    }
+    dogData.currentAction = newAction;
   }
 
   // ==========================================================
@@ -2374,24 +2901,151 @@ class Farm3DWorld {
     });
   }
 
-  // BIRDS (REMOVED)
   // ==========================================================
-  createLowPolyBird() {
-    return null;
+  // BIRDS (V-FORMATION FLOCK & LONE PERCHING VISITOR)
+  // ==========================================================
+  createLowPolyBird(color = 0x2A3439) {
+    const bird = new THREE.Group();
+    const birdMat = new THREE.MeshStandardMaterial({ color, roughness: 0.8, metalness: 0.05 });
+    const beakMat = new THREE.MeshStandardMaterial({ color: 0xF59E0B, roughness: 0.5 });
+
+    // Torso / Body (facing -Z)
+    const bodyGeo = new THREE.ConeGeometry(0.3, 1.3, 5);
+    bodyGeo.rotateX(Math.PI / 2);
+    const body = new THREE.Mesh(bodyGeo, birdMat);
+    bird.add(body);
+
+    // Head
+    const headGeo = new THREE.SphereGeometry(0.24, 6, 6);
+    const head = new THREE.Mesh(headGeo, birdMat);
+    head.position.set(0, 0.14, -0.7);
+    bird.add(head);
+
+    // Beak
+    const beakGeo = new THREE.ConeGeometry(0.08, 0.3, 4);
+    beakGeo.rotateX(-Math.PI / 2);
+    const beak = new THREE.Mesh(beakGeo, beakMat);
+    beak.position.set(0, 0.12, -0.95);
+    bird.add(beak);
+
+    // Left Wing (pivot at shoulder)
+    const wingLGroup = new THREE.Group();
+    wingLGroup.position.set(-0.25, 0.12, -0.1);
+    const wingLGeo = new THREE.BoxGeometry(1.05, 0.03, 0.38);
+    wingLGeo.translate(-0.52, 0, 0);
+    const wingL = new THREE.Mesh(wingLGeo, birdMat);
+    wingLGroup.add(wingL);
+    bird.add(wingLGroup);
+
+    // Right Wing
+    const wingRGroup = new THREE.Group();
+    wingRGroup.position.set(0.25, 0.12, -0.1);
+    const wingRGeo = new THREE.BoxGeometry(1.05, 0.03, 0.38);
+    wingRGeo.translate(0.52, 0, 0);
+    const wingR = new THREE.Mesh(wingRGeo, birdMat);
+    wingRGroup.add(wingR);
+    bird.add(wingRGroup);
+
+    // Tail
+    const tailGeo = new THREE.BoxGeometry(0.4, 0.03, 0.5);
+    const tail = new THREE.Mesh(tailGeo, birdMat);
+    tail.position.set(0, 0.06, 0.75);
+    bird.add(tail);
+
+    bird.userData = { wingL: wingLGroup, wingR: wingRGroup, head, body };
+    return bird;
   }
 
   buildBirdFlock() {
+    this.flockGroup = new THREE.Group();
+    this.flockGroup.visible = false;
+    this.scene.add(this.flockGroup);
+
+    // Classic V-formation (Apex lead bird + 3 on left wing + 3 on right wing = 7 birds)
+    const vPositions = [
+      { x: 0, y: 0, z: 0 },          // Apex leader
+      { x: -4.2, y: 0.3, z: 4.6 },   // Left 1
+      { x: 4.2, y: -0.2, z: 4.6 },   // Right 1
+      { x: -8.4, y: -0.3, z: 9.2 },  // Left 2
+      { x: 8.4, y: 0.2, z: 9.2 },    // Right 2
+      { x: -12.6, y: 0.1, z: 13.8 }, // Left 3
+      { x: 12.6, y: -0.1, z: 13.8 }  // Right 3
+    ];
+
     this.flockBirds = [];
-    this.flockGroup = null;
-    this.flockActive = false;
+    vPositions.forEach((pos, idx) => {
+      const bird = this.createLowPolyBird(0x283238);
+      bird.position.set(pos.x, pos.y, pos.z);
+      bird.scale.set(0.95, 0.95, 0.95);
+      bird.userData.wingPhase = idx * 0.5;
+      this.flockGroup.add(bird);
+      this.flockBirds.push(bird);
+    });
+
+    // Launch flock every 2 minutes (120 seconds) per user requirement
+    setInterval(() => {
+      this.launchBirdFlock();
+    }, 120000);
+
+    // Initial flock launch 6 seconds after loading
+    setTimeout(() => {
+      this.launchBirdFlock();
+    }, 6000);
   }
 
   launchBirdFlock() {
-    // No-op
+    if (this.flockActive || !this.flockGroup) return;
+
+    // Random flight heading across the countryside
+    const angle = Math.random() * Math.PI * 2;
+    const spawnRadius = 260;
+    const startX = Math.cos(angle) * spawnRadius;
+    const startZ = Math.sin(angle) * spawnRadius;
+    const endX = -startX;
+    const endZ = -startZ;
+
+    const altitude = 44 + Math.random() * 16;
+    this.flockStart.set(startX, altitude, startZ);
+    this.flockEnd.set(endX, altitude + (Math.random() * 6 - 3), endZ);
+
+    this.flockGroup.position.copy(this.flockStart);
+    this.flockGroup.lookAt(this.flockEnd);
+    this.flockGroup.rotateY(Math.PI); // Orient bird group forward so beaks point toward destination
+    this.flockGroup.visible = true;
+    this.flockActive = true;
+    this.flockProgress = 0;
+
+    try {
+      if (sound && typeof sound.playBirdChirp === 'function') {
+        setTimeout(() => sound.playBirdChirp(), 4200);
+      }
+    } catch (e) { }
   }
 
   buildPerchingBird() {
-    this.perchingBirdGroup = null;
+    this.perchingBirdGroup = this.createLowPolyBird(0x4A3728); // Chestnut brown songbird
+    this.perchingBirdGroup.scale.set(0.65, 0.65, 0.65);
+    this.perchingBirdGroup.visible = false;
+    this.scene.add(this.perchingBirdGroup);
+
+    // Warm breast accent
+    const breastMat = new THREE.MeshStandardMaterial({ color: 0xD9534F, roughness: 0.7 });
+    const breast = new THREE.Mesh(new THREE.SphereGeometry(0.18, 5, 5), breastMat);
+    breast.position.set(0, 0.02, -0.4);
+    this.perchingBirdGroup.add(breast);
+
+    this.perchOptions = [
+      { name: 'Tractor Roof', pos: new THREE.Vector3(-22, 3.4, 26), rotY: Math.PI / 4 },
+      { name: 'North Lamp Post', pos: new THREE.Vector3(-10.5, 6.2, -24), rotY: 0 },
+      { name: 'South Lamp Post', pos: new THREE.Vector3(-10.5, 6.2, 24), rotY: 0 },
+      { name: 'Barn Roof Ridge', pos: new THREE.Vector3(-42, 9.6, -26), rotY: -Math.PI / 3 },
+      { name: 'Pasture Fence Post', pos: new THREE.Vector3(-54, 2.3, 0), rotY: Math.PI / 2 }
+    ];
+
+    this.perchState = 'IDLE_WAIT';
+    this.perchTimer = 8.0; // Spawns first visit ~8 seconds after loading!
+    this.perchProgress = 0;
+    this.perchedElapsed = 0;
   }
 
   // ==========================================================
@@ -2926,20 +3580,10 @@ class Farm3DWorld {
             window.farmdb.showToast('🏡 Uncle Somu: "Hear that gentle moo? Daisy & Bella are resting inside the barn! Complete Level 1 Task 4 in SQL Studio to register them and let them out into the pasture!"', 'info');
           }
         } else {
-          try {
-            if (sound && typeof sound.playChime === 'function') sound.playChime();
-          } catch (e) { }
-          if (window.farmdb && window.farmdb.showToast) {
-            window.farmdb.showToast('🏡 Rustic Barn: Secure storage for cattle feed, seed sacks, and harvest inventory.', 'info');
-          }
+          this.playTruckDeliveryAnimation('Farm Supplies');
         }
       } else if (this.hoveredEntity === 'truck') {
-        try {
-          if (sound && typeof sound.playTruckHorn === 'function') sound.playTruckHorn();
-        } catch (e) { }
-        if (window.farmdb && window.farmdb.showToast) {
-          window.farmdb.showToast('🚚 Vintage Delivery Truck: Parked and ready for farm logistics & supply runs!', 'info');
-        }
+        this.playTruckDeliveryAnimation('Seed Sacks');
       } else if (this.hoveredEntity === 'tractor') {
         try {
           if (sound && typeof sound.playTractorRev === 'function') {
@@ -3155,8 +3799,6 @@ class Farm3DWorld {
         this.tractorGroup.rotation.y = Math.PI / 2;
       }
 
-      this.render();
-
       if (driveProgress < 1.0) {
         requestAnimationFrame(driveLoop);
       } else {
@@ -3169,7 +3811,6 @@ class Farm3DWorld {
           this.tractorGroup.position.copy(originalPos);
           this.tractorGroup.rotation.y = originalRot;
           this.isHarvestingAnim = false;
-          this.render();
         }, 300);
       }
     };
@@ -3177,41 +3818,401 @@ class Farm3DWorld {
   }
 
   // ==========================================================
-  // STATIC ON-DEMAND RENDERING (ZERO IDLE CPU USAGE)
+  // LIFECYCLE, VISIBILITY & PERFORMANCE MANAGEMENT
   // ==========================================================
-  requestRender() {
-    if (this.renderRequested) return;
-    this.renderRequested = true;
-    requestAnimationFrame(() => {
-      this.renderRequested = false;
-      this.render();
+  setupLifecycleManagement() {
+    // 1. Page Visibility API (Pause RAF when tab hidden / in background)
+    if (typeof document !== 'undefined') {
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+          this.isTabVisible = false;
+          this.stopAnimationLoop();
+        } else {
+          this.isTabVisible = true;
+          this.dogClock.getDelta(); // flush delta spike
+          this.lastRenderTime = performance.now();
+          this.lastUserActivity = performance.now();
+          this.startAnimationLoop();
+        }
+      });
+    }
+
+    // 2. Element Visibility (IntersectionObserver for canvas container)
+    if (typeof IntersectionObserver !== 'undefined' && this.container) {
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          this.isElementVisible = entry.isIntersecting;
+          if (this.isElementVisible && this.isTabVisible && !this.isPaused) {
+            this.dogClock.getDelta();
+            this.lastRenderTime = performance.now();
+            this.startAnimationLoop();
+          } else {
+            this.stopAnimationLoop();
+          }
+        });
+      }, { threshold: 0.05 });
+      observer.observe(this.container);
+    }
+
+    // 3. User Activity Tracking (for smart idle frame-rate throttling)
+    const onActivity = () => {
+      this.lastUserActivity = performance.now();
+      if (!this.rafId && this.isTabVisible && this.isElementVisible && !this.isPaused) {
+        this.startAnimationLoop();
+      }
+    };
+    ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll', 'wheel'].forEach(evt => {
+      window.addEventListener(evt, onActivity, { passive: true });
     });
   }
 
-  render() {
+  startAnimationLoop() {
+    if (this.rafId) return;
+    if (!this.isTabVisible || !this.isElementVisible || this.isPaused) return;
+    this.rafId = requestAnimationFrame(this.boundAnimate);
+  }
+
+  stopAnimationLoop() {
+    if (this.rafId) {
+      cancelAnimationFrame(this.rafId);
+      this.rafId = null;
+    }
+  }
+
+  pause() {
+    this.isPaused = true;
+    this.stopAnimationLoop();
+  }
+
+  resume() {
+    this.isPaused = false;
+    this.dogClock.getDelta();
+    this.lastRenderTime = performance.now();
+    this.lastUserActivity = performance.now();
+    this.startAnimationLoop();
+  }
+
+  // ==========================================================
+  // MAIN ANIMATION RENDER LOOP
+  // ==========================================================
+  animate(now = performance.now()) {
+    if (!this.isTabVisible || !this.isElementVisible || this.isPaused) {
+      this.stopAnimationLoop();
+      return;
+    }
+
+    // Smart Inactivity Throttling:
+    // If no user interaction has occurred for > 25 seconds, throttle to 15 FPS (66ms interval)
+    // to keep CPU/GPU idle for Lighthouse audits, battery savings, and background efficiency.
+    const isIdle = (now - this.lastUserActivity) > 25000;
+    const minFrameInterval = isIdle ? 66 : 0;
+
+    if (minFrameInterval > 0 && (now - this.lastRenderTime) < minFrameInterval) {
+      this.rafId = requestAnimationFrame(this.boundAnimate);
+      return;
+    }
+
+    this.lastRenderTime = now;
+    this.rafId = requestAnimationFrame(this.boundAnimate);
+
+    const elapsed = (now - this.startTime) * 0.001;
+
+    // 1. Controls update
     if (this.controls) this.controls.update();
+
+    // 2. Animate Cows (head bob & tail swish when idle)
+    if (!this.isAnimalAnimating) {
+      this.cowMeshes.forEach((cow, i) => {
+        if (!cow.visible) return;
+        if (cow.userData.head) {
+          cow.userData.head.rotation.x = Math.sin(elapsed * 1.5 + i) * 0.08;
+        }
+        if (cow.userData.tail) {
+          cow.userData.tail.rotation.z = Math.sin(elapsed * 2.2 + i * 1.5) * 0.18;
+        }
+      });
+    }
+
+    // 3. Animate 3D Grass Tufts & Wildflowers Swaying in Country Wind
+    if (this.grassMeshes && this.grassMeshes.length > 0) {
+      const windTime = elapsed * 2.2;
+      for (let i = 0; i < this.grassMeshes.length; i++) {
+        const g = this.grassMeshes[i];
+        g.rotation.z = Math.sin(windTime + g.userData.phaseX) * 0.12;
+        g.rotation.x = Math.cos(windTime * 0.8 + g.userData.phaseZ) * 0.08;
+      }
+    }
+
+    // 4. Animate Farmer Idle Breathing & Porch Resting
+    if (this.farmerGroup && !this.isFarmerAnimating) {
+      this.farmerGroup.position.y = Math.sin(elapsed * 1.8) * 0.03;
+      if (this.farmerGroup.userData.armR) {
+        this.farmerGroup.userData.armR.rotation.z = Math.sin(elapsed * 1.2) * 0.04;
+      }
+    }
+
+    // 5. Animate 3D Water Surface Shimmer & Buoy Bobbing
+    if (this.waterSurfaceMesh && this.waterMesh) {
+      const bob = Math.sin(elapsed * 2.5) * 0.04;
+      this.waterSurfaceMesh.position.y += bob * 0.08;
+      if (this.waterBuoy) {
+        this.waterBuoy.position.y += bob * 0.12;
+        this.waterBuoy.rotation.y = elapsed * 0.4;
+      }
+    }
+    if (this.troughWater) {
+      this.troughWater.position.y = 0.65 + Math.sin(elapsed * 2.0) * 0.015;
+    }
+
+    // 6. Animate Dynamic Clouds Drifting Across the High Sky
+    if (this.dynamicClouds && this.dynamicClouds.length > 0) {
+      for (let i = 0; i < this.dynamicClouds.length; i++) {
+        const cloud = this.dynamicClouds[i];
+        cloud.position.x += cloud.userData.speed;
+        cloud.position.y = cloud.userData.baseY + Math.sin(elapsed * 0.5 + cloud.userData.bobPhase) * 0.55;
+        if (cloud.position.x > 260) {
+          cloud.position.x = -260;
+          cloud.position.z = ((Math.sin(elapsed + i) * 0.5 + 0.5) * 320) - 160;
+        }
+      }
+    }
+
+    // 7. Animate V-Formation Bird Flock Flying Overhead
+    if (this.flockActive && this.flockGroup) {
+      this.flockProgress += 0.0016; // Smooth graceful flight across the entire sky (~12 seconds)
+      this.flockGroup.position.lerpVectors(this.flockStart, this.flockEnd, this.flockProgress);
+      // Gentle atmospheric glide wave
+      this.flockGroup.position.y += Math.sin(this.flockProgress * Math.PI * 4) * 0.08;
+
+      this.flockBirds.forEach(bird => {
+        const flap = Math.sin(elapsed * 9.5 + bird.userData.wingPhase) * 0.65;
+        bird.userData.wingL.rotation.z = flap;
+        bird.userData.wingR.rotation.z = -flap;
+      });
+
+      if (this.flockProgress >= 1.0) {
+        this.flockActive = false;
+        this.flockGroup.visible = false;
+      }
+    }
+
+    // 8. Animate Lone Exploring & Perching Bird
+    if (this.perchingBirdGroup) {
+      if (this.perchState === 'IDLE_WAIT') {
+        this.perchTimer -= 0.016;
+        if (this.perchTimer <= 0) {
+          const option = this.perchOptions[Math.floor(Math.random() * this.perchOptions.length)];
+          this.currentPerchTarget = option.pos.clone();
+          this.currentPerchRotY = option.rotY;
+
+          const spawnAng = Math.random() * Math.PI * 2;
+          this.perchStartPos = new THREE.Vector3(
+            this.currentPerchTarget.x + Math.cos(spawnAng) * 60,
+            this.currentPerchTarget.y + 26,
+            this.currentPerchTarget.z + Math.sin(spawnAng) * 60
+          );
+
+          this.perchingBirdGroup.position.copy(this.perchStartPos);
+          this.perchingBirdGroup.lookAt(this.currentPerchTarget);
+          this.perchingBirdGroup.visible = true;
+          this.perchState = 'FLYING_IN';
+          this.perchProgress = 0;
+        }
+      } else if (this.perchState === 'FLYING_IN') {
+        this.perchProgress += 0.014;
+        const p = this.perchProgress;
+        this.perchingBirdGroup.position.lerpVectors(this.perchStartPos, this.currentPerchTarget, p);
+        this.perchingBirdGroup.position.y += Math.sin(p * Math.PI) * 4.2;
+
+        const flap = Math.sin(elapsed * 13.0) * 0.8;
+        this.perchingBirdGroup.userData.wingL.rotation.z = flap;
+        this.perchingBirdGroup.userData.wingR.rotation.z = -flap;
+
+        if (this.perchProgress >= 1.0) {
+          this.perchingBirdGroup.position.copy(this.currentPerchTarget);
+          this.perchingBirdGroup.rotation.set(0, this.currentPerchRotY, 0);
+          this.perchingBirdGroup.userData.wingL.rotation.set(0.2, 0.2, 0.08);
+          this.perchingBirdGroup.userData.wingR.rotation.set(0.2, -0.2, -0.08);
+          this.perchState = 'PERCHED';
+          this.perchedElapsed = 0;
+        }
+      } else if (this.perchState === 'PERCHED') {
+        this.perchedElapsed += 0.016;
+        const t = this.perchedElapsed;
+        const head = this.perchingBirdGroup.userData.head;
+
+        // Stage 1: Sits and looks forward (0 to 1.8s)
+        if (t < 1.8) {
+          head.rotation.set(0, 0, 0);
+        }
+        // Stage 2: Turn head left and inspect surroundings (1.8 to 3.6s)
+        else if (t < 3.6) {
+          head.rotation.y = THREE.MathUtils.lerp(head.rotation.y, 0.85, 0.08);
+        }
+        // Stage 3: Bob head & peck surface, happy chirp! (3.6 to 5.0s)
+        else if (t < 5.0) {
+          head.rotation.y = THREE.MathUtils.lerp(head.rotation.y, 0, 0.1);
+          head.rotation.x = Math.sin(t * 12.0) * 0.35;
+          if (t > 4.2 && !this.birdChirpedThisPerch) {
+            this.birdChirpedThisPerch = true;
+            try {
+              if (sound && typeof sound.playBirdChirp === 'function') sound.playBirdChirp();
+            } catch (e) {}
+          }
+        }
+        // Stage 4: Turn head right and look around (5.0 to 7.0s)
+        else if (t < 7.0) {
+          head.rotation.x = 0;
+          head.rotation.y = THREE.MathUtils.lerp(head.rotation.y, -0.85, 0.08);
+        }
+        // Stage 5: Return to center and prepare for takeoff (7.0 to 8.2s)
+        else if (t < 8.2) {
+          head.rotation.y = THREE.MathUtils.lerp(head.rotation.y, 0, 0.1);
+        }
+        // Takeoff into random direction!
+        else {
+          this.birdChirpedThisPerch = false;
+          const departAngle = Math.random() * Math.PI * 2;
+          this.perchDepartStart = this.currentPerchTarget.clone();
+          this.perchDepartTarget = new THREE.Vector3(
+            this.currentPerchTarget.x + Math.cos(departAngle) * 180,
+            this.currentPerchTarget.y + 45,
+            this.currentPerchTarget.z + Math.sin(departAngle) * 180
+          );
+          this.perchingBirdGroup.lookAt(this.perchDepartTarget);
+          this.perchState = 'FLYING_OUT';
+          this.perchProgress = 0;
+        }
+      } else if (this.perchState === 'FLYING_OUT') {
+        this.perchProgress += 0.012;
+        const p = this.perchProgress;
+        this.perchingBirdGroup.position.lerpVectors(this.perchDepartStart, this.perchDepartTarget, p);
+
+        const flap = Math.sin(elapsed * 14.0) * 0.85;
+        this.perchingBirdGroup.userData.wingL.rotation.z = flap;
+        this.perchingBirdGroup.userData.wingR.rotation.z = -flap;
+
+        if (this.perchProgress >= 1.0) {
+          this.perchingBirdGroup.visible = false;
+          this.perchState = 'IDLE_WAIT';
+          this.perchTimer = 50.0 + Math.random() * 25.0; // Next visit in ~50-75s
+        }
+      }
+    }
+
+    // 9. Animate River Water Surface Shimmer
+    if (this.riverMat) {
+      this.riverMat.roughness = 0.12 + Math.sin(elapsed * 1.5) * 0.03;
+    }
+
+    // 10. Animate Windpump Blades Spinning in the Breeze
+    if (this.windmillRotor) {
+      const boost = this.windmillSpinBoost || 1.0;
+      this.windmillRotor.rotation.z -= 0.022 * boost;
+      if (this.windmillSpinBoost && this.windmillSpinBoost > 1.0) {
+        this.windmillSpinBoost = Math.max(1.0, this.windmillSpinBoost - 0.012);
+      }
+    }
+
+    // 11. Animate Horizon Wind Turbine Blades Spinning in Country Breeze
+    if (this.turbineRotor && this.turbineGroup && this.turbineGroup.visible) {
+      this.turbineRotor.rotation.z -= 0.012;
+    }
+
+    // 12. Animate Nocturnal Fireflies Drifting Over Meadows
+    if (this.fireflies && this.fireflies.length > 0 && gameState.timeOfDay === 'night') {
+      for (let i = 0; i < this.fireflies.length; i++) {
+        const f = this.fireflies[i];
+        f.position.y = f.userData.baseY + Math.sin(elapsed * f.userData.speed + f.userData.phase) * 0.35;
+        f.position.x = f.userData.baseX + Math.cos(elapsed * 0.6 + f.userData.phase) * 0.45;
+        f.position.z = f.userData.baseZ + Math.sin(elapsed * 0.5 + f.userData.phase) * 0.45;
+      }
+    }
+
+    // 13. Subtle breathing shimmer for lit street lamp lanterns
+    if (this.lampPosts && this.lampPosts.length > 0) {
+      this.lampPosts.forEach((lamp, idx) => {
+        if (lamp.userData && lamp.userData.isOn && lamp.userData.pointLight) {
+          const shimmer = 1.0 + Math.sin(elapsed * 3.6 + idx * 1.4) * 0.035;
+          lamp.userData.pointLight.intensity = 2.6 * shimmer;
+        }
+      });
+    }
+
+    // 14. Animate German Shepherd Dogs (State Machine: IDLE ↔ WALK ↔ PLAY)
+    if (this.dogs.length > 0) {
+      const dogDelta = this.dogClock.getDelta();
+
+      this.dogs.forEach((dogData, idx) => {
+        // Update animation mixer
+        dogData.mixer.update(dogDelta);
+
+        // State machine timer
+        dogData.stateTimer -= dogDelta;
+        if (dogData.stateTimer <= 0) {
+          if (dogData.state === 'IDLE') {
+            const roll = Math.random();
+            if (roll < 0.65) {
+              // Walk to a random point anywhere on the farm
+              const angle = Math.random() * Math.PI * 2;
+              const dist = 10 + Math.random() * 35;
+              dogData.walkTarget.set(
+                Math.cos(angle) * dist,
+                0,
+                Math.sin(angle) * dist
+              );
+              // Clamp within full farm boundaries
+              dogData.walkTarget.x = THREE.MathUtils.clamp(dogData.walkTarget.x, -48, 48);
+              dogData.walkTarget.z = THREE.MathUtils.clamp(dogData.walkTarget.z, -40, 40);
+              this.switchDogAnimation(idx, 'walk');
+              dogData.state = 'WALKING';
+              dogData.stateTimer = 5.0 + Math.random() * 7.0;
+            } else {
+              this.switchDogAnimation(idx, 'play');
+              dogData.state = 'PLAYING';
+              dogData.stateTimer = 3.0 + Math.random() * 3.0;
+              try {
+                if (sound && typeof sound.playDogSound === 'function') sound.playDogSound();
+              } catch (e) { }
+            }
+          } else {
+            this.switchDogAnimation(idx, 'idle');
+            dogData.state = 'IDLE';
+            dogData.stateTimer = 3.0 + Math.random() * 5.0;
+          }
+        }
+
+        // Move dog towards target during WALKING state
+        if (dogData.state === 'WALKING' && dogData.group) {
+          const dir = new THREE.Vector3().subVectors(dogData.walkTarget, dogData.group.position);
+          dir.y = 0;
+          const dist = dir.length();
+          if (dist > 0.5) {
+            dir.normalize();
+            dogData.group.position.addScaledVector(dir, Math.min(dogDelta * 4.0, dist));
+            dogData.group.rotation.y = Math.atan2(dir.x, dir.z);
+          } else {
+            this.switchDogAnimation(idx, 'idle');
+            dogData.state = 'IDLE';
+            dogData.stateTimer = 2.0 + Math.random() * 4.0;
+          }
+        }
+      });
+    }
+
+    // 11. Render
     if (this.renderer && this.scene && this.camera) {
       this.renderer.render(this.scene, this.camera);
     }
   }
 
-  animate() {
-    this.requestRender();
-  }
-
-  pause() {}
-  resume() {
-    this.requestRender();
-  }
-
   onWindowResize() {
     if (!this.container || !this.camera || !this.renderer) return;
-    const width = this.container.clientWidth || 800;
+    const width = this.container.clientWidth;
     const height = this.container.clientHeight || 500;
     this.camera.aspect = width / height;
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(width, height);
-    this.requestRender();
   }
 }
 
