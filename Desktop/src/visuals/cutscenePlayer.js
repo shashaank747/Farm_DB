@@ -8,22 +8,17 @@
 import { sound } from './audio.js';
 
 class CutscenePlayer {
-  constructor() {
-    this.isPlaying = false;
-    this.currentTime = 0;
-    this.duration = 11;
-    this.activeCutscene = null;
-    this.onCompleteCallback = null;
-    this.animFrameId = null;
-    this.particleFrameId = null;
-    this.particles = [];
-    this.isMuted = false;
+  constructor() {}
+  init() {}
+  createDOM() {}
+  setupListeners() {}
+  playCutscene(cutsceneData, levelNumber, levelRole, onComplete = null) {
+    if (typeof onComplete === 'function') onComplete();
   }
-
-  init() {
-    this.createDOM();
-    this.setupListeners();
+  stopAndClose() {
+    if (typeof this.onCompleteCallback === 'function') this.onCompleteCallback();
   }
+}
 
   createDOM() {
     if (document.getElementById('cutscene-modal-overlay')) return;

@@ -12,7 +12,6 @@ import { setupDraggableWindow } from './visuals/draggable.js';
 import { sound } from './visuals/audio.js';
 import { loginView } from './visuals/loginView.js';
 import { farm3D } from './visuals/farm3D.js';
-import { cutscenePlayer } from './visuals/cutscenePlayer.js';
 
 class FarmDBApp {
   constructor() {
@@ -22,7 +21,6 @@ class FarmDBApp {
     this.sound = sound;
     this.loginView = loginView;
     this.farm3D = farm3D;
-    this.cutscenePlayer = cutscenePlayer;
     this.is3DMode = true;
     this.activeHintTier = 1;
     this.schemaVisible = true;
@@ -35,6 +33,8 @@ class FarmDBApp {
       window.farmdb = this;
     }
 
+    const yieldToMain = () => new Promise(resolve => setTimeout(resolve, 0));
+
     // Check for ?reset or ?clear query param in URL to allow one-click URL reset
     if (typeof window !== 'undefined') {
       const urlParams = new URLSearchParams(window.location.search);
@@ -45,7 +45,38 @@ class FarmDBApp {
       }
     }
 
-    // 1. Initialize SQLite WebAssembly Engine
+    // --- PHASE 0: Instant Visual Render (Immediate paint: FCP & LCP in <200ms) ---
+    this.renderGameState();
+    this.renderCurrentMission();
+    this.renderMinimizedFarmReport();
+    this.setupUIEventListeners();
+    this.setupSQLEditorListeners();
+    this.setupViewSwitching();
+
+    // Setup Draggable Floating SQL Terminal Window
+    const terminalEl = document.getElementById('floating-sql-terminal');
+    const titlebarEl = document.getElementById('terminal-titlebar');
+    const resizeHandleEl = document.getElementById('terminal-resize-handle');
+    this.terminalController = setupDraggableWindow(terminalEl, titlebarEl, resizeHandleEl);
+
+    if (terminalEl) {
+      terminalEl.addEventListener('mousedown', () => {
+        terminalEl.style.zIndex = '600';
+      });
+    }
+
+    // Global hooks
+    window.renderFarmQuickReport = () => this.renderMinimizedFarmReport();
+    window.sqlEngine = sqlEngine;
+    window.gameState = gameState;
+    window.sound = sound;
+    window.farm3D = farm3D;
+    window.simulation = simulation;
+
+    // Yield control so browser paints Phase 0 immediately without waiting for WASM/WebGL
+    await yieldToMain();
+
+    // --- PHASE 1: SQLite WebAssembly Engine & Baseline Data ---
     const statusMsg = document.getElementById('status-message');
     if (statusMsg) statusMsg.textContent = 'Connecting to SQLite WebAssembly...';
 
@@ -60,11 +91,13 @@ class FarmDBApp {
       this.showToast(`SQLite Error: ${errMsg}`, 'error');
     }
 
-    // 2. Initialize Simulation & Baseline Tables (Plots, Water Reservoir)
     simulation.initBaselineTables();
     simulation.syncPlotsWithLevel(gameState.currentLevel);
 
-    // 3. Initialize Living Farm Renderer (2D) & 3D WebGL World
+    // Yield to main thread
+    await yieldToMain();
+
+    // --- PHASE 2: 2D & 3D Living World Initialization ---
     farmRenderer.init({
       plotsContainer: document.getElementById('plots-container'),
       waterFill: document.getElementById('water-fill-bar'),
@@ -79,36 +112,13 @@ class FarmDBApp {
     if (farm3dWrapper) {
       farm3D.init(farm3dWrapper);
     }
-    cutscenePlayer.init();
 
-    // 4. Setup Draggable Floating SQL Terminal Window
-    const terminalEl = document.getElementById('floating-sql-terminal');
-    const titlebarEl = document.getElementById('terminal-titlebar');
-    const resizeHandleEl = document.getElementById('terminal-resize-handle');
-    this.terminalController = setupDraggableWindow(terminalEl, titlebarEl, resizeHandleEl);
+    // Yield to main thread
+    await yieldToMain();
 
-    // Global hooks for live minimized farm report and test automation
-    window.renderFarmQuickReport = () => this.renderMinimizedFarmReport();
-    window.sqlEngine = sqlEngine;
-    window.gameState = gameState;
-    window.sound = sound;
-    window.farm3D = farm3D;
-    window.simulation = simulation;
-
-    // Bring terminal to front on click
-    if (terminalEl) {
-      terminalEl.addEventListener('mousedown', () => {
-        terminalEl.style.zIndex = '600';
-      });
-    }
-
-    // 5. Attach Event Listeners
-    this.setupUIEventListeners();
-    this.setupSQLEditorListeners();
-    this.setupViewSwitching();
+    // --- PHASE 3: Subscriptions & Secondary UI Rendering ---
     this.setupDebugPanel();
 
-    // 6. Subscribe to Game State & Database Changes
     gameState.addListener(() => {
       simulation.syncPlotsWithLevel(gameState.currentLevel);
       if (gameState.prevTimeOfDay === 'night' && gameState.timeOfDay === 'morning') {
@@ -125,6 +135,7 @@ class FarmDBApp {
         farm3D.syncFromDatabase();
       }
     });
+
     sqlEngine.addChangeListener(() => {
       this.renderSchemaTree();
       this.renderDatabaseERD();
@@ -136,33 +147,23 @@ class FarmDBApp {
       }
     });
 
-    // 7. Initial Renders
-    this.renderGameState();
-    this.renderCurrentMission();
-    this.renderMinimizedFarmReport();
     this.renderSchemaTree();
     this.renderDatabaseERD();
     this.renderInventoryView();
     this.renderJourneyView();
     this.updateDebugPanel();
 
-    // 8. Start Ambient Day/Night Cycle Progression
     this.startTimeCycleTimer();
 
-    // 9. First-time Opening Cinematic Story Check
+    // Yield to main thread
+    await yieldToMain();
+
+    // --- PHASE 4: Open Story Notebook Directly ---
     const hasSeenIntro = localStorage.getItem('farmdb_intro_seen');
     if (!hasSeenIntro) {
-      const lvlData = MISSIONS_DATA[1];
-      if (lvlData && lvlData.cutscene) {
-        cutscenePlayer.playCutscene(lvlData.cutscene, 1, lvlData.role, () => {
-          this.openNotebookModal();
-        });
-      } else {
-        this.openNotebookModal();
-      }
+      this.openNotebookModal();
     }
 
-    // 10. Initialize Living Login View
     loginView.init();
 
     this.isInitialized = true;
@@ -1100,11 +1101,6 @@ class FarmDBApp {
       if (isUnlocked) {
         actionButtons = `
           <div class="journey-card-actions" style="margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap;">
-            ${lvl && lvl.cutscene ? `
-              <button class="btn-journey-video" data-level="${i}" style="background: rgba(245, 158, 11, 0.15); border: 1px solid #F59E0B; color: #B45309; padding: 5px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 4px;" title="Watch Chapter Intro Video">
-                <span>🎬 Watch Video</span>
-              </button>
-            ` : ''}
             ${!isCurrent ? `
               <button class="btn-journey-switch" data-level="${i}" style="background: rgba(34, 197, 94, 0.15); border: 1px solid #22C55E; color: #15803D; padding: 5px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 4px;" title="Switch to this chapter">
                 <span>▶ Jump to Level</span>
@@ -1136,16 +1132,6 @@ class FarmDBApp {
     container.innerHTML = html;
 
     // Attach listeners for interactive buttons
-    container.querySelectorAll('.btn-journey-video').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const lvlNum = parseInt(btn.dataset.level, 10);
-        const lvlData = MISSIONS_DATA[lvlNum];
-        if (lvlData && lvlData.cutscene) {
-          cutscenePlayer.playCutscene(lvlData.cutscene, lvlNum, lvlData.role);
-        }
-      });
-    });
 
     container.querySelectorAll('.btn-journey-switch').forEach(btn => {
       btn.addEventListener('click', (e) => {
@@ -1261,20 +1247,7 @@ class FarmDBApp {
       btnShowStory.addEventListener('click', () => this.openNotebookModal());
     }
 
-    // Watch Cutscene Video from Notebook Modal
-    const btnWatchCutscene = document.getElementById('btn-watch-cutscene');
-    if (btnWatchCutscene) {
-      btnWatchCutscene.addEventListener('click', () => {
-        const lvlData = MISSIONS_DATA[gameState.currentLevel];
-        if (lvlData && lvlData.cutscene) {
-          const modal = document.getElementById('notebook-modal-overlay');
-          if (modal) modal.classList.remove('active');
-          cutscenePlayer.playCutscene(lvlData.cutscene, gameState.currentLevel, lvlData.role, () => {
-            this.openNotebookModal();
-          });
-        }
-      });
-    }
+
 
     // Start Playing from Notebook
     const btnStartPlaying = document.getElementById('btn-start-playing');
@@ -1322,15 +1295,7 @@ class FarmDBApp {
           if (this.is3DMode) farm3D.syncFromDatabase();
           const lvlData = MISSIONS_DATA[nextLevel];
           this.showToast(`🎉 Welcome to Level ${nextLevel}: ${lvlData ? lvlData.title : 'Next Chapter'}!`, 'success');
-
-          // Automatically play new chapter intro video, then show notebook
-          if (lvlData && lvlData.cutscene) {
-            cutscenePlayer.playCutscene(lvlData.cutscene, nextLevel, lvlData.role, () => {
-              this.openNotebookModal();
-            });
-          } else {
-            this.openNotebookModal();
-          }
+          this.openNotebookModal();
         } else {
           this.showGrandFinaleModal();
         }
@@ -2126,7 +2091,6 @@ function startFarmDB() {
     window.gameState = gameState;
     window.farmRenderer = farmRenderer;
     window.farm3D = farm3D;
-    window.cutscenePlayer = cutscenePlayer;
     window.farmdb.init();
   }
 }

@@ -18,15 +18,25 @@ class MobileApp {
 
   async start() {
     console.log('🚀 Booting FARMDB Mobile (Full 3D Engine)...');
+    const yieldToMain = () => new Promise(resolve => setTimeout(resolve, 0));
 
-    // 1. Initialize SQLite WASM
+    // Phase 0: Setup UI and render HUD instantly (0ms FCP/LCP)
+    this.setupUI();
+    this.setupVirtualKeyboardDetection();
+    this.setupOrientationHandling();
+    this.updateHUD();
+    this.renderMissionInfo();
+
+    await yieldToMain();
+
+    // Phase 1: Initialize SQLite WASM
     await sqlEngine.init();
-
-    // 2. Initialize Simulation & Baseline Tables (Plots, Water Reservoir, Equipment)
     simulation.initBaselineTables();
     simulation.syncPlotsWithLevel(gameState.currentLevel || 1);
 
-    // 3. Initialize the Full 3D WebGL Living Farm
+    await yieldToMain();
+
+    // Phase 2: Initialize 3D Living Farm
     const canvasContainer = document.getElementById('canvas-container');
     if (canvasContainer) {
       farm3D.init(canvasContainer);
@@ -35,14 +45,9 @@ class MobileApp {
       farm3D.syncFromDatabase();
     }
 
-    // 4. Setup Touch UI, Virtual Keyboard, and Events
-    this.setupUI();
-    this.setupVirtualKeyboardDetection();
-    this.setupOrientationHandling();
-    this.updateHUD();
-    this.renderMissionInfo();
+    await yieldToMain();
 
-    // 5. Connect Database Changes to 3D Scene
+    // Phase 3: Event Subscriptions & Global handles
     sqlEngine.addChangeListener(() => {
       if (farm3D) {
         farm3D.syncFromDatabase();
