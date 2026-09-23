@@ -125,3 +125,12 @@
 
 ## Project State
 - **FARMDB IS 100% COMPLETE & VERIFIED.** All 24 levels are fully implemented, tested, and playable.
+
+## Project Cleanup
+- **Cleanup Date**: 2026-09-23
+- **Files Removed**:
+  - `test_level1.js` (Redundant single-level scratch test script, superseded by `test_levels.js`)
+  - `rand/report.html` & `rand/` (Obsolete early draft planning mock)
+- **Dependencies Removed**:
+  - `puppeteer-core` (Unused devDependency from obsolete screenshot test scripts, removed from `Desktop/package.json` and `Desktop/package-lock.json`)
+- **Final Test Result**: **144/144 missions passing (100%)**, `npm run build` PASS with 0 errors.
