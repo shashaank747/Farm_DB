@@ -370,6 +370,7 @@
             <span>New to FarmDB?</span> <a class="link-signup" id="link-create-account">Create an account</a>
             <button type="button" class="btn-guest-login" id="btn-guest-login">⚡ Play as Demo Farmer (Instant
               Access)</button>
+            <button type="button" class="btn-login-starter-guide" id="btn-login-starter-guide" style="margin-top: 8px; width: 100%; background: #EFF6FF; border: 1.5px solid #93C5FD; color: #1D4ED8; font-weight: 700; padding: 8px 12px; border-radius: 8px; font-size: 12px; cursor: pointer;">📘 Open Student Starter Guide</button>
           </div>
         </form>
       </div>
@@ -477,6 +478,9 @@
       <div class="nav-right">
         <button class="btn-icon" id="btn-toggle-sound" title="Toggle Farm Audio (Unmuted by default)">
           <span id="sound-icon">🔊</span>
+        </button>
+        <button class="btn-icon" id="btn-show-starter-guide" title="Open Student Starter Guide & Manual">
+          <span>📘</span>
         </button>
         <button class="btn-icon" id="btn-show-story" title="View Grandfather's Notebook & Story">
           <span>📖</span>
@@ -1132,6 +1136,322 @@ SELECT * FROM seeds;"></textarea>
           <button id="dbg-btn-clear-storage"
             style="background: #F59E0B; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer;">Clear
             LocalStorage & Reset</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==========================================================
+         STUDENT STARTER GUIDE MODAL (FARMDB STARTER MANUAL)
+         ========================================================== -->
+    <div class="modal-overlay" id="starter-guide-modal-overlay">
+      <div class="starter-guide-modal">
+        <div class="starter-guide-header">
+          <div class="starter-guide-header-text">
+            <h2><span>🌾</span> FARMDB STUDENT STARTER GUIDE</h2>
+            <p>"Everything you need to know before entering the farm."</p>
+          </div>
+          <button class="starter-guide-close-btn" id="btn-close-starter-guide" title="Close Guide (Esc)">✕</button>
+        </div>
+
+        <div class="starter-guide-nav-bar" id="starter-guide-tabs">
+          <button class="guide-tab-btn active" data-section="sec-welcome">🌱 Welcome</button>
+          <button class="guide-tab-btn" data-section="sec-path">🗺️ Choose Path</button>
+          <button class="guide-tab-btn" data-section="sec-basics">🗄️ Database & Tables</button>
+          <button class="guide-tab-btn" data-section="sec-crud">⚡ Core SQL (CRUD)</button>
+          <button class="guide-tab-btn" data-section="sec-analytics">📈 Aggregations & Joins</button>
+          <button class="guide-tab-btn" data-section="sec-design">🏗️ Design & DDL</button>
+          <button class="guide-tab-btn" data-section="sec-fullstack">🚀 Full Stack Systems</button>
+          <button class="guide-tab-btn" data-section="sec-mindset">💡 Mission Mindset</button>
+        </div>
+
+        <div class="starter-guide-body" id="starter-guide-content">
+          <!-- SECTION 1: WELCOME & HOW IT WORKS -->
+          <div class="guide-card" id="sec-welcome">
+            <h3><span>🌾</span> Welcome to FARMDB</h3>
+            <p>Welcome to <strong>FARMDB</strong>! You are stepping onto a digital agricultural homestead powered by a genuine relational database engine. Rather than learning database concepts purely through abstract lectures or multiple-choice quizzes, you will apply real SQL to solve practical operational problems facing the farm.</p>
+            <p>During your career, you will use SQL to:</p>
+            <ul>
+              <li><strong>Create and manage tables</strong> (crops, supplies, animals, plots, facilities)</li>
+              <li><strong>Add and update records</strong> (planting schedules, harvest yields, prices)</li>
+              <li><strong>Filter and sort data</strong> (low inventory alerts, high-value crops)</li>
+              <li><strong>Analyze agricultural performance</strong> (revenue metrics, profit margins)</li>
+              <li><strong>Connect related tables</strong> (linking suppliers, orders, and fields)</li>
+              <li><strong>Architect normalized schemas</strong> and enforce data integrity</li>
+              <li><strong>Automate workflows with Triggers & Stored Procedures</strong></li>
+              <li><strong>Secure database access with Data Control Language (DCL)</strong></li>
+              <li><strong>Construct AI-assisted decision pipelines</strong> and complete the final harvest capstone!</li>
+            </ul>
+
+            <h4>🎮 How the Game Works</h4>
+            <p>Every level presents an authentic farm situation. The flow is straightforward:</p>
+            <div class="guide-sql-block">Story & Context ➔ Operational Problem ➔ Mission Task ➔ Write SQL Query ➔ Inspect Result & Advance!</div>
+            <p>You write SQL in the <strong>FARMDB Terminal</strong>. The WebAssembly SQLite database executes your query and evaluates whether the farm's objective was achieved.</p>
+          </div>
+
+          <!-- SECTION 2: CHOOSE YOUR PATH -->
+          <div class="guide-card" id="sec-path">
+            <h3><span>🗺️</span> Choose Your Learning Path</h3>
+            <p>FARMDB features two specialized learning journeys sharing a unified curriculum:</p>
+
+            <div class="guide-path-selector">
+              <div class="path-option-card selected" id="path-card-analytics">
+                <span class="path-badge analytics">📊 Path 1: Data Analytics</span>
+                <h4 style="margin: 0 0 6px 0;">Data Analytics Curriculum</h4>
+                <p style="font-size: 12.5px; color: #475569; margin-bottom: 8px;"><strong>Levels 1–17</strong>: Designed for students focusing on SQL data retrieval, filtering, aggregation, reporting, subqueries, CTEs, and relational modeling.</p>
+                <div style="font-size: 12px; color: #047857; font-weight: 700;">Concludes at Level 17 with the DA Capstone!</div>
+              </div>
+
+              <div class="path-option-card" id="path-card-fullstack">
+                <span class="path-badge fullstack">🚀 Path 2: Full Stack</span>
+                <h4 style="margin: 0 0 6px 0;">Full Stack Agribusiness</h4>
+                <p style="font-size: 12.5px; color: #475569; margin-bottom: 8px;"><strong>Levels 1–24</strong>: Includes everything in Data Analytics and continues into Views, ACID Transactions, Triggers, Stored Procedures, DCL Security, and AI Decision Pipelines.</p>
+                <div style="font-size: 12px; color: #9D174D; font-weight: 700;">Concludes at Level 24 with Agribusiness Emperor!</div>
+              </div>
+            </div>
+            <p style="font-size: 12.5px; color: #64748B;"><em>Click either card above to set your active learning path at any time.</em></p>
+          </div>
+
+          <!-- SECTION 3: DATABASE & TABLES -->
+          <div class="guide-card" id="sec-basics">
+            <h3><span>🗄️</span> What is a Database? Tables, Rows & Columns</h3>
+            <p>A <strong>database</strong> is an organized, persistent collection of records. Think of a table like a structured spreadsheet:</p>
+            <table class="guide-table">
+              <thead>
+                <tr>
+                  <th>crop_id (PK)</th>
+                  <th>crop_name</th>
+                  <th>growth_days</th>
+                  <th>market_price</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>1</strong></td>
+                  <td>Wheat</td>
+                  <td>45</td>
+                  <td>₹45</td>
+                </tr>
+                <tr>
+                  <td><strong>2</strong></td>
+                  <td>Rice</td>
+                  <td>60</td>
+                  <td>₹60</td>
+                </tr>
+                <tr>
+                  <td><strong>3</strong></td>
+                  <td>Tomato</td>
+                  <td>30</td>
+                  <td>₹35</td>
+                </tr>
+              </tbody>
+            </table>
+            <ul>
+              <li><strong>TABLE</strong>: The complete collection of records (e.g., <code>crops</code>).</li>
+              <li><strong>ROW (Record / Tuple)</strong>: One individual entity row across columns.</li>
+              <li><strong>COLUMN (Field / Attribute)</strong>: One specific type of information (e.g., <code>crop_name</code>).</li>
+            </ul>
+
+            <h4>🔑 Primary Key (PK) vs 🔗 Foreign Key (FK)</h4>
+            <ul>
+              <li><strong>PRIMARY KEY</strong>: Uniquely identifies each record. <em>"Which exact record is this?"</em></li>
+              <li><strong>FOREIGN KEY</strong>: Connects a row to the primary key of another table. <em>"Which record in another table is this connected to?"</em></li>
+            </ul>
+            <div class="guide-sql-block">CREATE TABLE crops (
+  crop_id INT PRIMARY KEY,
+  crop_name VARCHAR(50),
+  market_price FLOAT
+);
+
+CREATE TABLE farming (
+  field_id INT PRIMARY KEY,
+  crop_id INT,
+  FOREIGN KEY (crop_id) REFERENCES crops(crop_id)
+);</div>
+
+            <h4>🏷️ Common Data Types</h4>
+            <ul>
+              <li><code>INT</code> / <code>INTEGER</code>: Whole numbers (e.g., <code>quantity INT</code>)</li>
+              <li><code>FLOAT</code> / <code>DECIMAL</code>: Fractional numbers (e.g., <code>price FLOAT</code>)</li>
+              <li><code>VARCHAR(N)</code> / <code>TEXT</code>: Text strings (e.g., <code>crop_name VARCHAR(50)</code>)</li>
+              <li><code>DATE</code> / <code>DATETIME</code>: Calendar dates and timestamps</li>
+            </ul>
+          </div>
+
+          <!-- SECTION 4: CORE SQL (CRUD) -->
+          <div class="guide-card" id="sec-crud">
+            <h3><span>⚡</span> Core SQL Commands (CRUD)</h3>
+
+            <h4>1. INSERT — Add New Records</h4>
+            <div class="guide-sql-block">INSERT INTO crops (crop_id, crop_name, market_price)
+VALUES (1, 'Wheat', 45);</div>
+
+            <h4>2. SELECT — Retrieve Data</h4>
+            <div class="guide-sql-block">-- Select all columns
+SELECT * FROM crops;
+
+-- Select specific columns (projection)
+SELECT crop_name, market_price FROM crops;</div>
+
+            <h4>3. WHERE — Filter Specific Rows</h4>
+            <div class="guide-sql-block">SELECT * FROM crops WHERE market_price > 50;</div>
+
+            <h4>4. ORDER BY & LIMIT — Sorting & Restricting</h4>
+            <div class="guide-sql-block">-- Sort highest price first and show top 3
+SELECT * FROM crops ORDER BY market_price DESC LIMIT 3;</div>
+            <p><code>ASC</code> = Ascending (default) | <code>DESC</code> = Descending</p>
+
+            <h4>5. UPDATE — Modify Existing Data</h4>
+            <div class="guide-sql-block">UPDATE crops SET market_price = 55 WHERE crop_id = 1;</div>
+
+            <h4>6. DELETE — Remove Outdated Data</h4>
+            <div class="guide-sql-block">DELETE FROM crops WHERE crop_id = 3;</div>
+            <p style="color: #DC2626; font-size: 13px; font-weight: 700;">⚠️ Always specify a WHERE clause with UPDATE and DELETE to prevent modifying or deleting the entire table!</p>
+          </div>
+
+          <!-- SECTION 5: AGGREGATIONS & JOINS -->
+          <div class="guide-card" id="sec-analytics">
+            <h3><span>📈</span> Aggregations, Filtering, Joins & NULL</h3>
+
+            <h4>Aggregate Functions</h4>
+            <p>Calculate summary numbers across rows: <code>COUNT()</code>, <code>SUM()</code>, <code>AVG()</code>, <code>MIN()</code>, <code>MAX()</code>.</p>
+
+            <h4>GROUP BY vs HAVING</h4>
+            <div class="guide-sql-block">SELECT crop_id, SUM(quantity) AS total_sold
+FROM sales
+GROUP BY crop_id
+HAVING SUM(quantity) > 100;</div>
+            <p><strong>Rule</strong>: <code>WHERE</code> filters individual rows <em>before</em> grouping; <code>HAVING</code> filters aggregated values <em>after</em> grouping.</p>
+
+            <h4>Smart Filtering Operators</h4>
+            <ul>
+              <li><code>AND</code> / <code>OR</code>: Compound logical conditions</li>
+              <li><code>BETWEEN 20 AND 50</code>: Value inside inclusive range</li>
+              <li><code>IN ('Seed', 'Feed', 'Fertilizer')</code>: Value matches any in a list</li>
+              <li><code>LIKE 'Tom%'</code>: Wildcard text pattern matching</li>
+            </ul>
+
+            <h4>Relational JOINs</h4>
+            <div class="guide-sql-block">-- INNER JOIN: returns rows where matches exist in BOTH tables
+SELECT crops.crop_name, supplies.quantity
+FROM crops
+INNER JOIN supplies ON crops.crop_id = supplies.crop_id;
+
+-- LEFT JOIN: keeps ALL rows from left table, matching right table (NULL if no match)
+SELECT crops.crop_name, sales.sale_price
+FROM crops
+LEFT JOIN sales ON crops.crop_id = sales.crop_id;</div>
+
+            <h4>Handling Missing Data (NULL)</h4>
+            <p>Use <code>WHERE phone IS NULL</code> or <code>WHERE phone IS NOT NULL</code>. Never use <code>= NULL</code>.</p>
+          </div>
+
+          <!-- SECTION 6: DESIGN & DDL -->
+          <div class="guide-card" id="sec-design">
+            <h3><span>🏗️</span> Advanced Queries & Database Architecture</h3>
+
+            <h4>CASE WHEN — Conditional Categorization</h4>
+            <div class="guide-sql-block">SELECT crop_name,
+       CASE 
+         WHEN market_price >= 50 THEN 'Premium Crop'
+         ELSE 'Standard Crop'
+       END AS price_category
+FROM crops;</div>
+
+            <h4>Subqueries & Common Table Expressions (CTEs)</h4>
+            <div class="guide-sql-block">-- CTE (WITH ... AS) creates modular, reusable intermediate queries:
+WITH TopSales AS (
+  SELECT crop_id, SUM(quantity * sale_price) AS revenue
+  FROM sales
+  GROUP BY crop_id
+)
+SELECT crops.crop_name, TopSales.revenue
+FROM crops
+INNER JOIN TopSales ON crops.crop_id = TopSales.crop_id
+WHERE TopSales.revenue > 1000;</div>
+
+            <h4>Relationships & Normalization</h4>
+            <ul>
+              <li><strong>1:1 (One-to-One)</strong>: One profile per farm entity.</li>
+              <li><strong>1:M (One-to-Many)</strong>: One crop variety planted in multiple field plots.</li>
+              <li><strong>M:M (Many-to-Many)</strong>: Resolved via junction tables with composite primary keys (e.g., <code>crop_suppliers</code>).</li>
+              <li><strong>Normalization (1NF, 2NF, 3NF)</strong>: Organizing tables to eliminate redundancy and update anomalies.</li>
+              <li><strong>DDL (Data Definition Language)</strong>: <code>CREATE TABLE</code>, <code>ALTER TABLE ADD COLUMN</code>, <code>RENAME TABLE</code>, <code>DROP TABLE</code>.</li>
+            </ul>
+          </div>
+
+          <!-- SECTION 7: FULL STACK SYSTEMS -->
+          <div class="guide-card" id="sec-fullstack">
+            <h3><span>🚀</span> Full Stack Systems (Levels 18–24)</h3>
+
+            <h4>Views (`CREATE VIEW`)</h4>
+            <p>Saved, reusable virtual tables encapsulating complex joins and calculations.</p>
+
+            <h4>ACID Transactions (`BEGIN`, `COMMIT`, `ROLLBACK`)</h4>
+            <p>Execute multi-step database changes as an all-or-nothing atomic unit to prevent data corruption.</p>
+
+            <h4>Autonomous Triggers (`CREATE TRIGGER`)</h4>
+            <p>Procedural SQL that fires automatically on <code>INSERT</code>, <code>UPDATE</code>, or <code>DELETE</code> to write audit logs or block invalid data (using <code>BEFORE</code>/<code>AFTER</code> and <code>NEW</code>/<code>OLD</code>).</p>
+
+            <h4>Stored Procedures (`CREATE PROCEDURE`, `CALL`)</h4>
+            <p>Reusable database subroutines with input parameters (<code>IN</code>) executed with <code>CALL</code>.</p>
+
+            <h4>Data Control Language (DCL — `GRANT`, `REVOKE`)</h4>
+            <p>Enforce Role-Based Access Control (RBAC) and the Principle of Least Privilege across analysts, managers, and directors.</p>
+
+            <h4>AI + SQL Ground Truth Pipeline</h4>
+            <p>Relational databases represent immutable ground truth. Structured SQL queries extract precise operational metrics to feed automated AI decision and recommendation engines.</p>
+          </div>
+
+          <!-- SECTION 8: MISSION MINDSET -->
+          <div class="guide-card" id="sec-mindset">
+            <h3><span>💡</span> How to Approach Any Mission</h3>
+            <ol>
+              <li><strong>Read the story context</strong>: Understand the real agricultural situation.</li>
+              <li><strong>Identify the required data</strong>: Which table or columns hold the answer?</li>
+              <li><strong>Select the right SQL tool</strong>: Filter (<code>WHERE</code>), Aggregate (<code>SUM</code>/<code>GROUP BY</code>), Join (<code>INNER JOIN</code>), or Automate (<code>TRIGGER</code>)?</li>
+              <li><strong>Draft and execute</strong>: Type your query and press <code>Ctrl+Enter</code>.</li>
+              <li><strong>Inspect results</strong>: If an error occurs, read the message, check table/column names, check Tier 1–3 hints, and iterate!</li>
+            </ol>
+
+            <table class="guide-table">
+              <thead>
+                <tr>
+                  <th>Goal</th>
+                  <th>SQL Solution</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>Find and read rows</td><td><code>SELECT ... FROM ...</code></td></tr>
+                <tr><td>Filter specific criteria</td><td><code>WHERE condition</code></td></tr>
+                <tr><td>Sort highest or lowest</td><td><code>ORDER BY col DESC/ASC</code></td></tr>
+                <tr><td>Category totals & averages</td><td><code>GROUP BY col</code> with <code>SUM()</code>, <code>AVG()</code></td></tr>
+                <tr><td>Filter aggregated groups</td><td><code>HAVING SUM() > value</code></td></tr>
+                <tr><td>Combine multiple tables</td><td><code>INNER JOIN</code> / <code>LEFT JOIN</code></td></tr>
+                <tr><td>Multi-step analytics</td><td><code>WITH CTE AS (...)</code></td></tr>
+                <tr><td>Automatic audit/defense</td><td><code>CREATE TRIGGER ...</code></td></tr>
+                <tr><td>Reusable routine</td><td><code>CREATE PROCEDURE ...</code></td></tr>
+              </tbody>
+            </table>
+
+            <div style="background: #ECFDF5; border: 1.5px solid #10B981; border-radius: 10px; padding: 14px; margin-top: 16px; text-align: center;">
+              <h4 style="color: #065F46; margin: 0 0 6px 0;">🌾 YOU ARE READY TO ENTER THE FARM!</h4>
+              <p style="color: #047857; margin: 0; font-size: 13px;">Choose your path, write your first query, and lead your agricultural enterprise from a humble plot to a global agribusiness!</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="starter-guide-footer">
+          <div style="font-size: 12.5px; color: #64748B;">
+            Active Path: <strong id="guide-active-path-label" style="color: #059669;">Data Analytics (Lvl 1–17)</strong>
+          </div>
+          <div style="display: flex; gap: 10px;">
+            <button class="btn-enter-farm" id="btn-guide-start-game">
+              <span>Enter Farm & Begin Playing ❯</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
     <!-- ==========================================================
          PLAYER PROFILE / CAREER STATS MODAL
          ========================================================== -->

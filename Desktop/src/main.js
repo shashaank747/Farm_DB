@@ -904,6 +904,32 @@ class FarmDBApp {
     }
   }
 
+  openStarterGuideModal() {
+    const modal = document.getElementById('starter-guide-modal-overlay');
+    if (modal) {
+      modal.classList.add('active');
+      const isFullstack = gameState.learningPath === 'fullstack';
+      const cardAnalytics = document.getElementById('path-card-analytics');
+      const cardFullstack = document.getElementById('path-card-fullstack');
+      if (cardAnalytics) cardAnalytics.classList.toggle('selected', !isFullstack);
+      if (cardFullstack) cardFullstack.classList.toggle('selected', isFullstack);
+      const label = document.getElementById('guide-active-path-label');
+      if (label) {
+        label.textContent = isFullstack ? 'Full Stack (Lvl 1–24)' : 'Data Analytics (Lvl 1–17)';
+        label.style.color = isFullstack ? '#9D174D' : '#059669';
+      }
+      sound.playNotebookOpen();
+    }
+  }
+
+  closeStarterGuideModal() {
+    const modal = document.getElementById('starter-guide-modal-overlay');
+    if (modal) {
+      modal.classList.remove('active');
+      sound.playPlotSelect();
+    }
+  }
+
   // ==========================================================
   // QUERY RESULT RENDERING
   // ==========================================================
@@ -1278,13 +1304,92 @@ class FarmDBApp {
     document.addEventListener('pointerdown', unlockAudio, { once: true });
     document.addEventListener('keydown', unlockAudio, { once: true });
 
+    // Show Student Starter Guide
+    const btnShowStarterGuide = document.getElementById('btn-show-starter-guide');
+    if (btnShowStarterGuide) {
+      btnShowStarterGuide.addEventListener('click', () => this.openStarterGuideModal());
+    }
+
+    const btnLoginStarterGuide = document.getElementById('btn-login-starter-guide');
+    if (btnLoginStarterGuide) {
+      btnLoginStarterGuide.addEventListener('click', () => this.openStarterGuideModal());
+    }
+
+    const btnCloseStarterGuide = document.getElementById('btn-close-starter-guide');
+    if (btnCloseStarterGuide) {
+      btnCloseStarterGuide.addEventListener('click', () => this.closeStarterGuideModal());
+    }
+
+    const btnGuideStartGame = document.getElementById('btn-guide-start-game');
+    if (btnGuideStartGame) {
+      btnGuideStartGame.addEventListener('click', () => {
+        this.closeStarterGuideModal();
+        this.openTerminal();
+        sound.playChime();
+        this.showToast(`🌾 Path set: ${gameState.learningPath === 'fullstack' ? 'Full Stack (L1-24)' : 'Data Analytics (L1-17)'}! Welcome to FARMDB!`, 'success');
+      });
+    }
+
+    const starterGuideOverlay = document.getElementById('starter-guide-modal-overlay');
+    if (starterGuideOverlay) {
+      starterGuideOverlay.addEventListener('click', (e) => {
+        if (e.target === starterGuideOverlay) {
+          this.closeStarterGuideModal();
+        }
+      });
+    }
+
+    // Path selection in Starter Guide
+    const cardAnalytics = document.getElementById('path-card-analytics');
+    const cardFullstack = document.getElementById('path-card-fullstack');
+    const updatePathCards = () => {
+      const isFullstack = gameState.learningPath === 'fullstack';
+      if (cardAnalytics) cardAnalytics.classList.toggle('selected', !isFullstack);
+      if (cardFullstack) cardFullstack.classList.toggle('selected', isFullstack);
+      const label = document.getElementById('guide-active-path-label');
+      if (label) {
+        label.textContent = isFullstack ? 'Full Stack (Lvl 1–24)' : 'Data Analytics (Lvl 1–17)';
+        label.style.color = isFullstack ? '#9D174D' : '#059669';
+      }
+    };
+
+    if (cardAnalytics) {
+      cardAnalytics.addEventListener('click', () => {
+        gameState.setLearningPath('analytics');
+        updatePathCards();
+        sound.playPlotSelect();
+        this.showToast('📊 Selected Learning Path: Data Analytics (Levels 1–17)', 'info');
+      });
+    }
+
+    if (cardFullstack) {
+      cardFullstack.addEventListener('click', () => {
+        gameState.setLearningPath('fullstack');
+        updatePathCards();
+        sound.playPlotSelect();
+        this.showToast('🚀 Selected Learning Path: Full Stack (Levels 1–24)', 'info');
+      });
+    }
+
+    // Tabs inside Starter Guide
+    const guideTabs = document.querySelectorAll('#starter-guide-tabs .guide-tab-btn');
+    guideTabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        guideTabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        const secId = tab.getAttribute('data-section');
+        const target = document.getElementById(secId);
+        if (target) {
+          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      });
+    });
+
     // Show Story Notebook
     const btnShowStory = document.getElementById('btn-show-story');
     if (btnShowStory) {
       btnShowStory.addEventListener('click', () => this.openNotebookModal());
     }
-
-
 
     // Start Playing from Notebook
     const btnStartPlaying = document.getElementById('btn-start-playing');
