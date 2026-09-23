@@ -10,6 +10,7 @@ class GameState {
     this.minute = 0;
     this.timeOfDay = 'morning'; // 'morning' | 'day' | 'sunset' | 'night'
     this.isTimePaused = false;
+    this.learningPath = 'analytics'; // 'analytics' (Normal/DA) | 'fullstack' (Full Stack)
     this.money = 500;
     this.xp = 0;
     this.badges = [];
@@ -176,11 +177,17 @@ class GameState {
     this.notify();
   }
 
+  setLearningPath(path) {
+    this.learningPath = path === 'fullstack' ? 'fullstack' : 'analytics';
+    this.notify();
+  }
+
   saveToStorage() {
     try {
       const data = {
         currentLevel: this.currentLevel,
         currentMissionIndex: this.currentMissionIndex,
+        learningPath: this.learningPath,
         season: this.season,
         day: this.day,
         hour: this.hour,
@@ -204,6 +211,7 @@ class GameState {
         const data = JSON.parse(saved);
         this.currentLevel = data.currentLevel || 1;
         this.currentMissionIndex = data.currentMissionIndex || 0;
+        this.learningPath = data.learningPath || 'analytics';
         this.season = data.season || 1;
         this.day = data.day || 1;
         this.hour = data.hour !== undefined ? data.hour : 7;
@@ -228,6 +236,7 @@ class GameState {
     } catch (e) {}
     this.currentLevel = 1;
     this.currentMissionIndex = 0;
+    this.learningPath = 'analytics';
     this.season = 1;
     this.day = 1;
     this.hour = 7;

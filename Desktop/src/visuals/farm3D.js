@@ -626,7 +626,16 @@ class Farm3DWorld {
       return;
     }
 
-    const cropName = (cropData.crop_id || '').toLowerCase();
+    let cropName = String(cropData.crop_id || '').toLowerCase();
+    if (/^\d+$/.test(cropName)) {
+      const crops = (sqlEngine && sqlEngine.isReady) ? (sqlEngine.getTableData('crops') || []) : [];
+      const match = crops.find(c => String(c.crop_id) === String(cropName));
+      if (match && match.crop_name) {
+        cropName = match.crop_name.toLowerCase();
+      } else if (cropName === '1') cropName = 'tomato';
+      else if (cropName === '2') cropName = 'wheat';
+      else if (cropName === '3') cropName = 'rice';
+    }
     const growth = cropData.growth_percent || 0;
 
     // Rows and columns of plants in the 0.5 acre bed
@@ -3414,7 +3423,7 @@ class Farm3DWorld {
         plot.lockGroup.visible = !isUnlocked;
         plot.bedMesh.material.opacity = isUnlocked ? 1.0 : 0.6;
 
-        const cropRecord = farmingData.find(f => (f.plot_id === plotId || f.plot_id === plotId.split('.')[0]) && f.status === 'growing');
+        const cropRecord = farmingData.find(f => (f.plot_id === plotId || f.plot_id === plotId.split('.')[0]) && (f.status === 'growing' || f.status === 'ready'));
         this.updatePlotCropVisual(plotId, cropRecord);
       });
 

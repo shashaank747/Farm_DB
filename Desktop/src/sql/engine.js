@@ -13,6 +13,17 @@ class SQLEngine {
     this.lastSql = '(none)';
     this.lastResult = '(none)';
     this.lastError = '(none)';
+    this.procedures = {};
+    this.roles = {
+      'farm_analyst': ['SELECT'],
+      'farm_manager': ['SELECT', 'INSERT', 'UPDATE'],
+      'farm_admin': ['ALL']
+    };
+    this.grants = [
+      { grantee: 'farm_analyst', privs: ['SELECT'], object: 'crops' },
+      { grantee: 'farm_analyst', privs: ['SELECT'], object: 'sales' },
+      { grantee: 'farm_manager', privs: ['SELECT', 'INSERT', 'UPDATE'], object: 'supplies' }
+    ];
   }
 
   async init() {
@@ -44,11 +55,13 @@ class SQLEngine {
         throw new Error('initSqlJs is not a function. Check if /sql-wasm.js is loaded.');
       }
 
+      const isNode = typeof process !== 'undefined' && process.versions && process.versions.node;
       this.SQL = await initFn({
-        locateFile: (file) => `/${file}`
+        locateFile: (file) => isNode ? `./node_modules/sql.js/dist/${file}` : `/${file}`
       });
 
       this.db = new this.SQL.Database();
+      this.db.exec("PRAGMA foreign_keys = ON;");
       this.isReady = true;
       this.initError = null;
       console.log('🌾 FARMDB SQLite WASM Engine initialized successfully.');
@@ -112,6 +125,42 @@ class SQLEngine {
       };
     }
 
+    // Handle CREATE DATABASE gracefully in SQLite
+    if (/^\s*create\s+database\s+([\w_]+)/i.test(trimmed)) {
+      const match = trimmed.match(/^\s*create\s+database\s+([\w_]+)/i);
+      const dbName = match ? match[1] : 'farm_db';
+      this.lastResult = `Database '${dbName}' created and ready for farm tables.`;
+      this.lastError = '(none)';
+      return {
+        success: true,
+        action: 'CREATE DATABASE',
+        table: null,
+        results: [{ columns: ['status'], values: [[`Database '${dbName}' created and initialized successfully.`]] }],
+        rowsAffected: 0
+      };
+    }
+
+    // Handle USE database gracefully in SQLite
+    if (/^\s*use\s+([\w_]+)/i.test(trimmed)) {
+      const match = trimmed.match(/^\s*use\s+([\w_]+)/i);
+      const dbName = match ? match[1] : 'farm_db';
+      this.lastResult = `Active database switched to '${dbName}'.`;
+      this.lastError = '(none)';
+      return {
+        success: true,
+        action: 'USE',
+        table: null,
+        results: [{ columns: ['status'], values: [[`Now using database '${dbName}'.`]] }],
+        rowsAffected: 0
+      };
+    }
+
+    // Handle Stored Procedures & DCL simulation layers
+    const procOrDclRes = this.handleProcedureAndDcl(trimmed);
+    if (procOrDclRes) {
+      return procOrDclRes;
+    }
+
     // Auto-normalize missing VALUES in INSERT statements (e.g. INSERT INTO seeds (cols) ('Tomato', 10, 20)...)
     let queryToRun = trimmed;
     if (/INSERT\s+INTO\s+[\w_]+\s*\([^)]+\)\s*\(/i.test(queryToRun) && !/\bVALUES\b/i.test(queryToRun)) {
@@ -137,7 +186,7 @@ class SQLEngine {
       else if (upper.includes('DELETE FROM') || upper.includes('DELETE ')) action = 'DELETE';
       else if (upper.includes('DROP TABLE')) action = 'DROP';
 
-      const tables = ['plots', 'seeds', 'animals', 'equipment', 'stock', 'farming', 'crops', 'water_reservoir', 'test_table'];
+      const tables = ['plots', 'seeds', 'animals', 'equipment', 'feed_log', 'supplies', 'stock', 'farming', 'crops', 'water_reservoir', 'test_table'];
       for (const t of tables) {
         if (new RegExp(`\\b${t}\\b`, 'i').test(trimmed)) {
           modifiedTable = t;
@@ -303,21 +352,26 @@ class SQLEngine {
 
       // 3. Equipment table dedup trigger & cleanup
       if (this.tableExists('equipment')) {
-        this.db.exec(`
-          CREATE TRIGGER IF NOT EXISTS trg_equipment_dedup
-          BEFORE INSERT ON equipment
-          FOR EACH ROW
-          WHEN EXISTS (SELECT 1 FROM equipment WHERE LOWER(TRIM(equipment_name)) = LOWER(TRIM(NEW.equipment_name)))
-          BEGIN
-            UPDATE equipment SET status = NEW.status WHERE LOWER(TRIM(equipment_name)) = LOWER(TRIM(NEW.equipment_name));
-            SELECT RAISE(IGNORE);
-          END;
-        `);
-        this.db.exec(`
-          DELETE FROM equipment WHERE rowid NOT IN (
-            SELECT MIN(rowid) FROM equipment GROUP BY LOWER(TRIM(equipment_name))
-          );
-        `);
+        const schema = this.getSchema();
+        const cols = (schema['equipment'] || []).map(c => c.name);
+        const nameCol = cols.includes('equipment_name') ? 'equipment_name' : (cols.includes('name') ? 'name' : null);
+        if (nameCol) {
+          this.db.exec(`
+            CREATE TRIGGER IF NOT EXISTS trg_equipment_dedup
+            BEFORE INSERT ON equipment
+            FOR EACH ROW
+            WHEN EXISTS (SELECT 1 FROM equipment WHERE LOWER(TRIM(${nameCol})) = LOWER(TRIM(NEW.${nameCol})))
+            BEGIN
+              UPDATE equipment SET status = NEW.status WHERE LOWER(TRIM(${nameCol})) = LOWER(TRIM(NEW.${nameCol}));
+              SELECT RAISE(IGNORE);
+            END;
+          `);
+          this.db.exec(`
+            DELETE FROM equipment WHERE rowid NOT IN (
+              SELECT MIN(rowid) FROM equipment GROUP BY LOWER(TRIM(${nameCol}))
+            );
+          `);
+        }
       }
 
       // 4. Stock table non-negative & dedup triggers
@@ -368,11 +422,316 @@ class SQLEngine {
   }
 
   /**
+   * Handle Stored Procedures & DCL Simulation Layers
+   */
+  handleProcedureAndDcl(trimmed) {
+    const cleanSql = trimmed.replace(/\r?\n/g, ' ').trim();
+
+    // 1. CREATE PROCEDURE
+    // Match DELIMITER ... CREATE PROCEDURE or CREATE PROCEDURE directly
+    if (/CREATE\s+PROCEDURE\s+([\w_]+)\s*\((.*?)\)\s*BEGIN\s+(.*?)\s*END/i.test(cleanSql)) {
+      const match = cleanSql.match(/CREATE\s+PROCEDURE\s+([\w_]+)\s*\((.*?)\)\s*BEGIN\s+(.*?)\s*END/i);
+      const procName = match[1];
+      const paramStr = match[2].trim();
+      const bodySql = match[3].trim();
+
+      const params = paramStr ? paramStr.split(',').map(p => {
+        const parts = p.trim().split(/\s+/);
+        if (parts.length >= 3) {
+          return { direction: parts[0].toUpperCase(), name: parts[1], type: parts[2].toUpperCase() };
+        } else if (parts.length === 2) {
+          return { direction: 'IN', name: parts[0], type: parts[1].toUpperCase() };
+        } else {
+          return { direction: 'IN', name: parts[0], type: 'ANY' };
+        }
+      }) : [];
+
+      this.procedures[procName.toLowerCase()] = {
+        name: procName,
+        params,
+        bodySql,
+        rawSql: trimmed
+      };
+
+      this.lastResult = `Stored procedure '${procName}' registered.`;
+      this.lastError = '(none)';
+      return {
+        success: true,
+        action: 'CREATE PROCEDURE',
+        table: null,
+        results: [{
+          columns: ['status', 'procedure_name', 'parameters', 'compatibility_mode'],
+          values: [[
+            `Procedure '${procName}' registered successfully.`,
+            procName,
+            params.map(p => `${p.direction} ${p.name} ${p.type}`).join(', ') || '(none)',
+            'FARMDB Stored Procedure Simulation Layer (MySQL Compat)'
+          ]]
+        }],
+        rowsAffected: 0
+      };
+    }
+
+    // 2. DROP PROCEDURE
+    if (/^\s*DROP\s+PROCEDURE\s+(?:IF\s+EXISTS\s+)?([\w_]+)/i.test(cleanSql)) {
+      const match = cleanSql.match(/^\s*DROP\s+PROCEDURE\s+(?:IF\s+EXISTS\s+)?([\w_]+)/i);
+      const procName = match[1];
+      delete this.procedures[procName.toLowerCase()];
+      this.lastResult = `Stored procedure '${procName}' dropped.`;
+      this.lastError = '(none)';
+      return {
+        success: true,
+        action: 'DROP PROCEDURE',
+        table: null,
+        results: [{
+          columns: ['status', 'compatibility_mode'],
+          values: [[`Procedure '${procName}' dropped.`, 'FARMDB Stored Procedure Simulation Layer']]
+        }],
+        rowsAffected: 0
+      };
+    }
+
+    // 3. CALL PROCEDURE
+    if (/^\s*CALL\s+([\w_]+)(?:\s*\((.*?)\))?/i.test(cleanSql)) {
+      const match = cleanSql.match(/^\s*CALL\s+([\w_]+)(?:\s*\((.*?)\))?/i);
+      const procName = match[1];
+      const argStr = match[2] ? match[2].trim() : '';
+      const proc = this.procedures[procName.toLowerCase()];
+
+      if (!proc) {
+        const err = `Stored procedure '${procName}' does not exist. Did you create it with CREATE PROCEDURE?`;
+        this.lastError = err;
+        return {
+          success: false,
+          error: err,
+          hint: `Define the procedure with CREATE PROCEDURE ${procName}(...) first.`
+        };
+      }
+
+      // Parse arguments
+      let args = [];
+      if (argStr) {
+        args = argStr.split(',').map(a => a.trim().replace(/^['"]|['"]$/g, ''));
+      }
+
+      // Substitute parameters in bodySql
+      let execSql = proc.bodySql;
+      proc.params.forEach((param, idx) => {
+        const val = args[idx] !== undefined ? args[idx] : 'NULL';
+        const regex = new RegExp(`\\b${param.name}\\b`, 'gi');
+        execSql = execSql.replace(regex, isNaN(val) ? `'${val}'` : val);
+      });
+
+      // Remove trailing delimiters or semicolons if needed
+      execSql = execSql.replace(/\/\/\s*$/, '').trim();
+
+      try {
+        const results = this.db.exec(execSql);
+        this.lastResult = `CALL ${procName} executed.`;
+        this.lastError = '(none)';
+        return {
+          success: true,
+          action: 'CALL',
+          table: null,
+          results: results,
+          rowsAffected: this.db.getRowsModified ? this.db.getRowsModified() : 0
+        };
+      } catch (e) {
+        this.lastError = e.message;
+        return {
+          success: false,
+          error: `Error executing procedure '${procName}': ${e.message}`,
+          hint: 'Verify the SQL query inside the stored procedure body.'
+        };
+      }
+    }
+
+    // 4. SHOW PROCEDURES / SHOW PROCEDURE STATUS
+    if (/^\s*SHOW\s+PROCEDURE\s+STATUS/i.test(cleanSql) || /^\s*SHOW\s+PROCEDURES/i.test(cleanSql)) {
+      const list = Object.values(this.procedures);
+      return {
+        success: true,
+        action: 'SHOW PROCEDURES',
+        table: null,
+        results: [{
+          columns: ['Procedure', 'Parameters', 'Created By'],
+          values: list.map(p => [
+            p.name,
+            p.params.map(pr => `${pr.direction} ${pr.name} ${pr.type}`).join(', ') || '(none)',
+            'FarmDB Automation Engineer'
+          ])
+        }],
+        rowsAffected: list.length
+      };
+    }
+
+    // 5. Global multi-statement DCL extraction
+    let hasDcl = false;
+
+    // A. CREATE ROLE
+    const roleMatches = [...cleanSql.matchAll(/CREATE\s+ROLE\s+([\w_]+)/gi)];
+    if (roleMatches.length > 0) {
+      hasDcl = true;
+      roleMatches.forEach(m => {
+        const roleName = m[1].toLowerCase();
+        if (!this.roles[roleName]) {
+          this.roles[roleName] = [];
+        }
+      });
+    }
+
+    // B. GRANT PRIVILEGES
+    const grantMatches = [...cleanSql.matchAll(/GRANT\s+(.*?)\s+ON\s+([\w_\*]+)\s+TO\s+([\w_]+)/gi)];
+    if (grantMatches.length > 0) {
+      hasDcl = true;
+      grantMatches.forEach(m => {
+        const privsStr = m[1].trim();
+        const objectName = m[2].trim().toLowerCase();
+        const grantee = m[3].trim().toLowerCase();
+        const privs = privsStr.split(',').map(p => p.trim().toUpperCase());
+
+        this.grants.push({
+          grantee,
+          privs,
+          object: objectName
+        });
+
+        if (!this.roles[grantee]) {
+          this.roles[grantee] = [];
+        }
+        privs.forEach(p => {
+          if (!this.roles[grantee].includes(p)) {
+            this.roles[grantee].push(p);
+          }
+        });
+      });
+    }
+
+    // C. REVOKE PRIVILEGES
+    const revokeMatches = [...cleanSql.matchAll(/REVOKE\s+(.*?)\s+ON\s+([\w_\*]+)\s+FROM\s+([\w_]+)/gi)];
+    if (revokeMatches.length > 0) {
+      hasDcl = true;
+      revokeMatches.forEach(m => {
+        const privsStr = m[1].trim();
+        const objectName = m[2].trim().toLowerCase();
+        const grantee = m[3].trim().toLowerCase();
+        const privs = privsStr.split(',').map(p => p.trim().toUpperCase());
+
+        this.grants = this.grants.filter(g => {
+          if (g.grantee === grantee && (g.object === objectName || objectName === '*')) {
+            g.privs = g.privs.filter(p => !privs.includes(p));
+            return g.privs.length > 0;
+          }
+          return true;
+        });
+
+        if (this.roles[grantee]) {
+          this.roles[grantee] = this.roles[grantee].filter(p => !privs.includes(p));
+        }
+      });
+    }
+
+    // D. SHOW GRANTS
+    if (/SHOW\s+GRANTS(?:\s+FOR\s+([\w_]+))?/i.test(cleanSql)) {
+      const match = cleanSql.match(/SHOW\s+GRANTS(?:\s+FOR\s+([\w_]+))?/i);
+      const target = match && match[1] ? match[1].toLowerCase() : null;
+      const filtered = target ? this.grants.filter(g => g.grantee === target) : this.grants;
+
+      return {
+        success: true,
+        action: 'SHOW GRANTS',
+        table: null,
+        results: [{
+          columns: ['Grantee', 'Privileges', 'Object'],
+          values: filtered.map(g => [g.grantee, g.privs.join(', '), g.object])
+        }],
+        rowsAffected: filtered.length
+      };
+    }
+
+    // E. SHOW ROLES
+    if (/SHOW\s+ROLES/i.test(cleanSql)) {
+      const roleList = Object.keys(this.roles);
+      return {
+        success: true,
+        action: 'SHOW ROLES',
+        table: null,
+        results: [{
+          columns: ['Role Name', 'Effective Privileges'],
+          values: roleList.map(r => [r, (this.roles[r] || []).join(', ') || '(none)'])
+        }],
+        rowsAffected: roleList.length
+      };
+    }
+
+    if (hasDcl) {
+      this.lastResult = 'DCL command(s) executed successfully.';
+      this.lastError = '(none)';
+      return {
+        success: true,
+        action: 'DCL',
+        table: null,
+        results: [{
+          columns: ['status', 'compatibility_mode'],
+          values: [['DCL security matrix updated successfully.', 'FARMDB DCL Simulation Layer (MySQL Compat)']]
+        }],
+        rowsAffected: 0
+      };
+    }
+
+    return null;
+  }
+
+  triggerExists(triggerName) {
+    if (!this.db) return false;
+    try {
+      const res = this.db.exec(`SELECT name FROM sqlite_master WHERE type='trigger' AND LOWER(name)=LOWER('${triggerName}');`);
+      return res.length > 0 && res[0].values.length > 0;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  procedureExists(procName) {
+    return !!this.procedures[procName.toLowerCase()];
+  }
+
+  getProcedure(procName) {
+    return this.procedures[procName.toLowerCase()];
+  }
+
+  roleExists(roleName) {
+    return this.roles.hasOwnProperty(roleName.toLowerCase());
+  }
+
+  hasGrant(grantee, priv, object) {
+    const gLower = grantee.toLowerCase();
+    const pUpper = priv.toUpperCase();
+    const oLower = object.toLowerCase();
+    return this.grants.some(g => 
+      g.grantee === gLower && 
+      (g.object === oLower || g.object === '*') && 
+      (g.privs.includes(pUpper) || g.privs.includes('ALL') || g.privs.includes('ALL PRIVILEGES'))
+    );
+  }
+
+  /**
    * Reset database cleanly
    */
   reset() {
     if (this.SQL) {
       this.db = new this.SQL.Database();
+      this.procedures = {};
+      this.roles = {
+        'farm_analyst': ['SELECT'],
+        'farm_manager': ['SELECT', 'INSERT', 'UPDATE'],
+        'farm_admin': ['ALL']
+      };
+      this.grants = [
+        { grantee: 'farm_analyst', privs: ['SELECT'], object: 'crops' },
+        { grantee: 'farm_analyst', privs: ['SELECT'], object: 'sales' },
+        { grantee: 'farm_manager', privs: ['SELECT', 'INSERT', 'UPDATE'], object: 'supplies' }
+      ];
       this.notifyChange({ action: 'RESET' });
     }
   }

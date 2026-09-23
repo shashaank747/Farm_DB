@@ -689,54 +689,88 @@ class FarmDBApp {
     }
 
     // Specific in-game consequences per mission
-    if (mission.id === 'L1_M4' || mission.id === 'L1_M5') {
+    if (mission.id === 'L1_M3' || mission.id === 'L1_M4') {
       if (this.is3DMode && farm3D.playAnimalReactionAnimation) {
         farm3D.playAnimalReactionAnimation();
       }
-    } else if (mission.id === 'L2_M2') {
-      if (this.is3DMode && farm3D.playFarmerPlantAnimation) {
-        farm3D.playFarmerPlantAnimation('A1.1');
-      }
-      this.showToast('🌱 Tomato sown in Plot A1! Advance Day to water and grow it.', 'info');
-    } else if (mission.id === 'L2_M4') {
-      farmRenderer.playHarvestAnimation();
-      if (this.is3DMode) farm3D.playHarvestAnimation();
-      this.showToast('🚜 Tractor harvested 40kg tomatoes! Added to Warehouse.', 'success');
-    } else if (mission.id === 'L4_M1' || mission.id === 'L4_M2') {
+    } else if (mission.id === 'L2_M1' || mission.id === 'L2_M2') {
       if (this.is3DMode && farm3D.playTruckDeliveryAnimation) {
-        farm3D.playTruckDeliveryAnimation('Seeds & Fertilizer');
+        farm3D.playTruckDeliveryAnimation('Warehouse Supplies');
       }
+      this.showToast('📦 Warehouse supplies recorded in database!', 'info');
     } else if (mission.id === 'L2_M5') {
       if (isNew) {
-        const stock = sqlEngine.getTableData('stock');
-        const tomato = stock.find(s => (s.product_name || '').toLowerCase() === 'tomato');
-        const unitPrice = (tomato && Number(tomato.price) > 0) ? Number(tomato.price) : 20;
-        const saleRevenue = 40 * unitPrice; // 40kg * ₹20/kg = ₹800
-        gameState.addMoney(saleRevenue);
+        gameState.addMoney(300);
         sound.playCoin();
-        this.showToast(`💰 Order fulfilled! Earned ₹${saleRevenue.toLocaleString()} cash!`, 'success');
+        this.showToast('💰 Warehouse inventory cataloged & audited! Earned ₹300 bonus!', 'success');
       }
-    } else if (mission.id === 'L3_M4') {
-      this.showToast('🔓 High-Yield plots filtered! Plot A2 unlocked for cultivation.', 'success');
+    } else if (mission.id === 'L3_M5') {
+      if (isNew) {
+        gameState.addMoney(400);
+        sound.playCoin();
+        this.showToast('🔍 Precision search report generated! Earned ₹400 bonus!', 'success');
+      }
+    } else if (mission.id === 'L4_M0') {
+      this.showToast('🌱 Crop catalog registered in database!', 'info');
+    } else if (mission.id === 'L4_M1') {
+      this.showToast('📋 Planting ledger ready for field assignments!', 'info');
+    } else if (mission.id === 'L4_M2') {
+      farmRenderer.playPlantAnimation();
+      if (this.is3DMode) farm3D.playFarmerPlantAnimation();
+      this.showToast('🌱 Plot A1 planted with Tomatoes!', 'success');
+    } else if (mission.id === 'L4_M3') {
+      farmRenderer.playPlantAnimation();
+      if (this.is3DMode) farm3D.playFarmerPlantAnimation();
+      this.showToast('🌾 Multi-plot planting assigned across the farm!', 'success');
     } else if (mission.id === 'L4_M4') {
+      this.showToast('✨ Plot A3 record corrected to Rice!', 'success');
+    } else if (mission.id === 'L4_M5') {
+      if (isNew) {
+        gameState.addMoney(500);
+        sound.playCoin();
+        this.showToast('🎉 First planting plan completed and validated! Earned ₹500 bonus!', 'success');
+      }
+    } else if (mission.id === 'L5_M0') {
+      this.showToast('🌱 Plot A1 tomatoes growing vigorously (50%)!', 'info');
+    } else if (mission.id === 'L5_M1') {
+      farmRenderer.playPlantAnimation();
+      if (this.is3DMode) farm3D.syncFromDatabase();
+      this.showToast('🍅 Plot A1 tomatoes are ripe and ready for harvest!', 'success');
+    } else if (mission.id === 'L5_M2') {
+      this.showToast('📦 Warehouse compost inventory updated to 45 kg!', 'info');
+    } else if (mission.id === 'L5_M3') {
+      this.showToast('🗑️ Broken hand hoe record safely removed from database!', 'info');
+    } else if (mission.id === 'L5_M4') {
+      this.showToast('📋 Warehouse inventory audit confirmed clean!', 'success');
+    } else if (mission.id === 'L5_M5') {
+      if (isNew) {
+        gameState.addMoney(800);
+        sound.playCoin();
+        farmRenderer.playHarvestAnimation();
+        if (this.is3DMode) farm3D.playHarvestAnimation();
+        this.showToast('🚚 Plot A1 tomatoes harvested and prepped for market! Earned ₹800 bonus!', 'success');
+      }
+    } else if (mission.id === 'L6_M5') {
+      if (isNew) {
+        gameState.addMoney(1000);
+        sound.playCoin();
+        this.showToast('📊 Farm analytics report compiled! Earned ₹1,000 bonus!', 'success');
+      }
+    } else if (mission.id === 'L7_M0') {
+      farmRenderer.playPlantAnimation();
+      if (this.is3DMode) farm3D.playFarmerPlantAnimation();
+      this.showToast('🌾 Plot A4 planted with Wheat!', 'success');
+    } else if (mission.id === 'L7_M5') {
       if (isNew) {
         gameState.addMoney(1200);
         sound.playCoin();
-        this.showToast('💰 Priority orders dispatched! Earned ₹1,200 bonus!', 'success');
+        this.showToast('🎯 Commercial crop scale report delivered! Earned ₹1,200 bonus!', 'success');
       }
-    } else if (mission.id === 'L5_M4') {
+    } else if (mission.id === 'L8_M5') {
       if (isNew) {
-        gameState.addMoney(3500);
+        gameState.addMoney(1500);
         sound.playCoin();
-        this.showToast('💰 Wholesale orders invoiced! Earned ₹3,500!', 'success');
-      }
-    } else if (mission.id === 'L6_M4') {
-      this.showToast('🚜 Machinery fleet deployed to field crews!', 'success');
-    } else if (mission.id === 'L7_M4') {
-      if (isNew) {
-        gameState.addMoney(5000);
-        sound.playCoin();
-        this.showToast('⚖️ Forensic audit recovered ₹5,000 in lost revenue!', 'success');
+        this.showToast('🔍 Compound smart filter report compiled! Earned ₹1,500 bonus!', 'success');
       }
     } else if (mission.id === 'L10_M3') {
       if (isNew) {
@@ -804,7 +838,9 @@ class FarmDBApp {
       if (btnProceed) {
         const span = btnProceed.querySelector('span');
         if (span) {
-          if (gameState.currentLevel >= 10) {
+          if (gameState.currentLevel === 17 && gameState.learningPath !== 'fullstack') {
+            span.textContent = '🏆 Complete Data Analytics Path!';
+          } else if (gameState.currentLevel >= Object.keys(MISSIONS_DATA).length) {
             span.textContent = '🏆 Celebrate Agribusiness Empire!';
           } else {
             span.textContent = `Begin Chapter ${gameState.currentLevel + 1} ❯`;
@@ -1088,7 +1124,8 @@ class FarmDBApp {
     if (!container) return;
 
     let html = '';
-    for (let i = 1; i <= 10; i++) {
+    const totalLevels = Object.keys(MISSIONS_DATA).length;
+    for (let i = 1; i <= totalLevels; i++) {
       const lvl = MISSIONS_DATA[i];
       const isCurrent = gameState.currentLevel === i;
       const isCompleted = gameState.currentLevel > i;
@@ -1281,15 +1318,21 @@ class FarmDBApp {
       });
     }
 
-    // Next Level Proceed Button from Celebration Modal (Levels 1 through 10)
+    // Next Level Proceed Button from Celebration Modal
     const btnProceed = document.getElementById('btn-proceed-next-level');
     if (btnProceed) {
       btnProceed.addEventListener('click', () => {
         const overlay = document.getElementById('celebration-modal-overlay');
         if (overlay) overlay.classList.remove('active');
 
+        // If DA path user finished Level 17
+        if (gameState.currentLevel === 17 && gameState.learningPath !== 'fullstack') {
+          this.showGrandFinaleModal();
+          return;
+        }
+
         const nextLevel = gameState.currentLevel + 1;
-        if (nextLevel <= 10) {
+        if (MISSIONS_DATA[nextLevel]) {
           gameState.setLevel(nextLevel);
           simulation.syncPlotsWithLevel(nextLevel);
           if (this.is3DMode) farm3D.syncFromDatabase();

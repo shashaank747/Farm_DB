@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FARMDB — Updated Level & Mission Plan</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#080d14;color:#e8edf4;font-family:Inter,Segoe UI,Arial,sans-serif;line-height:1.5}
+.wrap{max-width:1150px;margin:auto;padding:32px 22px 70px}.hero{padding:35px 0 28px;border-bottom:1px solid #263241}
+h1{font-size:42px;line-height:1.05;margin:0 0 10px}.sub{color:#9eacbc;font-size:16px;max-width:850px}
+h2{font-size:27px;margin:42px 0 12px}.note{color:#9eacbc;margin:0 0 20px}
+.flow{display:grid;grid-template-columns:1fr 1fr;gap:18px}.path{border:1px solid #263241;border-radius:14px;padding:20px;background:#0d141e}
+.path.da{border-color:#276347}.path.fs{border-color:#584080}
+.path h3{margin:0 0 10px;font-size:21px}.path p{color:#aeb9c7}.steps{display:flex;flex-wrap:wrap;gap:7px;align-items:center}.step{padding:8px 11px;border-radius:8px;background:#151f2b;border:1px solid #2a394b;font-size:13px}.da .step{border-color:#25553d}.fs .step{border-color:#49366b}
+.end{margin-top:15px;font-weight:700}.da .end{color:#63dc9b}.fs .end{color:#c09aff}
+table{width:100%;border-collapse:collapse;margin-top:20px;background:#0c131c;border:1px solid #273342}
+th{background:#141e29;color:#e9eff6;text-align:left}th,td{padding:11px 10px;border-bottom:1px solid #222d3a;vertical-align:top;font-size:13px}td{color:#b6c1ce}tr:hover td{background:#111b26}.n{width:45px;color:#708196}.tag{white-space:nowrap;font-size:11px;font-weight:700}.shared{color:#62db98}.full{color:#c29aff}.final{color:#f1cc69}
+.topic{margin-top:12px;border:1px solid #273342;border-radius:12px;background:#0d151f;overflow:hidden}.topic-head{padding:14px 16px;background:#111c28;display:flex;justify-content:space-between;gap:15px}.topic-head b{font-size:16px}.topic-body{padding:15px 16px}.mission{color:#e7edf5}.sql{color:#7fa5c9;font-family:Consolas,monospace;font-size:12px;margin-top:6px}.visual{color:#71d99b;font-size:12px;margin-top:6px}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:16px}.box{border:1px solid #273342;border-radius:12px;padding:18px;background:#0d151f}.box h3{margin-top:0}.box li{color:#b6c1ce;margin:6px 0}
+footer{margin-top:45px;border-top:1px solid #263241;padding-top:20px;color:#718096;font-size:12px}
+@media(max-width:800px){.flow,.cols{grid-template-columns:1fr}h1{font-size:33px}table{display:block;overflow-x:auto}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="hero">
+<h1>FARMDB — Updated Level &amp; Mission Plan</h1>
+<p class="sub">The important part only: the final Normal/Data Analytics and Full Stack flow, what each path covers, and concrete mission ideas for every SQL topic.</p>
+</header>
+
+<h2>1. Final Level Flow</h2>
+<p class="note">The key correction: database design is part of the shared Normal/Data Analytics foundation. Full Stack begins only with the additional database-development topics that are not part of the DA core.</p>
+<div class="flow">
+<div class="path da">
+<h3>Normal / Data Analytics</h3>
+<div class="steps">
+<span class="step">1 Setup</span>→<span class="step">2 Stock</span>→<span class="step">3 Find</span>→
+<span class="step">4 Plant & Cleanup</span>→<span class="step">5 COUNT</span>→<span class="step">6 Aggregates</span>→
+<span class="step">7 HAVING</span>→<span class="step">8 Filtering</span>→<span class="step">9 Supply</span>→
+<span class="step">10 Market</span>→<span class="step">11 JOIN</span>→<span class="step">12 Reports</span>→
+<span class="step">13 Subqueries</span>→<span class="step">14 CTE</span>→
+<span class="step">15 DB Design</span>→<span class="step">16 DA Final</span>
+</div>
+<div class="end">→ FARM DATA ANALYST</div>
+</div>
+<div class="path fs">
+<h3>Full Stack SQL</h3>
+<div class="steps">
+<span class="step">1–15 Shared Foundation</span>→<span class="step">16 DA Final</span>→
+<span class="step">17 Views</span>→<span class="step">18 Transactions</span>→<span class="step">19 Triggers</span>→
+<span class="step">20 Procedures</span>→<span class="step">21 Access</span>→<span class="step">22 Intelligence</span>→<span class="step">23 Drought</span>
+</div>
+<div class="end">→ FARM BUSINESS OWNER</div>
+</div>
+</div>
+
+<h2>2. What Is Covered</h2>
+<div class="cols">
+<div class="box"><h3>Shared Foundation — Normal/DA + Full Stack</h3><ul>
+<li>Database, tables, rows, columns and data types</li>
+<li>CREATE DATABASE, USE, CREATE TABLE</li>
+<li>INSERT and SELECT</li><li>WHERE, ORDER BY, LIMIT</li><li>UPDATE and DELETE</li>
+<li>COUNT, SUM, AVG, MIN, MAX</li><li>GROUP BY and HAVING</li>
+<li>AND, OR, IN, BETWEEN, LIKE</li><li>Dates and CASE</li>
+<li>INNER, LEFT, RIGHT and FULL OUTER JOIN concept</li>
+<li>Multiple JOINs, aliases, calculated columns and NULL</li>
+<li>Subqueries and correlated subqueries</li><li>CTE / WITH</li>
+<li><b>ALTER TABLE, ADD/DROP COLUMN, RENAME TABLE, DROP TABLE</b></li>
+<li><b>PRIMARY KEY and FOREIGN KEY</b></li>
+<li><b>1:1, 1:M and M:M relationships</b></li>
+<li><b>ER diagrams and normalization</b></li>
+<li>Business analysis</li>
+</ul></div>
+<div class="box"><h3>Full Stack Extension</h3><ul>
+<li>Views</li><li>Transactions, COMMIT, ROLLBACK, SAVEPOINT</li>
+<li>Triggers</li><li>Stored procedures, parameters, variables, IF/CASE</li>
+<li>GRANT and REVOKE</li><li>AI/data intelligence concepts</li>
+<li>Final integrated business decision</li>
+</ul></div>
+</div>
+
+<h2>3. Level → Mission Plan</h2>
+<p class="note">Each level can contain multiple short missions. The mission is what the student actually does in the SQL terminal; the farm changes after successful validation.</p>
+
+<table><thead><tr><th>#</th><th>Level / Topics</th><th>Possible Missions</th><th>Farm / Result</th></tr></thead><tbody><tr><td class="n ">1</td><td><b>Farm Setup</b><br>Database, tables, data types, CREATE, USE, INSERT, SELECT</td><td>Create FARMDB; create crops/plots/seeds; insert first records; SELECT them.</td><td class="visual">Empty farm → plots/crops appear.</td></tr><tr><td class="n ">2</td><td><b>Stock the Farm</b><br>INSERT, SELECT columns, multiple rows</td><td>Add seeds, fertilizer and feed; insert multiple stock records; display item + quantity.</td><td class="visual">Warehouse fills.</td></tr><tr><td class="n ">3</td><td><b>Find What You Need</b><br>WHERE, ORDER BY, LIMIT</td><td>Find low-stock seeds; find low-price crops; sort by price; show first 5.</td><td class="visual">Search/report updates.</td></tr><tr><td class="n ">4</td><td><b>Plant & Cleanup</b><br>INSERT, UPDATE, DELETE, WHERE</td><td>Plant crop in plot; update status/date; correct wrong crop; delete unused seed safely.</td><td class="visual">Plot changes to planted.</td></tr><tr><td class="n ">5</td><td><b>Farm Gets Busy</b><br>GROUP BY, COUNT</td><td>Count plots used by each crop; identify crops occupying multiple plots.</td><td class="visual">Crop distribution dashboard.</td></tr><tr><td class="n ">6</td><td><b>Farm Statistics</b><br>SUM, AVG, MIN, MAX, COUNT</td><td>Calculate total stock, average price, cheapest/most expensive crop, crop count.</td><td class="visual">Statistics dashboard.</td></tr><tr><td class="n ">7</td><td><b>Important Crops</b><br>HAVING</td><td>Show crops with more than 2 plots; compare WHERE with HAVING.</td><td class="visual">Important crops report.</td></tr><tr><td class="n ">8</td><td><b>Smart Filtering</b><br>AND, OR, IN, BETWEEN, LIKE</td><td>Search by price range/category/name and combine conditions.</td><td class="visual">Advanced search.</td></tr><tr><td class="n ">9</td><td><b>Supply Problem</b><br>Suppliers, purchases, dates, CASE</td><td>Compare suppliers; total purchases; find expensive purchases; classify prices with CASE.</td><td class="visual">Supplier board.</td></tr><tr><td class="n ">10</td><td><b>Market & Revenue</b><br>Customers, products, sales, dates</td><td>Find top customers/products; total sales; monthly revenue.</td><td class="visual">Market/revenue dashboard.</td></tr><tr><td class="n ">11</td><td><b>Farm Manager</b><br>INNER JOIN</td><td>Join employees with plots/crops and show assignments.</td><td class="visual">Workers appear on plots.</td></tr><tr><td class="n ">12</td><td><b>Complete Farm Report</b><br>LEFT/RIGHT JOIN, NULL, multiple JOINs, aliases</td><td>Find customers with and without orders; build a multi-table report; demonstrate FULL OUTER JOIN concept with LEFT + RIGHT + UNION where needed in MySQL.</td><td class="visual">Management report.</td></tr><tr><td class="n ">13</td><td><b>Above Average</b><br>Subquery, correlated subquery</td><td>Find crops above average price; compare each record with its own group average using a correlated subquery.</td><td class="visual">Advanced analytics.</td></tr><tr><td class="n ">14</td><td><b>Farm Analysis</b><br>CTE / WITH</td><td>Build a CTE for production/revenue, then identify high-performing crops or plots.</td><td class="visual">Analyst report.</td></tr><tr><td class="n ">15</td><td><b>Farm Database Design</b><br>DDL, PK/FK, relationships, ER, normalization</td><td>Alter a table; add/drop a column; rename a table; identify PK/FK; model 1:M and M:M relationships; create/interpret an ER diagram; normalize a badly structured farm table.</td><td class="visual">Professional database design screen.</td></tr><tr><td class="n final">16</td><td><b>Save the Farm with Data</b><br>DA Final</td><td>Investigate production, customers, no-order customers, monthly revenue, expenses/profit and advanced analysis; produce a data-backed recommendation.</td><td class="visual">DA completes → FARM DATA ANALYST.</td></tr><tr><td class="n full">17</td><td><b>Farm Management View</b><br>VIEW</td><td>Create a reusable farm sales/reporting VIEW and query it.</td><td class="visual">Manager Reports unlocked.</td></tr><tr><td class="n full">18</td><td><b>Safe Sales</b><br>Transactions</td><td>Process order + items + stock + payment; COMMIT success; ROLLBACK/SAVEPOINT on failure.</td><td class="visual">Safe checkout.</td></tr><tr><td class="n full">19</td><td><b>Automatic Inventory</b><br>TRIGGER</td><td>Create a trigger so a sale automatically reduces stock.</td><td class="visual">Inventory updates automatically.</td></tr><tr><td class="n full">20</td><td><b>Farm Automation</b><br>Stored procedures</td><td>Create a stock-check procedure using parameters, variables and IF/CASE; generate reorder alert.</td><td class="visual">Automation panel.</td></tr><tr><td class="n full">21</td><td><b>Employee Access</b><br>GRANT / REVOKE</td><td>Set Owner/Manager/Analyst permissions and test restricted operations.</td><td class="visual">Access control.</td></tr><tr><td class="n full">22</td><td><b>Farm Intelligence</b><br>AI/data concepts</td><td>Analyze historical data for anomalies and simple recommendations; interpret visualization/data-mining results.</td><td class="visual">Farm Intelligence panel.</td></tr><tr><td class="n final">23</td><td><b>The Drought</b><br>Full integrated system</td><td>Choose crops, plots, suppliers, products, expense cuts, inventory actions and access under limited water/money/land/workers.</td><td class="visual">Full Stack completes → FARM BUSINESS OWNER.</td></tr></tbody></table>
+
+<h2>4. Important Design Rule</h2>
+<div class="box">
+<p><b>Common topic = common level/mission.</b> Do not create one DA version and one Full Stack version of the same SQL lesson.</p>
+<p><b>Different requirement = path-specific mission.</b> Full Stack-only concepts begin after the DA final point.</p>
+<p><b>Every mission should produce a database check and, where appropriate, a visible farm consequence.</b> This follows the master plan's Story → Mission → SQL → Database Check → Result Check → Farm Action → Reward flow. fileciteturn4file7</p>
+</div>
+
+<h2>5. Final Structure in One View</h2>
+<div class="box" style="font-family:Consolas,monospace;color:#b9c9da">
+NORMAL / DATA ANALYTICS<br>
+1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9 → 10 → 11 → 12 → 13 → 14 → 15 → 16<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;↓<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FARM DATA ANALYST<br><br>
+FULL STACK<br>
+1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9 → 10 → 11 → 12 → 13 → 14 → 15 → 16<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;↓<br>
+17 → 18 → 19 → 20 → 21 → 22 → 23<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;↓<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FARM BUSINESS OWNER
+</div>
+
+<footer>FARMDB — Updated Level &amp; Mission Plan • Development reference</footer>
+</div>
+</body>
+</html>

@@ -152,8 +152,8 @@ class FarmRenderer {
       const plotRecord1 = plots.find(p => p.plot_id === sub1Id) || { plot_id: sub1Id, status: isColLocked ? 'locked' : 'available' };
       const plotRecord2 = plots.find(p => p.plot_id === sub2Id) || { plot_id: sub2Id, status: isColLocked ? 'locked' : 'available' };
 
-      // Filter active growing crops
-      const colFarming = farming.filter(f => f.status === 'growing');
+      // Filter active growing or ready crops
+      const colFarming = farming.filter(f => f.status === 'growing' || f.status === 'ready');
       let crop1 = colFarming.find(f => f.plot_id === sub1Id);
       let crop2 = colFarming.find(f => f.plot_id === sub2Id);
 
@@ -225,7 +225,16 @@ class FarmRenderer {
             statusClass = growthPct >= 100 ? 'ready' : 'occupied';
             statusLabel = growthPct >= 100 ? 'Ready!' : 'Growing';
 
-            const cropName = (activeCrop.crop_id || '').toLowerCase();
+            let cropName = String(activeCrop.crop_id || '').toLowerCase();
+            if (/^\d+$/.test(cropName)) {
+              const crops = (sqlEngine && sqlEngine.isReady) ? (sqlEngine.getTableData('crops') || []) : [];
+              const match = crops.find(c => String(c.crop_id) === String(cropName));
+              if (match && match.crop_name) {
+                cropName = match.crop_name.toLowerCase();
+              } else if (cropName === '1') cropName = 'tomato';
+              else if (cropName === '2') cropName = 'wheat';
+              else if (cropName === '3') cropName = 'rice';
+            }
             const isWheat = cropName.includes('wheat');
             const isRice = cropName.includes('rice');
 
