@@ -1,59 +1,59 @@
 :root {
-  /* Core Palette - Warm, Light Farming Aesthetic */
-  --bg-cream: #FAF7F2;
+  /* Core Palette - Warm, Refined Farming Aesthetic */
+  --bg-cream: #F8FAFC;
   --bg-card: #FFFFFF;
-  --bg-card-subtle: #F5EFEB;
-  --bg-surface: #FDFBF7;
+  --bg-card-subtle: #F1F5F9;
+  --bg-surface: #FFFFFF;
 
-  /* Greens */
-  --green-deep: #2D6A4F;
-  --green-primary: #388E3C;
-  --green-fresh: #4CAF50;
-  --green-light: #E8F5E9;
-  --green-grass: #81C784;
-  --green-accent: #1B5E20;
+  /* Farm Greens */
+  --green-deep: #064E3B;
+  --green-primary: #059669;
+  --green-fresh: #10B981;
+  --green-light: #ECFDF5;
+  --green-grass: #34D399;
+  --green-accent: #047857;
 
-  /* Wheat & Gold */
-  --wheat-gold: #E5A93C;
-  --wheat-light: #FFF8E7;
+  /* Harvest Gold & Amber */
+  --wheat-gold: #F59E0B;
+  --wheat-light: #FFFBEB;
   --wheat-amber: #D97706;
-  --wheat-border: #FCD34D;
+  --wheat-border: #FDE68A;
 
-  /* Earth & Soil */
-  --earth-brown: #795548;
-  --earth-dark: #4E342E;
-  --earth-light: #D7CCC8;
-  --soil-rich: #5D4037;
-  --soil-fallow: #8D6E63;
-  --wood-warm: #A0522D;
+  /* Earth & Slate Neutrals */
+  --earth-brown: #78350F;
+  --earth-dark: #451A03;
+  --earth-light: #FEF3C7;
+  --soil-rich: #3E2723;
+  --soil-fallow: #5D4037;
+  --wood-warm: #92400E;
 
   /* Sky & Water */
   --sky-blue: #38BDF8;
-  --sky-light: #E0F2FE;
+  --sky-light: #F0F9FF;
   --water-blue: #0284C7;
   --water-deep: #0369A1;
 
-  /* Text Colors */
-  --text-main: #1F2937;
-  --text-muted: #6B7280;
-  --text-light: #9CA3AF;
+  /* Text Hierarchy */
+  --text-main: #0F172A;
+  --text-muted: #475569;
+  --text-light: #94A3B8;
   --text-inverse: #FFFFFF;
 
   /* Borders & Shadows */
-  --border-light: #E5E7EB;
-  --border-subtle: #F3F4F6;
-  --border-warm: #E6DFD5;
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -1px rgba(0, 0, 0, 0.04);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.03);
-  --shadow-float: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  --border-light: #E2E8F0;
+  --border-subtle: #F1F5F9;
+  --border-warm: #CBD5E1;
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
+  --shadow-md: 0 4px 10px -1px rgba(0, 0, 0, 0.07), 0 2px 5px -1px rgba(0, 0, 0, 0.04);
+  --shadow-lg: 0 12px 24px -4px rgba(0, 0, 0, 0.1), 0 4px 8px -2px rgba(0, 0, 0, 0.04);
+  --shadow-float: 0 20px 35px -6px rgba(15, 23, 42, 0.18), 0 8px 16px -4px rgba(15, 23, 42, 0.08);
   --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
   --radius-full: 9999px;
 
   /* Typography */
   --font-family: 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, sans-serif;
   --font-mono: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
-  --font-hand: 'Caveat', 'Segoe Print', cursive;
+  --font-hand: 'Caveat', cursive;
 }
