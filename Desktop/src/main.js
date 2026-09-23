@@ -242,43 +242,6 @@ class FarmDBApp {
       navPlots.title = `${openCount} of 5 Plots Unlocked (Level ${gameState.currentLevel})`;
     }
 
-    // Update Sidebar XP Progress
-    const xpFill = document.getElementById('sidebar-xp-fill');
-    const xpText = document.getElementById('sidebar-xp-text');
-    const currentMissionIndex = gameState.currentMissionIndex || 0;
-    const totalMissionsInLevel = lvlData ? (lvlData.missions?.length || 6) : 6;
-    const xpPercent = Math.min(100, Math.round(((currentMissionIndex) / totalMissionsInLevel) * 100));
-    const xpVal = currentMissionIndex * 20;
-    const xpMax = totalMissionsInLevel * 20;
-    if (xpFill) xpFill.style.width = `${Math.max(5, xpPercent)}%`;
-    if (xpText) xpText.textContent = `${xpVal} / ${xpMax} XP`;
-
-    // Update Live HUD Strip
-    const hudPlots = document.getElementById('hud-val-plots');
-    const hudCrops = document.getElementById('hud-val-crops');
-    const hudSupplies = document.getElementById('hud-val-supplies');
-    const hudWater = document.getElementById('hud-val-water');
-    const hudMoney = document.getElementById('hud-val-money');
-
-    if (hudPlots) {
-      const openCount = gameState.currentLevel < 3 ? 1 : Math.min(5, gameState.currentLevel - 1);
-      hudPlots.textContent = `${openCount} / 5`;
-    }
-    if (hudCrops) {
-      const cropCount = sqlEngine.db ? (sqlEngine.getTableData('crops')?.length || 0) : 0;
-      hudCrops.textContent = `${cropCount} Varieties`;
-    }
-    if (hudSupplies) {
-      const supplyCount = sqlEngine.db ? (sqlEngine.getTableData('supplies')?.length || 0) : 0;
-      hudSupplies.textContent = `${supplyCount} Items`;
-    }
-    if (hudWater) {
-      hudWater.textContent = `${gameState.waterReservoir ? gameState.waterReservoir.toLocaleString() : '72,000'} L`;
-    }
-    if (hudMoney) {
-      hudMoney.textContent = `₹${gameState.money.toLocaleString()}`;
-    }
-
     this.renderCurrentMission();
   }
 
@@ -1063,7 +1026,7 @@ class FarmDBApp {
               else if (typeLower.includes('real') || typeLower.includes('float') || typeLower.includes('num')) typeClass = 'type-num';
 
               return `
-                <div class="schema-col-item" data-col="${c.name.toLowerCase()}" title="${c.name} (${c.type || 'TEXT'}${c.pk ? ' - Primary Key' : ''})">
+                <div class="schema-col-item" title="${c.name} (${c.type || 'TEXT'}${c.pk ? ' - Primary Key' : ''})">
                   <div class="col-name-group">
                     <span class="col-key-icon" ${c.pk ? 'title="Primary Key"' : ''}>${c.pk ? '🔑' : '•'}</span>
                     <span class="col-name ${c.pk ? 'col-pk' : ''}">${c.name}</span>
@@ -1078,39 +1041,6 @@ class FarmDBApp {
     });
 
     container.innerHTML = html;
-
-    // Live Schema Search & Filter Handler
-    const searchInput = document.getElementById('schema-search-input');
-    if (searchInput && !searchInput._boundSearch) {
-      searchInput._boundSearch = true;
-      searchInput.addEventListener('input', (e) => {
-        const query = e.target.value.toLowerCase().trim();
-        const items = container.querySelectorAll('.schema-table-item');
-        items.forEach(item => {
-          const tblName = (item.dataset.table || '').toLowerCase();
-          const colItems = item.querySelectorAll('.schema-col-item');
-          let tableMatches = tblName.includes(query);
-          let anyColMatches = false;
-
-          colItems.forEach(col => {
-            const colName = (col.dataset.col || '').toLowerCase();
-            if (!query || colName.includes(query)) {
-              col.style.display = 'flex';
-              if (query && colName.includes(query)) anyColMatches = true;
-            } else {
-              col.style.display = 'none';
-            }
-          });
-
-          if (!query || tableMatches || anyColMatches) {
-            item.style.display = 'block';
-            if (query && anyColMatches) item.classList.remove('collapsed');
-          } else {
-            item.style.display = 'none';
-          }
-        });
-      });
-    }
 
     // Attach Toggle All Tables action once
     const btnToggleAll = document.getElementById('btn-schema-toggle-all');
@@ -1950,26 +1880,12 @@ class FarmDBApp {
     document.querySelectorAll('.sidebar-nav .nav-item').forEach(item => {
       item.addEventListener('click', () => {
         const viewId = item.dataset.view;
-        if (viewId) {
-          this.switchView(viewId);
-        } else if (item.id === 'nav-sidebar-manual') {
-          this.openStarterGuideModal();
-        } else if (item.id === 'nav-sidebar-achievements') {
-          this.switchView('journey-view');
-        }
+        this.switchView(viewId);
         if (window.innerWidth <= 768) {
           this.toggleSidebar(false, true);
         }
       });
     });
-
-    // Wire Schema Full ERD button
-    const btnSchemaOpenERD = document.getElementById('btn-schema-open-erd');
-    if (btnSchemaOpenERD) {
-      btnSchemaOpenERD.addEventListener('click', () => {
-        this.switchView('database-view');
-      });
-    }
   }
 
   switchView(viewId) {

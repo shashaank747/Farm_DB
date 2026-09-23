@@ -420,90 +420,80 @@
 
   <div id="app">
     <!-- ==========================================================
-         TOP NAVIGATION BAR (Zone 1: TOP HUD)
+         TOP NAVIGATION BAR
          ========================================================== -->
     <header class="top-nav">
-      <!-- LEFT: Brand & Subtitle -->
       <div class="nav-left">
-        <button class="btn-burger-menu active" id="btn-toggle-sidebar" title="Toggle Farm Menu (Ctrl+B)" aria-label="Toggle navigation menu">
-          <span class="burger-bar"></span>
-          <span class="burger-bar"></span>
-          <span class="burger-bar"></span>
-        </button>
-        <div class="brand" id="brand-logo" title="FARMDB: Learn SQL. Grow Your Farm.">
+        <div class="brand" id="brand-logo" title="FARMDB: From Farmer to Agribusiness">
           <img src="/farmdb_icon.png" alt="FarmDB Logo" class="brand-logo-img">
           <div class="brand-text">
-            <h1 class="brand-title">FARMDB</h1>
-            <span class="brand-subtitle">Learn SQL. Grow Your Farm.</span>
+            <h1>FARMDB</h1>
           </div>
         </div>
-      </div>
 
-      <!-- CENTER: Environmental Time & Weather + Advance -->
-      <div class="nav-center">
-        <div class="stat-pill day-pill" id="day-pill" title="Current Farming Season Day">
-          <span class="pill-label">📅 Day</span>
-          <strong class="pill-value" id="day-val">1</strong>
+        <div class="stat-pill day-pill" id="day-pill" title="Season 1">
+          <span>📅 Day <strong id="day-val">1</strong></span>
         </div>
 
-        <div class="stat-pill time-pill" id="time-pill" title="Click to cycle time of day (Morning ➔ Day ➔ Sunset ➔ Night)">
+        <div class="stat-pill time-pill" id="time-pill"
+          title="Click to cycle time of day (Morning ➔ Day ➔ Sunset ➔ Night)">
           <span id="time-icon">🌅</span>
           <span id="time-text">07:00 AM</span>
+        </div>
+
+        <button class="btn-advance-day" id="btn-advance-day"
+          title="Advance farm time by 1 day (crops grow, water consumed)">
+          <span>⏩ Advance</span>
+        </button>
+
+        <!-- Prominent SQL Compiler Button in Top Bar -->
+        <button class="btn-sql-compiler" id="btn-top-sql-compiler" title="Open SQL Compiler & Studio (Ctrl+Enter)">
+          <span class="compiler-glow-ring"></span>
+          <span class="compiler-icon">⚡</span>
+          <span class="compiler-label">SQL Compiler</span>
+        </button>
+
+        <!-- 3D Environment Toggle Button -->
+        <button class="btn-view-mode-toggle" id="btn-toggle-3d-mode" title="Toggle between 3D Living Farm and 2D Grid">
+          <span id="view-mode-icon">🎮</span>
+          <span id="view-mode-label">3D World</span>
+        </button>
+      </div>
+
+      <div class="nav-center">
+        <div class="stat-pill level-pill" id="level-pill" title="Player Level">
+          <span>🎖️ <strong id="level-role">Lvl 1: New Farmer</strong></span>
+        </div>
+
+        <div class="stat-pill money-pill" id="money-pill" title="Treasury Cash">
+          <span>💰 <strong id="money-val">₹500</strong></span>
         </div>
 
         <div class="stat-pill weather-pill" id="weather-pill" title="Farm Weather">
           <span id="weather-icon">☀️</span>
           <span id="weather-text">24°C</span>
         </div>
-
-        <button class="btn-advance-day" id="btn-advance-day" title="Advance farm time by 1 day (crops grow, water consumed)">
-          <span>⏩ Advance Day</span>
-        </button>
       </div>
 
-      <!-- RIGHT: Career Level, Treasury, View Toggle, Tools -->
       <div class="nav-right">
-        <div class="stat-pill level-pill" id="level-pill" title="Farmer Career Role (Click to open profile)">
-          <span class="pill-icon">🎖️</span>
-          <strong id="level-role">Lvl 1: Farm Assistant</strong>
-        </div>
-
-        <div class="stat-pill money-pill" id="money-pill" title="Treasury Balance">
-          <span class="pill-icon">💰</span>
-          <strong id="money-val">₹500</strong>
-        </div>
-
-        <button class="btn-view-mode-toggle" id="btn-toggle-3d-mode" title="Toggle between 3D Living Farm and 2D Grid">
-          <span id="view-mode-icon">🎮</span>
-          <span id="view-mode-label">3D World</span>
+        <button class="btn-icon" id="btn-toggle-sound" title="Toggle Farm Audio (Unmuted by default)">
+          <span id="sound-icon">🔊</span>
         </button>
-
-        <button class="btn-sql-compiler" id="btn-top-sql-compiler" title="Open SQL Studio & Terminal (Ctrl+Enter)">
-          <span class="compiler-glow-ring"></span>
-          <span class="compiler-icon">⚡</span>
-          <span class="compiler-label">SQL Studio</span>
+        <button class="btn-icon" id="btn-show-starter-guide" title="Open Student Starter Guide & Manual">
+          <span>📘</span>
         </button>
-
-        <div class="nav-tool-actions">
-          <button class="btn-icon" id="btn-toggle-sound" title="Toggle Farm Audio (Unmuted by default)">
-            <span id="sound-icon">🔊</span>
-          </button>
-          <button class="btn-icon" id="btn-show-starter-guide" title="Open Student Starter Guide & Manual">
-            <span>📘</span>
-          </button>
-          <button class="btn-icon" id="btn-show-story" title="View Grandfather's Notebook & Story">
-            <span>📖</span>
-          </button>
-          <button class="btn-icon" id="btn-reset-level" title="Reset Current Level Database">
-            <span>↺</span>
-          </button>
-          <button class="btn-icon" id="btn-toggle-debug" title="Toggle Developer Diagnostics (F2)">
-            <span>🐛</span>
-          </button>
-          <button class="btn-icon" id="btn-logout-game" title="Log Out & Return to Living Login Screen">
-            <span>🚪</span>
-          </button>
-        </div>
+        <button class="btn-icon" id="btn-show-story" title="View Grandfather's Notebook & Story">
+          <span>📖</span>
+        </button>
+        <button class="btn-icon" id="btn-reset-level" title="Reset Current Level Database">
+          <span>↺</span>
+        </button>
+        <button class="btn-icon" id="btn-toggle-debug" title="Toggle Developer Diagnostics (F2)">
+          <span>🐛</span>
+        </button>
+        <button class="btn-icon" id="btn-logout-game" title="Log Out & Return to Living Login Screen">
+          <span>🚪</span>
+        </button>
       </div>
     </header>
 
@@ -514,13 +504,20 @@
       <!-- Mobile / Tablet Sidebar Backdrop Overlay -->
       <div class="sidebar-backdrop" id="sidebar-backdrop"></div>
 
-      <!-- Left Sidebar Navigation (Zone 2: LEFT FARM NAVIGATION) -->
+      <!-- Left Sidebar Navigation -->
       <aside class="sidebar" id="app-sidebar">
         <!-- Sidebar Header with Burger Toggle and Collapse Controls -->
         <div class="sidebar-header">
           <div class="sidebar-header-left">
-            <span class="sidebar-header-icon">🌾</span>
-            <span class="sidebar-header-title">FARM NAVIGATION</span>
+            <button class="btn-burger-menu active" id="btn-toggle-sidebar" title="Toggle Farm Menu (Ctrl+B)" aria-label="Toggle navigation menu">
+              <span class="burger-bar"></span>
+              <span class="burger-bar"></span>
+              <span class="burger-bar"></span>
+            </button>
+            <div class="sidebar-header-label">
+              <span class="sidebar-header-icon">🌱</span>
+              <span class="sidebar-header-title">FARM MENU</span>
+            </div>
           </div>
           <button class="btn-sidebar-collapse" id="btn-collapse-sidebar" title="Collapse Menu (Ctrl+B)">
             <span>◀</span>
@@ -531,14 +528,14 @@
           <!-- Operations Group -->
           <div class="sidebar-section">
             <div class="sidebar-section-header">
-              <span class="sidebar-section-title">FARM</span>
+              <span class="sidebar-section-title">Farm Activities</span>
             </div>
             <div class="nav-item active" data-view="farm-world">
               <span class="nav-icon">🏠</span>
               <span class="nav-text">Farm World</span>
             </div>
             <div class="nav-item" data-view="fields-view">
-              <span class="nav-icon">🌱</span>
+              <span class="nav-icon">🌾</span>
               <span class="nav-text">Fields & Plots</span>
               <span class="nav-badge" id="nav-plots-count">1/5</span>
             </div>
@@ -555,7 +552,7 @@
           <!-- Progression & Database Group -->
           <div class="sidebar-section">
             <div class="sidebar-section-header">
-              <span class="sidebar-section-title">DATABASE</span>
+              <span class="sidebar-section-title">Database & System</span>
             </div>
             <div class="nav-item" data-view="database-view">
               <span class="nav-icon">🗄️</span>
@@ -565,35 +562,16 @@
               <span class="nav-icon">🗺️</span>
               <span class="nav-text">Story & Levels</span>
             </div>
-            <div class="nav-item" id="nav-sidebar-manual">
-              <span class="nav-icon">📘</span>
-              <span class="nav-text">Starter Guide</span>
-            </div>
-          </div>
-
-          <!-- Progress / Achievements Group -->
-          <div class="sidebar-section">
-            <div class="sidebar-section-header">
-              <span class="sidebar-section-title">PROGRESS</span>
-            </div>
-            <div class="nav-item" id="nav-sidebar-achievements">
-              <span class="nav-icon">🏆</span>
-              <span class="nav-text">Career & Badges</span>
-            </div>
           </div>
         </nav>
 
-        <!-- Sidebar Footer Player Card -->
+        <!-- Sidebar Footer Status Card -->
         <div class="sidebar-footer">
-          <div class="sidebar-farmer-card" title="Click to view Farmer Profile & Career Milestones">
+          <div class="sidebar-farmer-card">
             <div class="farmer-avatar">👨‍🌾</div>
             <div class="farmer-meta">
               <span class="farmer-name">Farmer Player</span>
-              <span class="farmer-rank" id="sidebar-farmer-role">Lvl 1: Farm Assistant</span>
-              <div class="farmer-xp-bar-track" title="Level Progression XP">
-                <div class="farmer-xp-bar-fill" id="sidebar-xp-fill" style="width: 25%;"></div>
-              </div>
-              <span class="farmer-xp-text" id="sidebar-xp-text">25 / 100 XP</span>
+              <span class="farmer-rank" id="sidebar-farmer-role">Lvl 1 Pioneer</span>
             </div>
           </div>
           <div class="sidebar-shortcut-hint" title="Press Ctrl+B to toggle menu">
@@ -613,17 +591,16 @@
           </div>
           <span class="floating-burger-label">MENU</span>
         </button>
-
-        <!-- Floating Quest HUD (Zone 3: CURRENT MISSION) -->
+        <!-- Floating Quest HUD (Objective Card) -->
         <div class="quest-hud" id="quest-hud">
           <!-- Expanded Card View -->
           <div class="quest-hud-card" id="quest-hud-card">
             <div class="quest-hud-header" id="quest-hud-drag-header" title="Drag to reposition anywhere in the viewport">
               <div class="quest-hud-badge">
                 <span class="quest-hud-pulse"></span>
-                <span class="quest-hud-icon">🌱</span>
-                <span class="quest-hud-label">CURRENT MISSION</span>
-                <span class="quest-hud-step" id="quest-hud-step-badge">1/6</span>
+                <span class="quest-hud-icon">🎯</span>
+                <span class="quest-hud-label">CURRENT TASK</span>
+                <span class="quest-hud-step" id="quest-hud-step-badge">1/3</span>
               </div>
               <div class="quest-hud-controls">
                 <button class="quest-hud-ctrl-btn" id="btn-quest-hud-toggle-pos" title="Switch corner (Top-Left / Top-Right)">⇄</button>
@@ -632,20 +609,20 @@
             </div>
 
             <div class="quest-hud-body" id="quest-hud-body">
-              <h3 class="quest-hud-title" id="quest-hud-title">Loading mission...</h3>
+              <div class="quest-hud-title" id="quest-hud-title">Loading mission...</div>
               <div class="quest-hud-desc" id="sidebar-mission-desc">Loading your first task...</div>
               <div class="quest-hud-quote" id="quest-hud-dialogue">
                 <span class="quote-avatar">👨‍🌾</span>
                 <span class="quote-text" id="quest-hud-quote-text">Uncle Somu: "Inspect our expanded farm."</span>
               </div>
               <div class="quest-hud-actions">
-                <button class="quest-hud-btn-primary" id="btn-open-terminal-from-mission" title="Open SQL Studio (Ctrl+Enter)">
+                <button class="quest-hud-btn-primary" id="btn-open-terminal-from-mission" title="Open SQL Terminal (Ctrl+Enter)">
                   <span class="btn-icon">⚡</span>
-                  <span>Open SQL Studio</span>
+                  <span>Open SQL Terminal</span>
                   <span class="btn-chevron">❯</span>
                 </button>
                 <button class="quest-hud-btn-hint" id="btn-quest-hud-hint" title="View mission hints in SQL Studio">
-                  <span>💡 Hint (1/3)</span>
+                  <span>💡 Hint</span>
                 </button>
               </div>
             </div>
@@ -654,38 +631,9 @@
           <!-- Compact Minimized Pill Bar -->
           <div class="quest-hud-pill" id="quest-hud-pill" style="display: none;" title="Click to expand Current Task">
             <span class="pill-pulse"></span>
-            <span class="pill-icon">🌱</span>
+            <span class="pill-icon">🎯</span>
             <span class="pill-title" id="quest-hud-pill-title">Verify Unlocked Plot A2</span>
             <span class="pill-expand-icon">▸</span>
-          </div>
-        </div>
-
-        <!-- Live Farm Quick Status Strip (Zone 8: FARM STATUS HUD) -->
-        <div class="farm-live-hud-strip" id="farm-live-hud-strip">
-          <div class="farm-hud-item" id="hud-stat-plots" title="Field Plots Utilized">
-            <span class="hud-item-icon">🌾</span>
-            <span class="hud-item-label">PLOTS:</span>
-            <strong class="hud-item-val" id="hud-val-plots">1 / 5</strong>
-          </div>
-          <div class="farm-hud-item" id="hud-stat-crops" title="Crops Cataloged">
-            <span class="hud-item-icon">🌱</span>
-            <span class="hud-item-label">CROPS:</span>
-            <strong class="hud-item-val" id="hud-val-crops">0 Varieties</strong>
-          </div>
-          <div class="farm-hud-item" id="hud-stat-supplies" title="Warehouse Supplies">
-            <span class="hud-item-icon">📦</span>
-            <span class="hud-item-label">SUPPLIES:</span>
-            <strong class="hud-item-val" id="hud-val-supplies">0 Items</strong>
-          </div>
-          <div class="farm-hud-item" id="hud-stat-water" title="Water Reservoir Level">
-            <span class="hud-item-icon">💧</span>
-            <span class="hud-item-label">WATER:</span>
-            <strong class="hud-item-val" id="hud-val-water">72,000 L</strong>
-          </div>
-          <div class="farm-hud-item" id="hud-stat-money" title="Treasury Balance">
-            <span class="hud-item-icon">💰</span>
-            <span class="hud-item-label">CASH:</span>
-            <strong class="hud-item-val" id="hud-val-money">₹500</strong>
           </div>
         </div>
         <!-- 1. FARM WORLD VIEW -->
@@ -982,11 +930,11 @@
             <button class="btn-run-sql" id="btn-run-sql" title="Execute SQL (Ctrl+Enter)">
               <span>▶ Run SQL</span>
             </button>
-            <button class="btn-toolbar" id="btn-quick-fill" title="Insert Mission SQL Template">
-              <span>⚡ Quick Fill</span>
-            </button>
             <button class="btn-toolbar" id="btn-clear-sql" title="Clear Editor">
               <span>🧹 Clear</span>
+            </button>
+            <button class="btn-toolbar" id="btn-quick-fill" title="Insert Mission SQL Template">
+              <span>⚡ Fill Query</span>
             </button>
           </div>
           <div class="toolbar-right">
@@ -994,7 +942,7 @@
               <span id="hint-button-label">💡 Hint (1/3)</span>
             </button>
             <button class="btn-toolbar" id="btn-toggle-schema" title="Toggle Database Schema Explorer">
-              <span>📂 Schema</span>
+              <span>🔍 Schema</span>
             </button>
           </div>
         </div>
@@ -1005,7 +953,7 @@
           <div class="editor-pane">
             <div class="code-editor-wrapper">
               <div class="line-numbers" id="editor-line-numbers">1<br>2<br>3</div>
-              <textarea class="sql-textarea" id="sql-input" spellcheck="false" placeholder="-- Write SQL here to manage your farm database...
+              <textarea class="sql-textarea" id="sql-input" spellcheck="false" placeholder="-- Write SQL here to manage your farm...
 SELECT * FROM seeds;"></textarea>
             </div>
           </div>
@@ -1013,47 +961,35 @@ SELECT * FROM seeds;"></textarea>
           <!-- Draggable Splitter between Editor and Schema -->
           <div class="split-gutter" id="schema-split-gutter" title="Drag to adjust schema width • Double click to reset"></div>
 
-          <!-- Schema Pane (Zone 6: DATABASE SCHEMA PANEL) -->
+          <!-- Schema Pane (Collapsible) -->
           <div class="schema-pane" id="schema-pane">
             <div class="schema-header">
               <div class="schema-header-title-wrap">
                 <span class="schema-icon">📂</span>
-                <span class="schema-title-text">DATABASE SCHEMA</span>
+                <span class="schema-title-text">Tables & Columns</span>
               </div>
               <button class="btn-schema-action" id="btn-schema-toggle-all" title="Collapse or Expand all tables">↕</button>
-            </div>
-            <div class="schema-search-box">
-              <input type="text" id="schema-search-input" class="schema-search-input" placeholder="Search tables or columns..." />
             </div>
             <div class="schema-tree" id="schema-tree-container">
               <!-- Live Tables & Columns -->
             </div>
-            <div class="schema-footer-actions">
-              <button class="btn-schema-erd-link" id="btn-schema-open-erd" title="Open interactive Database ERD view">
-                <span>🗄️ Full Schema ERD ❯</span>
-              </button>
-            </div>
           </div>
         </div>
 
-        <!-- Output Tabs & Results Area (Zone 5: SQL RESULT AREA) -->
+        <!-- Output Tabs & Results Area -->
         <div class="terminal-output-pane">
           <div class="output-tabs">
             <div class="output-tab active" data-tab="results">📊 Query Results</div>
             <div class="output-tab" data-tab="mission">🎯 Mission Objectives</div>
-            <div class="output-tab" data-tab="hints">💡 Hints & Guidance (<span id="hint-tier-count">1</span>/3)</div>
+            <div class="output-tab" data-tab="hints">💡 Hints (<span id="hint-tier-count">1</span>/3)</div>
           </div>
 
           <div class="output-content-area" id="output-content">
             <div id="tab-content-results">
-              <div class="sql-empty-state">
-                <span class="empty-icon">🗄️</span>
-                <div class="empty-title">Database Connected</div>
-                <div class="empty-subtitle">Run a query in the editor above to inspect live database records.</div>
-              </div>
+              <div style="color: #9CA3AF; font-style: italic; padding: 8px;">Run a query above to view results.</div>
             </div>
             <div id="tab-content-mission" style="display: none;">
-              <div id="mission-tab-text" style="line-height: 1.6; font-size: 13.5px;"></div>
+              <div id="mission-tab-text" style="line-height: 1.5; font-size: 13px;"></div>
             </div>
             <div id="tab-content-hints" style="display: none;">
               <div id="hints-tab-content"></div>
@@ -1062,16 +998,10 @@ SELECT * FROM seeds;"></textarea>
         </div>
       </div>
 
-      <!-- Status Bar & Resize Handle (Zone 9: BOTTOM STATUS BAR) -->
+      <!-- Status Bar & Resize Handle -->
       <div class="terminal-statusbar">
-        <div class="statusbar-left">
-          <span class="status-indicator-dot"></span>
-          <span id="status-message">SQLite WASM Engine Ready • Ctrl+Enter to Run Query</span>
-        </div>
-        <div class="statusbar-right">
-          <span class="statusbar-db-badge">Local Farm Database</span>
-          <div class="resize-handle" id="terminal-resize-handle" title="Drag to resize window"></div>
-        </div>
+        <span id="status-message">Connecting to SQLite WebAssembly...</span>
+        <div class="resize-handle" id="terminal-resize-handle" title="Drag to resize"></div>
       </div>
     </div>
 
